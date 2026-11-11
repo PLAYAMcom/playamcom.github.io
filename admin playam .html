@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PLAYAM Admin</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#0b0714;color:#f7f2ff;font:15px system-ui,-apple-system,Segoe UI,sans-serif}main{max-width:1100px;margin:auto;padding:24px}.brand{color:#e7a8ff;font-weight:800;letter-spacing:2px}.panel,.metric{background:#171022;border:1px solid #352344;border-radius:16px;padding:18px}.panel{margin-top:18px}h1{font-size:clamp(26px,5vw,40px);margin:8px 0}h2{font-size:18px;margin:0 0 14px}.muted{color:#b9adc5}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}.metric small{color:#b9adc5}.metric strong{display:block;font-size:27px;margin-top:8px;overflow-wrap:anywhere}input,button{font:inherit;border-radius:10px;padding:12px;border:1px solid #59436b}input{width:100%;margin:6px 0 12px;background:#0e0a16;color:white}button{background:#a83de0;color:white;font-weight:700;cursor:pointer;border:0}button.secondary{background:#352344}#app{display:none}.status{margin-top:12px;color:#ffb9cf;white-space:pre-wrap}.section{margin-top:24px}pre{white-space:pre-wrap;overflow-wrap:anywhere;color:#d9c8e8}@media(max-width:520px){main{padding:16px}}
+</style>
+</head>
+<body><main>
+<div class="brand">PLAYAM</div><h1>Admin dashboard</h1>
+<p class="muted">Private administration overview. Sign in with an authorised PLAYAM administrator account.</p>
+<section id="login" class="panel">
+<h2>Administrator sign in</h2>
+<label>Email</label><input id="email" type="email" autocomplete="username" placeholder="Admin email">
+<label>Password</label><input id="password" type="password" autocomplete="current-password" placeholder="Password">
+<button id="signIn">Sign in</button><div id="loginStatus" class="status" role="status"></div>
+</section>
+<section id="app">
+<div class="panel"><div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between"><span id="welcome" class="muted">Administrator</span><div><button id="refresh">Refresh</button> <button id="logout" class="secondary">Log out</button></div></div><div id="status" class="status" role="status"></div></div>
+<div class="section"><h2>Users & games</h2><div class="grid" id="usersGames"></div></div>
+<div class="section"><h2>Creator applications & moderation</h2><div class="grid" id="moderation"></div></div>
+<div class="section"><h2>LIVE & gifts</h2><div class="grid" id="live"></div></div>
+<div class="section"><h2>Payments & earnings</h2><div class="grid" id="finance"></div></div>
+<div class="panel"><h2>Detailed status data</h2><pre id="details">Waiting for authorised sign-in.</pre></div>
+<p class="muted">Purchases are stored-value liabilities, not platform revenue. Ad earnings are estimates and shown separately. This page provides overview data only; moderation and financial actions remain gated behind separate audited controls.</p>
+</section>
+</main>
+<script>
+const SUPABASE_URL='https://erjxmesxmmmaxivvmbsi.supabase.co';
+const SUPABASE_KEY='sb_publishable_8GZmo3tsiGphFbgsCmbdgA_A7blmyc0';
+const client=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const $=id=>document.getElementById(id);
+const num=v=>Number(v||0).toLocaleString();
+const moneyKobo=v=>'₦'+(Number(v||0)/100).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+function cards(target,items){$(target).innerHTML=items.map(([label,value])=>'<div class="metric"><small>'+label+'</small><strong>'+value+'</strong></div>').join('')}
+async function loadOverview(){
+ $('status').textContent='Loading secure administrator overview…';
+ const {data,error}=await client.rpc('get_playam_admin_overview');
+ if(error){$('status').textContent=error.message;$('details').textContent='Access denied or overview unavailable.';return}
+ const d=data||{},u=d.users||{},g=d.games||{},c=d.creator_applications||{},m=d.moderation||{},l=d.live||{},p=d.purchases||{},w=d.withdrawals||{},r=d.platform_revenue||{},a=d.advertising||{};
+ cards('usersGames',[['Registered accounts',num(u.registered_accounts)],['Player profiles',num(u.player_profiles)],['Online players',num(u.online_players)],['Total rooms',num(g.total_rooms)]]);
+ cards('moderation',[['Creator applications',num(c.total)],['Player reports',num(m.total_reports)],['Creator application statuses',JSON.stringify(c.statuses||{})],['Report statuses',JSON.stringify(m.statuses||{})]]);
+ cards('live',[['LIVE sessions',num(l.total_sessions)],['Completed gift transactions',num(l.completed_gift_transactions)],['LIVE session statuses',JSON.stringify(l.statuses||{})]]);
+ const paid=p.paid_amounts_by_currency||{},ads=a.estimated_earnings_by_currency||{};
+ cards('finance',[['Net platform gift revenue',moneyKobo(r.net_revenue_kobo)],['Pending creator withdrawals',num((w.statuses||{}).requested||0)],['Pending withdrawal amount',moneyKobo(w.pending_amount_kobo)],['Paid purchases by currency',JSON.stringify(paid)],['Estimated ad earnings',JSON.stringify(ads)]]);
+ $('details').textContent=JSON.stringify(d,null,2);
+ $('status').textContent='Overview loaded. Last generated: '+(d.generated_at||'time unavailable');
+}
+async function showSession(){
+ const {data:{session}}=await client.auth.getSession();
+ if(session){$('login').style.display='none';$('app').style.display='block';$('welcome').textContent='Signed in: '+(session.user.email||'administrator');await loadOverview()}
+ else{$('login').style.display='block';$('app').style.display='none'}
+}
+$('signIn').onclick=async()=>{ $('loginStatus').textContent='Signing in…';const {error}=await client.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});$('loginStatus').textContent=error?error.message:'';if(!error)await showSession()};
+$('refresh').onclick=loadOverview;
+$('logout').onclick=async()=>{await client.auth.signOut();$('loginStatus').textContent='Signed out.';await showSession()};
+client.auth.onAuthStateChange(()=>{setTimeout(showSession,0)});
+showSession();
+</script></body></html>
