@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="en">
 <head>
@@ -6,28 +7,110 @@
 <title>PLAYAM Admin</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#0b0714;color:#f7f2ff;font:15px system-ui,-apple-system,Segoe UI,sans-serif}main{max-width:1100px;margin:auto;padding:24px}.brand{color:#e7a8ff;font-weight:800;letter-spacing:2px}.panel,.metric{background:#171022;border:1px solid #352344;border-radius:16px;padding:18px}.panel{margin-top:18px}h1{font-size:clamp(26px,5vw,40px);margin:8px 0}h2{font-size:18px;margin:0 0 14px}.muted{color:#b9adc5}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}.metric small{color:#b9adc5}.metric strong{display:block;font-size:27px;margin-top:8px;overflow-wrap:anywhere}input,button{font:inherit;border-radius:10px;padding:12px;border:1px solid #59436b}input{width:100%;margin:6px 0 12px;background:#0e0a16;color:white}button{background:#a83de0;color:white;font-weight:700;cursor:pointer;border:0}button.secondary{background:#352344}#app{display:none}.status{margin-top:12px;color:#ffb9cf;white-space:pre-wrap}.section{margin-top:24px}pre{white-space:pre-wrap;overflow-wrap:anywhere;color:#d9c8e8}@media(max-width:520px){main{padding:16px}}
+:root{color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:#0b0714;color:#f7f2ff;font:15px system-ui,-apple-system,Segoe UI,sans-serif}
+main{max-width:1100px;margin:auto;padding:24px}
+.brand{color:#e7a8ff;font-weight:800;letter-spacing:2px}
+.panel,.metric{background:#171022;border:1px solid #352344;border-radius:16px;padding:18px}
+.panel{margin-top:18px}
+h1{font-size:clamp(26px,5vw,40px);margin:8px 0}
+h2{font-size:18px;margin:0 0 14px}
+.muted{color:#b9adc5}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.metric small{color:#b9adc5}
+.metric strong{display:block;font-size:27px;margin-top:8px;overflow-wrap:anywhere}
+input,button,select,textarea{font:inherit;border-radius:10px;padding:12px;border:1px solid #59436b}
+input,select,textarea{width:100%;margin:6px 0 12px;background:#0e0a16;color:white}
+textarea{min-height:90px;resize:vertical}
+button{background:#a83de0;color:white;font-weight:700;cursor:pointer;border:0;margin:3px}
+button.secondary{background:#352344}
+button.danger{background:#a83255}
+#app{display:none}
+.status{margin-top:12px;color:#ffb9cf;white-space:pre-wrap}
+.section{margin-top:24px}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;color:#d9c8e8}
+.report{background:#100b19;border:1px solid #49345b;border-radius:12px;padding:15px;margin:12px 0}
+.report p{overflow-wrap:anywhere}
+.report small{color:#b9adc5}
+.actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+@media(max-width:520px){main{padding:16px}}
 </style>
 </head>
-<body><main>
-<div class="brand">PLAYAM</div><h1>Admin dashboard</h1>
+<body>
+<main>
+<div class="brand">PLAYAM</div>
+<h1>Admin dashboard</h1>
 <p class="muted">Private administration overview. Sign in with an authorised PLAYAM administrator account.</p>
+
 <section id="login" class="panel">
 <h2>Administrator sign in</h2>
-<label>Email</label><input id="email" type="email" autocomplete="username" placeholder="Admin email">
-<label>Password</label><input id="password" type="password" autocomplete="current-password" placeholder="Password">
-<button id="signIn">Sign in</button><div id="loginStatus" class="status" role="status"></div>
+<label>Email</label>
+<input id="email" type="email" autocomplete="username" placeholder="Admin email">
+<label>Password</label>
+<input id="password" type="password" autocomplete="current-password" placeholder="Password">
+<button id="signIn">Sign in</button>
+<div id="loginStatus" class="status" role="status"></div>
 </section>
+
 <section id="app">
-<div class="panel"><div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between"><span id="welcome" class="muted">Administrator</span><div><button id="refresh">Refresh</button> <button id="logout" class="secondary">Log out</button></div></div><div id="status" class="status" role="status"></div></div>
-<div class="section"><h2>Users & games</h2><div class="grid" id="usersGames"></div></div>
-<div class="section"><h2>Creator applications & moderation</h2><div class="grid" id="moderation"></div></div>
-<div class="section"><h2>LIVE & gifts</h2><div class="grid" id="live"></div></div>
-<div class="section"><h2>Payments & earnings</h2><div class="grid" id="finance"></div></div>
-<div class="panel"><h2>Detailed status data</h2><pre id="details">Waiting for authorised sign-in.</pre></div>
-<p class="muted">Purchases are stored-value liabilities, not platform revenue. Ad earnings are estimates and shown separately. This page provides overview data only; moderation and financial actions remain gated behind separate audited controls.</p>
+<div class="panel">
+<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between">
+<span id="welcome" class="muted">Administrator</span>
+<div>
+<button id="refresh">Refresh</button>
+<button id="logout" class="secondary">Log out</button>
+</div>
+</div>
+<div id="status" class="status" role="status"></div>
+</div>
+
+<div class="section">
+<h2>Users & games</h2>
+<div class="grid" id="usersGames"></div>
+</div>
+
+<div class="section">
+<h2>Creator applications & moderation</h2>
+<div class="grid" id="moderation"></div>
+</div>
+
+<div class="section">
+<h2>LIVE & gifts</h2>
+<div class="grid" id="live"></div>
+</div>
+
+<div class="section">
+<h2>Payments & earnings</h2>
+<div class="grid" id="finance"></div>
+</div>
+
+<div class="panel">
+<h2>Player report moderation</h2>
+<p class="muted">Review reports submitted by players. Every moderation decision requires a reason and is recorded in the admin audit log.</p>
+
+<label for="reportFilter">Filter reports</label>
+<select id="reportFilter">
+<option value="">All reports</option>
+<option value="open">Open</option>
+<option value="reviewing">Reviewing</option>
+<option value="resolved">Resolved</option>
+<option value="dismissed">Dismissed</option>
+</select>
+<button id="loadReports">Load reports</button>
+<div id="reportStatus" class="status" role="status"></div>
+<div id="reports"></div>
+</div>
+
+<div class="panel">
+<h2>Detailed status data</h2>
+<pre id="details">Waiting for authorised sign-in.</pre>
+</div>
+
+<p class="muted">Purchases are stored-value liabilities, not platform revenue. Ad earnings are estimates and shown separately. Administrative actions are protected by server-side authorisation and audit logging.</p>
 </section>
 </main>
+
 <script>
 const SUPABASE_URL='https://erjxmesxmmmaxivvmbsi.supabase.co';
 const SUPABASE_KEY='sb_publishable_8GZmo3tsiGphFbgsCmbdgA_A7blmyc0';
@@ -35,28 +118,210 @@ const client=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 const $=id=>document.getElementById(id);
 const num=v=>Number(v||0).toLocaleString();
 const moneyKobo=v=>'₦'+(Number(v||0)/100).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
-function cards(target,items){$(target).innerHTML=items.map(([label,value])=>'<div class="metric"><small>'+label+'</small><strong>'+value+'</strong></div>').join('')}
+
+function escapeHTML(value){
+ return String(value??'').replace(/[&<>"']/g,char=>({
+ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+ }[char]));
+}
+
+function cards(target,items){
+ $(target).innerHTML=items.map(([label,value])=>
+ '<div class="metric"><small>'+escapeHTML(label)+'</small><strong>'+escapeHTML(value)+'</strong></div>'
+ ).join('');
+}
+
 async function loadOverview(){
  $('status').textContent='Loading secure administrator overview…';
  const {data,error}=await client.rpc('get_playam_admin_overview');
- if(error){$('status').textContent=error.message;$('details').textContent='Access denied or overview unavailable.';return}
- const d=data||{},u=d.users||{},g=d.games||{},c=d.creator_applications||{},m=d.moderation||{},l=d.live||{},p=d.purchases||{},w=d.withdrawals||{},r=d.platform_revenue||{},a=d.advertising||{};
- cards('usersGames',[['Registered accounts',num(u.registered_accounts)],['Player profiles',num(u.player_profiles)],['Online players',num(u.online_players)],['Total rooms',num(g.total_rooms)]]);
- cards('moderation',[['Creator applications',num(c.total)],['Player reports',num(m.total_reports)],['Creator application statuses',JSON.stringify(c.statuses||{})],['Report statuses',JSON.stringify(m.statuses||{})]]);
- cards('live',[['LIVE sessions',num(l.total_sessions)],['Completed gift transactions',num(l.completed_gift_transactions)],['LIVE session statuses',JSON.stringify(l.statuses||{})]]);
- const paid=p.paid_amounts_by_currency||{},ads=a.estimated_earnings_by_currency||{};
- cards('finance',[['Net platform gift revenue',moneyKobo(r.net_revenue_kobo)],['Pending creator withdrawals',num((w.statuses||{}).requested||0)],['Pending withdrawal amount',moneyKobo(w.pending_amount_kobo)],['Paid purchases by currency',JSON.stringify(paid)],['Estimated ad earnings',JSON.stringify(ads)]]);
+
+ if(error){
+  $('status').textContent=error.message;
+  $('details').textContent='Access denied or overview unavailable.';
+  return;
+ }
+
+ const d=data||{};
+ const u=d.users||{},g=d.games||{},c=d.creator_applications||{};
+ const m=d.moderation||{},l=d.live||{},p=d.purchases||{};
+ const w=d.withdrawals||{},r=d.platform_revenue||{},a=d.advertising||{};
+
+ cards('usersGames',[
+  ['Registered accounts',num(u.registered_accounts)],
+  ['Player profiles',num(u.player_profiles)],
+  ['Online players',num(u.online_players)],
+  ['Total rooms',num(g.total_rooms)]
+ ]);
+
+ cards('moderation',[
+  ['Creator applications',num(c.total)],
+  ['Player reports',num(m.total_reports)],
+  ['Creator application statuses',JSON.stringify(c.statuses||{})],
+  ['Report statuses',JSON.stringify(m.statuses||{})]
+ ]);
+
+ cards('live',[
+  ['LIVE sessions',num(l.total_sessions)],
+  ['Completed gift transactions',num(l.completed_gift_transactions)],
+  ['LIVE session statuses',JSON.stringify(l.statuses||{})]
+ ]);
+
+ const paid=p.paid_amounts_by_currency||{};
+ const ads=a.estimated_earnings_by_currency||{};
+
+ cards('finance',[
+  ['Net platform gift revenue',moneyKobo(r.net_revenue_kobo)],
+  ['Pending creator withdrawals',num((w.statuses||{}).requested||0)],
+  ['Pending withdrawal amount',moneyKobo(w.pending_amount_kobo)],
+  ['Paid purchases by currency',JSON.stringify(paid)],
+  ['Estimated ad earnings',JSON.stringify(ads)]
+ ]);
+
  $('details').textContent=JSON.stringify(d,null,2);
  $('status').textContent='Overview loaded. Last generated: '+(d.generated_at||'time unavailable');
 }
+
+async function loadReports(){
+ $('reportStatus').textContent='Loading player reports…';
+ $('reports').innerHTML='';
+
+ const status=$('reportFilter').value||null;
+
+ const {data,error}=await client.rpc('admin_list_player_reports',{
+  p_status:status,
+  p_limit:50
+ });
+
+ if(error){
+  $('reportStatus').textContent='Could not load reports: '+error.message;
+  return;
+ }
+
+ const reports=Array.isArray(data)?data:[];
+ $('reportStatus').textContent=reports.length
+  ? reports.length+' report(s) loaded.'
+  : 'No reports found for this filter.';
+
+ if(!reports.length)return;
+
+ $('reports').innerHTML=reports.map(report=>{
+  const id=escapeHTML(report.report_id);
+  const reason=escapeHTML(report.reason);
+  const details=escapeHTML(report.details||'No additional details provided.');
+  const reporter=escapeHTML(report.reporter_nickname||'Unknown player');
+  const reported=escapeHTML(report.reported_nickname||'Unknown player');
+  const state=escapeHTML(report.status);
+  const date=escapeHTML(report.created_at||'');
+  const disabled=['resolved','dismissed'].includes(report.status);
+
+  return `
+   <article class="report">
+    <small>Report ID: ${id}</small>
+    <p><strong>Reported player:</strong> ${reported}</p>
+    <p><strong>Reported by:</strong> ${reporter}</p>
+    <p><strong>Reason:</strong> ${reason}</p>
+    <p><strong>Details:</strong> ${details}</p>
+    <p><strong>Status:</strong> ${state}</p>
+    <small>Submitted: ${date}</small>
+    ${disabled?'':`
+     <label for="reason-${id}">Admin decision reason</label>
+     <textarea id="reason-${id}" minlength="5" maxlength="1000" placeholder="Explain your moderation decision (at least 5 characters)"></textarea>
+     <div class="actions">
+      <button class="secondary" data-report="${id}" data-action="reviewing">Mark reviewing</button>
+      <button data-report="${id}" data-action="resolved">Resolve</button>
+      <button class="danger" data-report="${id}" data-action="dismissed">Dismiss</button>
+     </div>
+    `}
+   </article>
+  `;
+ }).join('');
+}
+
+async function reviewReport(reportId,newStatus){
+ const reasonInput=$('reason-'+reportId);
+ const reason=reasonInput?reasonInput.value.trim():'';
+
+ if(reason.length<5||reason.length>1000){
+  alert('Please enter a reason between 5 and 1000 characters.');
+  return;
+ }
+
+ const actionName={
+  reviewing:'mark this report as reviewing',
+  resolved:'resolve this report',
+  dismissed:'dismiss this report'
+ }[newStatus];
+
+ if(!confirm('Are you sure you want to '+actionName+'? This action will be recorded.'))return;
+
+ $('reportStatus').textContent='Saving moderation decision…';
+
+ const {error}=await client.rpc('admin_review_player_report',{
+  p_report_id:reportId,
+  p_new_status:newStatus,
+  p_reason:reason
+ });
+
+ if(error){
+  $('reportStatus').textContent='Moderation action failed: '+error.message;
+  return;
+ }
+
+ $('reportStatus').textContent='Moderation decision saved.';
+ await loadReports();
+ await loadOverview();
+}
+
+$('reports').addEventListener('click',async event=>{
+ const button=event.target.closest('button[data-report]');
+ if(!button)return;
+ await reviewReport(button.dataset.report,button.dataset.action);
+});
+
 async function showSession(){
  const {data:{session}}=await client.auth.getSession();
- if(session){$('login').style.display='none';$('app').style.display='block';$('welcome').textContent='Signed in: '+(session.user.email||'administrator');await loadOverview()}
- else{$('login').style.display='block';$('app').style.display='none'}
+
+ if(session){
+  $('login').style.display='none';
+  $('app').style.display='block';
+  $('welcome').textContent='Signed in: '+(session.user.email||'administrator');
+  await loadOverview();
+  await loadReports();
+ }else{
+  $('login').style.display='block';
+  $('app').style.display='none';
+ }
 }
-$('signIn').onclick=async()=>{ $('loginStatus').textContent='Signing in…';const {error}=await client.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});$('loginStatus').textContent=error?error.message:'';if(!error)await showSession()};
-$('refresh').onclick=loadOverview;
-$('logout').onclick=async()=>{await client.auth.signOut();$('loginStatus').textContent='Signed out.';await showSession()};
-client.auth.onAuthStateChange(()=>{setTimeout(showSession,0)});
+
+$('signIn').onclick=async()=>{
+ $('loginStatus').textContent='Signing in…';
+ const {error}=await client.auth.signInWithPassword({
+  email:$('email').value.trim(),
+  password:$('password').value
+ });
+ $('loginStatus').textContent=error?error.message:'';
+ if(!error)await showSession();
+};
+
+$('refresh').onclick=async()=>{
+ await loadOverview();
+ await loadReports();
+};
+
+$('loadReports').onclick=loadReports;
+$('reportFilter').onchange=loadReports;
+
+$('logout').onclick=async()=>{
+ await client.auth.signOut();
+ $('loginStatus').textContent='Signed out.';
+ await showSession();
+};
+
+client.auth.onAuthStateChange(()=>{
+ setTimeout(showSession,0);
+});
+
 showSession();
-</script></body></html>
+</script>
+</body>
+</html>
