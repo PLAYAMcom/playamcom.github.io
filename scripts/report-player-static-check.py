@@ -1,0 +1,63 @@
+#!/usr/bin/env python3
+"""Safe, offline checks for the Report Player frontend. No Supabase calls are made."""
+from html.parser import HTMLParser
+from pathlib import Path
+import subprocess
+import tempfile
+
+HTML = Path("index.html").read_text(encoding="utf-8")
+
+class Scripts(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.in_script = False
+        self.external = False
+        self.current = []
+        self.items = []
+    def handle_starttag(self, tag, attrs):
+        if tag.lower() == "script":
+            self.in_script = True
+            self.external = any(k.lower() == "src" for k, _ in attrs)
+            self.current = []
+    def handle_data(self, data):
+        if self.in_script and not self.external:
+            self.current.append(data)
+    def handle_endtag(self, tag):
+        if tag.lower() == "script" and self.in_script:
+            if not self.external:
+                self.items.append("".join(self.current))
+            self.in_script = False
+            self.external = False
+
+parser = Scripts()
+parser.feed(HTML)
+assert parser.items, "No inline JavaScript blocks found"
+
+required = {
+    "report dialog": 'id="reportPlayerOverlay"',
+    "report target selector": 'id="reportTarget"',
+    "report reason selector": 'id="reportReason"',
+    "report details field": 'id="reportDetails"',
+    "report submit button": 'id="submitReportButton"',
+    "room-target RPC": "list_room_report_targets",
+    "report-submit RPC": "submit_player_report",
+    "details length guard": "details.length>2000",
+    "submission lock": "if(reportSubmitting)return",
+    "success duplicate guard": "reportSubmitted",
+    "Escape-key close": 'event.key==="Escape"',
+}
+for label, needle in required.items():
+    if needle not in HTML:
+        raise SystemExit(f"FAIL: missing {label} ({needle})")
+
+for i, source in enumerate(parser.items, 1):
+    with tempfile.NamedTemporaryFile("w", suffix=f"-{i}.js", encoding="utf-8") as tmp:
+        tmp.write(source)
+        tmp.flush()
+        result = subprocess.run(["node", "--check", tmp.name], text=True, capture_output=True)
+    if result.returncode:
+        raise SystemExit(f"FAIL: inline script {i} has a JavaScript syntax error:\\n{result.stderr}")
+
+print(f"PASS: {len(parser.items)} inline JavaScript block(s) parsed successfully.")
+print(f"PASS: {len(required)} Report Player wiring/safety checks passed.")
+print("NOTE: These are static checks only; they do not submit reports or contact Supabase.")
