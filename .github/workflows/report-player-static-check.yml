@@ -6,6 +6,7 @@ on:
     paths:
       - "index.html"
       - "admin playam .html"
+      - "admin-playam-staging.html"
       - "scripts/report-player-static-check.py"
       - "tests/report-player-isolated.html"
       - ".github/workflows/report-player-static-check.yml"
