@@ -66,9 +66,13 @@ for label, needle in admin_required.items():
 
 if "erjxmesxmmmaxivvmbsi.supabase.co" in STAGING_ADMIN_HTML or "sb_publishable_8GZmo3tsiGphFbgsCmbdgA_A7blmyc0" in STAGING_ADMIN_HTML:
     raise SystemExit("FAIL: staging admin page contains production Supabase configuration")
+if "https://pwnjrdedeoxbmtfywhkk.supabase.co" not in STAGING_ADMIN_HTML:
+    raise SystemExit("FAIL: staging admin page is not configured for the PLAYAM-Staging project")
+if "const SUPABASE_KEY='sb_publishable_" not in STAGING_ADMIN_HTML:
+    raise SystemExit("FAIL: staging admin page is missing a publishable-key configuration")
+if "__PLAYAM_STAGING_PROJECT_URL__" in STAGING_ADMIN_HTML or "__PLAYAM_STAGING_PUBLISHABLE_KEY__" in STAGING_ADMIN_HTML:
+    raise SystemExit("FAIL: staging admin page still contains configuration placeholders")
 for label, needle in {
-    "staging project URL placeholder": "__PLAYAM_STAGING_PROJECT_URL__",
-    "staging publishable key placeholder": "__PLAYAM_STAGING_PUBLISHABLE_KEY__",
     "fail-closed staging configuration": "if(!stagingConfigReady)",
     "AAL2 gate": "currentLevel==='aal2'",
 }.items():
