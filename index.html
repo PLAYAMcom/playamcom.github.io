@@ -591,13 +591,13 @@ async function openReportPlayer(){
  try{
   const {data:{session},error:sessionError}=await supabaseClient.auth.getSession();
   if(sessionError||!session){message.innerText="Please sign in again before submitting a report.";select.innerHTML='<option value="">Unable to load players</option>';return}
-  const {data:players,error}=await supabaseClient.from("players").select("id,nickname,auth_user_id").eq("room_id",currentRoomId);
+  const {data:players,error}=await supabaseClient.rpc("list_room_report_targets",{p_room_id:currentRoomId});
   if(error){message.innerText="Unable to load room players. Please try again.";select.innerHTML='<option value="">Unable to load players</option>';return}
   select.innerHTML='<option value="">Choose a player</option>';
   let available=0;
   (players||[]).forEach(player=>{
-   if(!player.auth_user_id||player.auth_user_id===session.user.id||player.id===currentPlayerId)return;
-   const option=document.createElement("option");option.value=player.auth_user_id;option.textContent=player.nickname||"PLAYAM player";select.appendChild(option);available++;
+   if(!player.reported_auth_user_id||player.reported_auth_user_id===session.user.id)return;
+   const option=document.createElement("option");option.value=player.reported_auth_user_id;option.textContent=player.nickname||"PLAYAM player";select.appendChild(option);available++;
   });
   if(!available){message.innerText="There are no other eligible players in this room to report.";return}
   submit.disabled=false;
