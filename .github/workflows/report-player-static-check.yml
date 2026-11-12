@@ -15,6 +15,7 @@ on:
     paths:
       - "index.html"
       - "admin playam .html"
+      - "admin-playam-staging.html"
       - "scripts/report-player-static-check.py"
       - ".github/workflows/report-player-static-check.yml"
 
