@@ -586,10 +586,11 @@ async function submitVote(){
 
 
 /* PLAYER REPORTING */
-let reportSubmitting=false;
+let reportSubmitting=false,reportSubmitted=false;
 function closeReportPlayer(){
  const overlay=document.getElementById("reportPlayerOverlay");
  overlay.classList.add("hidden");
+ reportSubmitted=false;
  document.getElementById("reportFormMessage").innerText="";
 }
 async function openReportPlayer(){
@@ -599,7 +600,7 @@ async function openReportPlayer(){
  const message=document.getElementById("reportFormMessage");
  const submit=document.getElementById("submitReportButton");
  select.innerHTML='<option value="">Loading players...</option>';
- message.innerText="";submit.disabled=true;
+ message.innerText="";submit.disabled=true;reportSubmitted=false;
  document.getElementById("reportReason").value="";
  document.getElementById("reportDetails").value="";
  overlay.classList.remove("hidden");
@@ -634,11 +635,12 @@ async function submitPlayerReport(){
   if(sessionError||!session)throw new Error("Your session has expired. Please sign in again.");
   const {error}=await supabaseClient.rpc("submit_player_report",{p_reported_auth_user_id:target,p_reason:reason,p_details:details||null,p_room_id:currentRoomId});
   if(error)throw error;
+  reportSubmitted=true;
   message.innerText="Your report has been submitted securely. Thank you for helping keep PLAYAM safe.";
   document.getElementById("reportTarget").value="";document.getElementById("reportReason").value="";document.getElementById("reportDetails").value="";
   setTimeout(closeReportPlayer,1800);
  }catch(error){message.innerText=error.message||"Your report could not be submitted. Please try again."}
- finally{reportSubmitting=false;submit.disabled=false}
+ finally{reportSubmitting=false;submit.disabled=reportSubmitted}
 }
 document.addEventListener("keydown",event=>{if(event.key==="Escape")closeReportPlayer()});
 
