@@ -344,8 +344,8 @@ async function prepareMfa(){
 }
 
 async function verifyAdminMfa(){
- const code=$('mfaCode').value.replace(/\\s/g,'');
- if(!/^\\d{6,8}$/.test(code)){mfaStatus('Enter the current 6–8 digit authenticator code.');return;}
+ const code=$('mfaCode').value.replace(/\s/g,'');
+ if(!/^\d{6,8}$/.test(code)){mfaStatus('Enter the current 6–8 digit authenticator code.');return;}
  if(!mfaFactorId||!mfaChallengeId){mfaStatus('MFA challenge is missing. Please sign out and sign in again.');return;}
  $('verifyMfa').disabled=true;mfaStatus('Verifying second factor…');
  try{
