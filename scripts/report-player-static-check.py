@@ -6,6 +6,7 @@ import subprocess
 import tempfile
 
 HTML = Path("index.html").read_text(encoding="utf-8")
+MOCK_HTML = Path("tests/report-player-isolated.html").read_text(encoding="utf-8")
 
 class Scripts(HTMLParser):
     def __init__(self):
@@ -58,6 +59,18 @@ for i, source in enumerate(parser.items, 1):
     if result.returncode:
         raise SystemExit(f"FAIL: inline script {i} has a JavaScript syntax error:\\n{result.stderr}")
 
-print(f"PASS: {len(parser.items)} inline JavaScript block(s) parsed successfully.")
+mock_parser = Scripts()
+mock_parser.feed(MOCK_HTML)
+assert mock_parser.items, "No inline JavaScript in isolated mock page"
+for i, source in enumerate(mock_parser.items, 1):
+    with tempfile.NamedTemporaryFile("w", suffix=f"-mock-{i}.js", encoding="utf-8") as tmp:
+        tmp.write(source)
+        tmp.flush()
+        result = subprocess.run(["node", "--check", tmp.name], text=True, capture_output=True)
+    if result.returncode:
+        raise SystemExit(f"FAIL: isolated mock script {i} has a JavaScript syntax error:\\n{result.stderr}")
+
+print(f"PASS: {len(parser.items)} main app inline JavaScript block(s) parsed successfully.")
+print(f"PASS: {len(mock_parser.items)} isolated mock JavaScript block(s) parsed successfully.")
 print(f"PASS: {len(required)} Report Player wiring/safety checks passed.")
 print("NOTE: These are static checks only; they do not submit reports or contact Supabase.")
