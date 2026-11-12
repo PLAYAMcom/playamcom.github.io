@@ -53,6 +53,17 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;color:#d9c8e8}
 <div id="loginStatus" class="status" role="status"></div>
 </section>
 
+<section id="mfaPanel" class="panel" style="display:none">
+ <h2>Administrator multi-factor verification</h2>
+ <p id="mfaMessage" class="muted" role="status">Complete your second factor to continue.</p>
+ <div id="mfaQr" style="display:none;margin:12px 0"></div>
+ <label for="mfaCode">Authenticator code</label>
+ <input id="mfaCode" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="Enter current 6-digit code">
+ <button id="verifyMfa">Verify and continue</button>
+ <button id="cancelMfa" class="secondary">Sign out</button>
+ <div id="mfaStatus" class="status" role="status"></div>
+</section>
+
 <section id="app">
 <div class="panel">
 <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between">
@@ -278,27 +289,106 @@ $('reports').addEventListener('click',async event=>{
  await reviewReport(button.dataset.report,button.dataset.action);
 });
 
+let mfaFactorId=null;
+let mfaChallengeId=null;
+let mfaBusy=false;
+let mfaPrepared=false;
+let dashboardLoaded=false;
+
+function mfaStatus(message){$('mfaStatus').textContent=message||'';}
+
+async function prepareMfa(){
+ if(mfaBusy||mfaPrepared)return;
+ mfaBusy=true;mfaPrepared=true;
+ $('mfaPanel').style.display='block';
+ $('mfaMessage').textContent='Checking administrator MFA enrolment…';
+ $('mfaQr').style.display='none';
+ $('mfaQr').innerHTML='';
+ $('mfaCode').value='';
+ mfaStatus('');
+ try{
+  const {data,error}=await client.auth.mfa.listFactors();
+  if(error)throw error;
+  const verified=(data?.totp||[]).find(f=>f.status==='verified');
+  if(verified){
+   mfaFactorId=verified.id;
+   const challenge=await client.auth.mfa.challenge({factorId:mfaFactorId});
+   if(challenge.error)throw challenge.error;
+   mfaChallengeId=challenge.data.id;
+   $('mfaMessage').textContent='Enter the current code from your registered authenticator app.';
+  }else{
+   const enrolled=await client.auth.mfa.enroll({factorType:'totp',friendlyName:'PLAYAM administrator authenticator'});
+   if(enrolled.error)throw enrolled.error;
+   mfaFactorId=enrolled.data.id;
+   const totp=enrolled.data.totp||{};
+   $('mfaQr').innerHTML='';
+   if(totp.qr_code){
+    const img=document.createElement('img');
+    img.alt='Authenticator enrolment QR code';
+    img.src=totp.qr_code;
+    img.style.maxWidth='220px';img.style.width='100%';img.style.background='white';img.style.padding='10px';img.style.borderRadius='10px';
+    $('mfaQr').appendChild(img);
+   }
+   if(totp.secret){
+    const p=document.createElement('p');p.className='muted';p.textContent='Manual setup key: '+totp.secret;
+    $('mfaQr').appendChild(p);
+   }
+   $('mfaQr').style.display='block';
+   const challenge=await client.auth.mfa.challenge({factorId:mfaFactorId});
+   if(challenge.error)throw challenge.error;
+   mfaChallengeId=challenge.data.id;
+   $('mfaMessage').textContent='Set up an authenticator app with the QR code, then enter its current code to activate mandatory administrator MFA.';
+  }
+ }catch(error){mfaStatus('MFA setup could not continue: '+(error.message||'Unknown error'));}
+ finally{mfaBusy=false;}
+}
+
+async function verifyAdminMfa(){
+ const code=$('mfaCode').value.replace(/\\s/g,'');
+ if(!/^\\d{6,8}$/.test(code)){mfaStatus('Enter the current 6–8 digit authenticator code.');return;}
+ if(!mfaFactorId||!mfaChallengeId){mfaStatus('MFA challenge is missing. Please sign out and sign in again.');return;}
+ $('verifyMfa').disabled=true;mfaStatus('Verifying second factor…');
+ try{
+  const result=await client.auth.mfa.verify({factorId:mfaFactorId,challengeId:mfaChallengeId,code});
+  if(result.error)throw result.error;
+  const assurance=await client.auth.mfa.getAuthenticatorAssuranceLevel();
+  if(assurance.error)throw assurance.error;
+  if(assurance.data.currentLevel!=='aal2')throw new Error('The session has not reached AAL2. Try a fresh authenticator code.');
+  $('mfaPanel').style.display='none';
+  $('app').style.display='block';
+  const {data:{session}}=await client.auth.getSession();
+  $('welcome').textContent='MFA verified · '+(session?.user?.email||'administrator');
+  dashboardLoaded=false;
+  await loadOverview();await loadReports();dashboardLoaded=true;
+ }catch(error){mfaStatus('Verification failed: '+(error.message||'Unknown error'));}
+ finally{$('verifyMfa').disabled=false;}
+}
+
 async function showSession(){
  const {data:{session}}=await client.auth.getSession();
-
- if(session){
-  $('login').style.display='none';
-  $('app').style.display='block';
-  $('welcome').textContent='Signed in: '+(session.user.email||'administrator');
-  await loadOverview();
-  await loadReports();
- }else{
-  $('login').style.display='block';
-  $('app').style.display='none';
+ if(!session){
+  $('login').style.display='block';$('mfaPanel').style.display='none';$('app').style.display='none';
+  dashboardLoaded=false;mfaPrepared=false;mfaFactorId=null;mfaChallengeId=null;return;
  }
+ const assurance=await client.auth.mfa.getAuthenticatorAssuranceLevel();
+ if(assurance.error){$('login').style.display='none';$('app').style.display='none';$('mfaPanel').style.display='block';mfaStatus(assurance.error.message);return;}
+ if(assurance.data.currentLevel==='aal2'){
+  $('login').style.display='none';$('mfaPanel').style.display='none';$('app').style.display='block';
+  $('welcome').textContent='MFA verified · '+(session.user.email||'administrator');
+  if(!dashboardLoaded){await loadOverview();await loadReports();dashboardLoaded=true;}
+  return;
+ }
+ $('login').style.display='none';$('app').style.display='none';
+ await prepareMfa();
 }
+
+$('verifyMfa').onclick=verifyAdminMfa;
+$('mfaCode').addEventListener('keydown',event=>{if(event.key==='Enter')verifyAdminMfa();});
+$('cancelMfa').onclick=async()=>{await client.auth.signOut();await showSession();};
 
 $('signIn').onclick=async()=>{
  $('loginStatus').textContent='Signing in…';
- const {error}=await client.auth.signInWithPassword({
-  email:$('email').value.trim(),
-  password:$('password').value
- });
+ const {error}=await client.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});
  $('loginStatus').textContent=error?error.message:'';
  if(!error)await showSession();
 };
@@ -317,8 +407,9 @@ $('logout').onclick=async()=>{
  await showSession();
 };
 
-client.auth.onAuthStateChange(()=>{
- setTimeout(showSession,0);
+client.auth.onAuthStateChange((event)=>{
+ if(event==='SIGNED_OUT'){dashboardLoaded=false;setTimeout(showSession,0);}
+ else if(event==='SIGNED_IN'||event==='MFA_CHALLENGE_VERIFIED'||event==='TOKEN_REFRESHED'){setTimeout(showSession,0);}
 });
 
 showSession();
