@@ -8,6 +8,7 @@ import tempfile
 HTML = Path("index.html").read_text(encoding="utf-8")
 MOCK_HTML = Path("tests/report-player-isolated.html").read_text(encoding="utf-8")
 ADMIN_HTML = Path("admin playam .html").read_text(encoding="utf-8")
+STAGING_ADMIN_HTML = Path("admin-playam-staging.html").read_text(encoding="utf-8")
 
 class Scripts(HTMLParser):
     def __init__(self):
@@ -63,6 +64,28 @@ for label, needle in admin_required.items():
     if needle not in ADMIN_HTML:
         raise SystemExit(f"FAIL: admin dashboard missing {label} ({needle})")
 
+if "erjxmesxmmmaxivvmbsi.supabase.co" in STAGING_ADMIN_HTML or "sb_publishable_8GZmo3tsiGphFbgsCmbdgA_A7blmyc0" in STAGING_ADMIN_HTML:
+    raise SystemExit("FAIL: staging admin page contains production Supabase configuration")
+for label, needle in {
+    "staging project URL placeholder": "__PLAYAM_STAGING_PROJECT_URL__",
+    "staging publishable key placeholder": "__PLAYAM_STAGING_PUBLISHABLE_KEY__",
+    "fail-closed staging configuration": "if(!stagingConfigReady)",
+    "AAL2 gate": "currentLevel==='aal2'",
+}.items():
+    if needle not in STAGING_ADMIN_HTML:
+        raise SystemExit(f"FAIL: staging admin page missing {label} ({needle})")
+
+staging_parser = Scripts()
+staging_parser.feed(STAGING_ADMIN_HTML)
+assert staging_parser.items, "No inline JavaScript in staging admin dashboard"
+for i, source in enumerate(staging_parser.items, 1):
+    with tempfile.NamedTemporaryFile("w", suffix=f"-staging-admin-{i}.js", encoding="utf-8") as tmp:
+        tmp.write(source)
+        tmp.flush()
+        result = subprocess.run(["node", "--check", tmp.name], text=True, capture_output=True)
+    if result.returncode:
+        raise SystemExit(f"FAIL: staging admin script {i} has a JavaScript syntax error:\\n{result.stderr}")
+
 admin_parser = Scripts()
 admin_parser.feed(ADMIN_HTML)
 assert admin_parser.items, "No inline JavaScript in admin dashboard"
@@ -95,6 +118,8 @@ for i, source in enumerate(mock_parser.items, 1):
 
 print(f"PASS: {len(parser.items)} main app inline JavaScript block(s) parsed successfully.")
 print(f"PASS: {len(admin_parser.items)} admin dashboard inline JavaScript block(s) parsed successfully.")
+print(f"PASS: {len(staging_parser.items)} staging admin JavaScript block(s) parsed successfully.")
+print("PASS: staging admin has no production Supabase configuration and fails closed until configured.")
 print(f"PASS: {len(admin_required)} admin MFA checks passed.")
 print(f"PASS: {len(mock_parser.items)} isolated mock JavaScript block(s) parsed successfully.")
 print(f"PASS: {len(required)} Report Player wiring/safety checks passed.")
