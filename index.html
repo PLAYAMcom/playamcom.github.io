@@ -66,6 +66,20 @@ label{display:block;margin-top:13px;font-weight:bold}
 .waiting-box{padding:22px;text-align:center;background:#101020;border-radius:15px}
 .game-status,.lobby-info{text-align:center;color:var(--muted);margin:12px}
 .mobile-menu{display:none;background:#22223a;color:white}
+
+.report-trigger{display:block;width:100%;margin:14px 0;background:#292943;color:#f0dfff;border:1px solid #7048a6}
+.report-trigger:hover{background:#38264f}
+.report-overlay{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(4,4,12,.82);overflow-y:auto}
+.report-card{width:100%;max-width:480px;max-height:calc(100vh - 36px);overflow-y:auto;background:var(--panel);border:1px solid #7048a6;border-radius:20px;padding:24px;box-shadow:0 18px 60px rgba(0,0,0,.55)}
+.report-card h3{margin:0 0 10px;font-size:22px}
+.report-card p{color:var(--muted);font-size:13px;line-height:1.5}
+.report-card select,.report-card textarea{display:block;margin:8px 0 14px}
+.report-card textarea{resize:vertical}
+.report-buttons{display:flex;gap:10px;margin-top:16px}
+.report-buttons button{flex:1;min-width:0}
+#reportFormMessage{min-height:20px;margin-bottom:0}
+@media(max-width:480px){.report-card{padding:18px}.report-buttons{flex-direction:column}}
+
 @media(max-width:760px){
  #app{display:block}
  .sidebar{width:100%;height:auto;padding:12px;display:flex;flex-direction:row;align-items:center;overflow-x:auto;border-right:0;border-bottom:1px solid #292943}
