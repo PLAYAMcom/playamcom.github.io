@@ -126,8 +126,8 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;color:#d9c8e8}
 <script>
 // STAGING ONLY: insert the PLAYAM-Staging Project URL and publishable key here.
 // Never paste a service-role key. This page intentionally contains no production credentials.
-const SUPABASE_URL='__PLAYAM_STAGING_PROJECT_URL__';
-const SUPABASE_KEY='__PLAYAM_STAGING_PUBLISHABLE_KEY__';
+const SUPABASE_URL='https://pwnjrdedeoxbmtfywhkk.supabase.co';
+const SUPABASE_KEY='sb_publishable_6zZlj2moK_zv9lAA_0xdzA_nBDueD50';
 const stagingConfigReady=SUPABASE_URL.startsWith('https://') && SUPABASE_URL.endsWith('.supabase.co') && !SUPABASE_URL.includes('__') && SUPABASE_KEY.startsWith('sb_publishable_') && !SUPABASE_KEY.includes('__');
 if(!stagingConfigReady){
  document.body.insertAdjacentHTML('afterbegin','<div style="position:sticky;top:0;z-index:9999;background:#5b3510;color:#fff;padding:14px;text-align:center;font-weight:700">STAGING CONFIGURATION REQUIRED — this page is disabled until the PLAYAM-Staging Project URL and publishable key are configured.</div>');
