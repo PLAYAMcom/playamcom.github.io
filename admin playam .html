@@ -292,13 +292,14 @@ $('reports').addEventListener('click',async event=>{
 let mfaFactorId=null;
 let mfaChallengeId=null;
 let mfaBusy=false;
+let mfaPrepared=false;
 let dashboardLoaded=false;
 
 function mfaStatus(message){$('mfaStatus').textContent=message||'';}
 
 async function prepareMfa(){
- if(mfaBusy)return;
- mfaBusy=true;
+ if(mfaBusy||mfaPrepared)return;
+ mfaBusy=true;mfaPrepared=true;
  $('mfaPanel').style.display='block';
  $('mfaMessage').textContent='Checking administrator MFA enrolment…';
  $('mfaQr').style.display='none';
@@ -367,7 +368,7 @@ async function showSession(){
  const {data:{session}}=await client.auth.getSession();
  if(!session){
   $('login').style.display='block';$('mfaPanel').style.display='none';$('app').style.display='none';
-  dashboardLoaded=false;mfaFactorId=null;mfaChallengeId=null;return;
+  dashboardLoaded=false;mfaPrepared=false;mfaFactorId=null;mfaChallengeId=null;return;
  }
  const assurance=await client.auth.mfa.getAuthenticatorAssuranceLevel();
  if(assurance.error){$('login').style.display='none';$('app').style.display='none';$('mfaPanel').style.display='block';mfaStatus(assurance.error.message);return;}
