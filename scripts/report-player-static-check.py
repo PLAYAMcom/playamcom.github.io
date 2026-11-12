@@ -7,6 +7,7 @@ import tempfile
 
 HTML = Path("index.html").read_text(encoding="utf-8")
 MOCK_HTML = Path("tests/report-player-isolated.html").read_text(encoding="utf-8")
+ADMIN_HTML = Path("admin playam .html").read_text(encoding="utf-8")
 
 class Scripts(HTMLParser):
     def __init__(self):
@@ -51,6 +52,28 @@ for label, needle in required.items():
     if needle not in HTML:
         raise SystemExit(f"FAIL: missing {label} ({needle})")
 
+admin_required = {
+    "MFA assurance-level gate": "currentLevel==='aal2'",
+    "TOTP enrollment": "mfa.enroll({factorType:'totp'",
+    "MFA challenge": "mfa.challenge({factorId:mfaFactorId})",
+    "MFA verification": "mfa.verify({factorId:mfaFactorId,challengeId:mfaChallengeId,code})",
+    "dashboard MFA panel": 'id="mfaPanel"',
+}
+for label, needle in admin_required.items():
+    if needle not in ADMIN_HTML:
+        raise SystemExit(f"FAIL: admin dashboard missing {label} ({needle})")
+
+admin_parser = Scripts()
+admin_parser.feed(ADMIN_HTML)
+assert admin_parser.items, "No inline JavaScript in admin dashboard"
+for i, source in enumerate(admin_parser.items, 1):
+    with tempfile.NamedTemporaryFile("w", suffix=f"-admin-{i}.js", encoding="utf-8") as tmp:
+        tmp.write(source)
+        tmp.flush()
+        result = subprocess.run(["node", "--check", tmp.name], text=True, capture_output=True)
+    if result.returncode:
+        raise SystemExit(f"FAIL: admin dashboard script {i} has a JavaScript syntax error:\n{result.stderr}")
+
 for i, source in enumerate(parser.items, 1):
     with tempfile.NamedTemporaryFile("w", suffix=f"-{i}.js", encoding="utf-8") as tmp:
         tmp.write(source)
@@ -71,6 +94,8 @@ for i, source in enumerate(mock_parser.items, 1):
         raise SystemExit(f"FAIL: isolated mock script {i} has a JavaScript syntax error:\\n{result.stderr}")
 
 print(f"PASS: {len(parser.items)} main app inline JavaScript block(s) parsed successfully.")
+print(f"PASS: {len(admin_parser.items)} admin dashboard inline JavaScript block(s) parsed successfully.")
+print(f"PASS: {len(admin_required)} admin MFA checks passed.")
 print(f"PASS: {len(mock_parser.items)} isolated mock JavaScript block(s) parsed successfully.")
 print(f"PASS: {len(required)} Report Player wiring/safety checks passed.")
 print("NOTE: These are static checks only; they do not submit reports or contact Supabase.")
