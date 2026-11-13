@@ -1,0 +1,317 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PLAYAM Staging Report Test</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+body{margin:0;padding:20px;background:#090914;color:#fff;font-family:Arial,sans-serif}
+main{max-width:520px;margin:25px auto;background:#17172a;padding:24px;border-radius:18px}
+.banner{background:#633b13;color:#ffe0a3;padding:13px;border-radius:10px;font-weight:bold;text-align:center}
+h1{color:#c49aff}
+input,select,textarea,button{box-sizing:border-box;width:100%;padding:13px;margin:8px 0;border-radius:9px;font-size:15px}
+input,select,textarea{background:#101020;color:white;border:1px solid #555}
+button{background:#9658df;color:white;border:0;font-weight:bold}
+button:disabled{opacity:.5}
+label{display:block;margin-top:12px;font-weight:bold}
+#status{white-space:pre-wrap;line-height:1.5;margin-top:15px}
+.hidden{display:none}
+small{color:#bbb}
+hr{border:0;border-top:1px solid #444;margin:24px 0}
+</style>
+</head>
+<body>
+<main>
+<div class="banner">PLAYAM STAGING ONLY — TEST ACCOUNTS ONLY — NOT PRODUCTION</div>
+<h1>🎮 PLAYAM Report Test</h1>
+<p><small>This page connects only to the PLAYAM-Staging Supabase project.</small></p>
+
+<section id="login">
+<h3>Test account login</h3>
+<label>Email</label>
+<input id="email" type="email" autocomplete="username" placeholder="Player A or Player B email">
+<label>Password</label>
+<input id="password" type="password" autocomplete="current-password" placeholder="Test account password">
+<button id="loginBtn" onclick="login()">LOG IN</button>
+</section>
+
+<section id="testing" class="hidden">
+<p id="signedIn"></p>
+<button onclick="logout()">LOG OUT</button>
+
+<hr>
+<h3>1. Create or join the test room</h3>
+<p><small>Player A creates the room. Player B signs in separately and joins using the room code.</small></p>
+
+<label>Your in-room nickname</label>
+<input id="roomNickname" maxlength="20" placeholder="e.g. Test Player A">
+<button id="createRoomBtn" onclick="createTestRoom()">CREATE STAGING TEST ROOM</button>
+
+<label>Room code (Player B uses this)</label>
+<input id="joinCode" placeholder="Enter Player A's room code">
+<button id="joinRoomBtn" onclick="joinTestRoom()">JOIN STAGING TEST ROOM</button>
+<p id="createdRoomCode"></p>
+
+<hr>
+<h3>2. Load room players</h3>
+<label>Room code</label>
+<input id="roomCode" placeholder="Enter the room code">
+<button id="loadRoomBtn" onclick="loadRoom()">LOAD ROOM PLAYERS</button>
+
+<div id="reportArea" class="hidden">
+<hr>
+<h3>3. Report another player</h3>
+<label>Choose player</label>
+<select id="target">
+<option value="">Choose a player</option>
+</select>
+
+<label>Reason</label>
+<select id="reason">
+<option value="">Choose a reason</option>
+<option value="Harassment or bullying">Harassment or bullying</option>
+<option value="Hate speech or abusive behaviour">Hate speech or abusive behaviour</option>
+<option value="Cheating or unfair play">Cheating or unfair play</option>
+<option value="Inappropriate content">Inappropriate content</option>
+<option value="Spam or disruptive behaviour">Spam or disruptive behaviour</option>
+<option value="Other">Other</option>
+</select>
+
+<label>Details (optional)</label>
+<textarea id="details" maxlength="2000" placeholder="Describe what happened"></textarea>
+<small>Maximum 2,000 characters.</small>
+<button id="submitBtn" onclick="submitReport()">SUBMIT REPORT</button>
+</div>
+</section>
+
+<div id="status" role="status"></div>
+</main>
+
+<script>
+// STAGING PROJECT URL — DO NOT CHANGE
+const SUPABASE_URL = "https://pwnjrdedeoxbmtfywhkk.supabase.co";
+
+// 🔴 KEEP YOUR STAGING PUBLISHABLE KEY HERE.
+// Use the publishable/anon key only. Never use service_role or secret keys.
+const SUPABASE_PUBLISHABLE_KEY = "PASTE_YOUR_STAGING_PUBLISHABLE_KEY_HERE";
+
+const client = supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+
+let roomId = null;
+let submitting = false;
+let submitted = false;
+
+function status(message){
+ document.getElementById("status").textContent=message;
+}
+
+async function login(){
+ const email=document.getElementById("email").value.trim();
+ const password=document.getElementById("password").value;
+ const button=document.getElementById("loginBtn");
+
+ if(!email||!password)return status("Enter your test account email and password.");
+
+ button.disabled=true;
+ status("Signing in...");
+
+ try{
+  const {data,error}=await client.auth.signInWithPassword({email,password});
+  if(error)throw error;
+
+  document.getElementById("login").classList.add("hidden");
+  document.getElementById("testing").classList.remove("hidden");
+  document.getElementById("signedIn").textContent="Signed in: "+data.user.email;
+  document.getElementById("password").value="";
+  status("Login successful. Create or join your test room.");
+ }catch(error){
+  status("Login failed: "+error.message);
+ }finally{
+  button.disabled=false;
+ }
+}
+
+async function createTestRoom(){
+ const nickname=document.getElementById("roomNickname").value.trim();
+ const button=document.getElementById("createRoomBtn");
+
+ if(!nickname)return status("Enter a nickname first.");
+
+ button.disabled=true;
+ status("Creating your Staging test room...");
+
+ try{
+  const {data,error}=await client.rpc("create_playam_room",{
+   p_nickname:nickname,
+   p_rounds:5,
+   p_game:"friendship-court",
+   p_level_key:"starter"
+  });
+
+  if(error)throw error;
+  if(!data||!data.length||!data[0].room_code){
+   throw new Error("Room details were not returned.");
+  }
+
+  const code=data[0].room_code;
+  document.getElementById("roomCode").value=code;
+  document.getElementById("joinCode").value=code;
+  document.getElementById("createdRoomCode").textContent="Your test room code: "+code;
+
+  status("Room created! Keep the room code. Log out, sign in as Player B, and join using this code.");
+ }catch(error){
+  status("Room creation failed: "+error.message);
+ }finally{
+  button.disabled=false;
+ }
+}
+
+async function joinTestRoom(){
+ const code=document.getElementById("joinCode").value.trim().toUpperCase();
+ const nickname=document.getElementById("roomNickname").value.trim();
+ const button=document.getElementById("joinRoomBtn");
+
+ if(!code||!nickname)return status("Enter the room code and your nickname.");
+
+ button.disabled=true;
+ status("Joining the Staging test room...");
+
+ try{
+  const {data,error}=await client.rpc("join_playam_room",{
+   p_code:code,
+   p_nickname:nickname
+  });
+
+  if(error)throw error;
+  if(!data||!data.length||!data[0].room_code){
+   throw new Error("Room details were not returned.");
+  }
+
+  document.getElementById("roomCode").value=data[0].room_code;
+  status("Successfully joined! Tap LOAD ROOM PLAYERS to verify both accounts.");
+ }catch(error){
+  status("Room join failed: "+error.message);
+ }finally{
+  button.disabled=false;
+ }
+}
+
+async function loadRoom(){
+ const code=document.getElementById("roomCode").value.trim().toUpperCase();
+ const button=document.getElementById("loadRoomBtn");
+
+ if(!code)return status("Enter the room code first.");
+
+ button.disabled=true;
+ status("Checking room and player membership...");
+
+ try{
+  const {data:room,error:roomError}=await client
+   .from("rooms")
+   .select("id,code")
+   .eq("code",code)
+   .single();
+
+  if(roomError)throw roomError;
+  roomId=room.id;
+
+  const {data:players,error}=await client.rpc(
+   "list_room_report_targets",
+   {p_room_id:roomId}
+  );
+
+  if(error)throw error;
+
+  const target=document.getElementById("target");
+  target.innerHTML='<option value="">Choose a player</option>';
+
+  let count=0;
+
+  (players||[]).forEach(player=>{
+   if(!player.reported_auth_user_id)return;
+
+   const option=document.createElement("option");
+   option.value=player.reported_auth_user_id;
+   option.textContent=player.nickname||"PLAYAM player";
+   target.appendChild(option);
+   count++;
+  });
+
+  document.getElementById("reportArea").classList.remove("hidden");
+
+  status(count
+   ?"Room loaded. "+count+" eligible other player(s) found."
+   :"Room found, but no other eligible player was returned. Check that both accounts joined.");
+ }catch(error){
+  roomId=null;
+  document.getElementById("reportArea").classList.add("hidden");
+  status("Room/player lookup failed: "+error.message);
+ }finally{
+  button.disabled=false;
+ }
+}
+
+async function submitReport(){
+ if(submitting||submitted)return;
+
+ const target=document.getElementById("target").value;
+ const reason=document.getElementById("reason").value;
+ const details=document.getElementById("details").value.trim();
+ const button=document.getElementById("submitBtn");
+
+ if(!roomId)return status("Load a room first.");
+ if(!target)return status("Choose a player.");
+ if(!reason)return status("Choose a report reason.");
+ if(details.length>2000)return status("Details are too long.");
+
+ submitting=true;
+ button.disabled=true;
+ status("Submitting report to Staging...");
+
+ try{
+  const {data:{session},error:sessionError}=await client.auth.getSession();
+  if(sessionError)throw sessionError;
+  if(!session)throw new Error("Please sign in again.");
+
+  const {data,error}=await client.rpc("submit_player_report",{
+   p_reported_auth_user_id:target,
+   p_reason:reason,
+   p_details:details||null,
+   p_room_id:roomId
+  });
+
+  if(error)throw error;
+
+  submitted=true;
+  button.textContent="REPORT SUBMITTED";
+  status("SUCCESS: Report submitted to Staging.\nReport ID: "+String(data));
+ }catch(error){
+  status("REPORT REJECTED OR FAILED:\n"+error.message);
+  button.disabled=false;
+ }finally{
+  submitting=false;
+ }
+}
+
+async function logout(){
+ await client.auth.signOut();
+ roomId=null;
+ submitted=false;
+ submitting=false;
+
+ document.getElementById("testing").classList.add("hidden");
+ document.getElementById("login").classList.remove("hidden");
+ document.getElementById("password").value="";
+ document.getElementById("roomNickname").value="";
+ document.getElementById("reportArea").classList.add("hidden");
+ document.getElementById("target").innerHTML='<option value="">Choose a player</option>';
+ document.getElementById("submitBtn").disabled=false;
+ document.getElementById("submitBtn").textContent="SUBMIT REPORT";
+
+ status("Signed out.");
+}
+</script>
+</body>
+</html>

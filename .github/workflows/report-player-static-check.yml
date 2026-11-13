@@ -1,0 +1,34 @@
+name: Report Player safe checks
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "index.html"
+      - "admin playam .html"
+      - "admin-playam-staging.html"
+      - "scripts/report-player-static-check.py"
+      - "tests/report-player-isolated.html"
+      - ".github/workflows/report-player-static-check.yml"
+  push:
+    branches: ["codex/report-player-feature"]
+    paths:
+      - "index.html"
+      - "admin playam .html"
+      - "admin-playam-staging.html"
+      - "scripts/report-player-static-check.py"
+      - ".github/workflows/report-player-static-check.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  report-player-static-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Check Report Player wiring and inline JavaScript syntax
+        run: python3 scripts/report-player-static-check.py

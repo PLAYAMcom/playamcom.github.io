@@ -66,6 +66,20 @@ label{display:block;margin-top:13px;font-weight:bold}
 .waiting-box{padding:22px;text-align:center;background:#101020;border-radius:15px}
 .game-status,.lobby-info{text-align:center;color:var(--muted);margin:12px}
 .mobile-menu{display:none;background:#22223a;color:white}
+
+.report-trigger{display:block;width:100%;margin:14px 0;background:#292943;color:#f0dfff;border:1px solid #7048a6}
+.report-trigger:hover{background:#38264f}
+.report-overlay{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(4,4,12,.82);overflow-y:auto}
+.report-card{width:100%;max-width:480px;max-height:calc(100vh - 36px);overflow-y:auto;background:var(--panel);border:1px solid #7048a6;border-radius:20px;padding:24px;box-shadow:0 18px 60px rgba(0,0,0,.55)}
+.report-card h3{margin:0 0 10px;font-size:22px}
+.report-card p{color:var(--muted);font-size:13px;line-height:1.5}
+.report-card select,.report-card textarea{display:block;margin:8px 0 14px}
+.report-card textarea{resize:vertical}
+.report-buttons{display:flex;gap:10px;margin-top:16px}
+.report-buttons button{flex:1;min-width:0}
+#reportFormMessage{min-height:20px;margin-bottom:0}
+@media(max-width:480px){.report-card{padding:18px}.report-buttons{flex-direction:column}}
+
 @media(max-width:760px){
  #app{display:block}
  .sidebar{width:100%;height:auto;padding:12px;display:flex;flex-direction:row;align-items:center;overflow-x:auto;border-right:0;border-bottom:1px solid #292943}
@@ -270,6 +284,7 @@ label{display:block;margin-top:13px;font-weight:bold}
    <hr>
    <h3>Players in the Room</h3>
    <div id="lobbyPlayers">Loading players...</div>
+   <button class="report-trigger" onclick="openReportPlayer()">⚑ REPORT A PLAYER</button>
    <p id="lobbyStatus" class="lobby-info">Waiting for players...</p>
    <p id="lobbyRound" class="lobby-info"></p>
    <button id="readyButton" class="primary" style="width:100%" onclick="toggleReady()">I'M READY</button>
@@ -297,6 +312,7 @@ label{display:block;margin-top:13px;font-weight:bold}
    </div>
    <div id="gameWaiting" class="waiting-box hidden">Waiting for the round to continue... 👀</div>
    <div id="gameStatus" class="game-status"></div>
+   <button class="report-trigger" onclick="openReportPlayer()">⚑ REPORT A PLAYER</button>
   </section>
 
   <section id="resultsScreen" class="screen-card hidden">
@@ -306,6 +322,31 @@ label{display:block;margin-top:13px;font-weight:bold}
    <button class="primary" style="width:100%" onclick="returnHomeFromResults()">BACK TO DASHBOARD</button>
   </section>
 
+  <div id="reportPlayerOverlay" class="report-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="reportPlayerTitle">
+   <div class="report-card">
+    <h3 id="reportPlayerTitle">Report a player</h3>
+    <p>Reports are sent privately to the PLAYAM moderation team. Only report behaviour that violates our community rules.</p>
+    <label for="reportTarget">Player</label>
+    <select id="reportTarget"><option value="">Choose a player</option></select>
+    <label for="reportReason">Reason</label>
+    <select id="reportReason">
+     <option value="">Choose a reason</option>
+     <option value="Harassment or bullying">Harassment or bullying</option>
+     <option value="Hate speech or abusive behaviour">Hate speech or abusive behaviour</option>
+     <option value="Cheating or unfair play">Cheating or unfair play</option>
+     <option value="Inappropriate content">Inappropriate content</option>
+     <option value="Spam or disruptive behaviour">Spam or disruptive behaviour</option>
+     <option value="Other">Other</option>
+    </select>
+    <label for="reportDetails">Additional details (optional)</label>
+    <textarea id="reportDetails" maxlength="2000" placeholder="Tell us what happened (up to 2,000 characters)."></textarea>
+    <div class="report-buttons">
+     <button class="back" type="button" onclick="closeReportPlayer()">CANCEL</button>
+     <button id="submitReportButton" class="primary" type="button" onclick="submitPlayerReport()">SEND REPORT</button>
+    </div>
+    <p id="reportFormMessage" role="status" aria-live="polite"></p>
+   </div>
+  </div>
   <div id="message"></div>
   <p class="small">🔞 Hard, Elite and Final Boss contain mature content.</p>
  </main>
@@ -542,6 +583,66 @@ async function submitVote(){
  if(error){showMessage(error.message);return}
  answerSubmitted=true;hideGameControls();document.getElementById("gameWaiting").classList.remove("hidden");document.getElementById("gameStatus").innerText="✓ Vote submitted. Waiting for the round...";
 }
+
+
+/* PLAYER REPORTING */
+let reportSubmitting=false,reportSubmitted=false;
+function closeReportPlayer(){
+ const overlay=document.getElementById("reportPlayerOverlay");
+ overlay.classList.add("hidden");
+ reportSubmitted=false;
+ document.getElementById("reportFormMessage").innerText="";
+}
+async function openReportPlayer(){
+ if(!currentRoomId||!currentPlayerId){showMessage("Join a room before reporting a player.");return}
+ const overlay=document.getElementById("reportPlayerOverlay");
+ const select=document.getElementById("reportTarget");
+ const message=document.getElementById("reportFormMessage");
+ const submit=document.getElementById("submitReportButton");
+ select.innerHTML='<option value="">Loading players...</option>';
+ message.innerText="";submit.disabled=true;reportSubmitted=false;
+ document.getElementById("reportReason").value="";
+ document.getElementById("reportDetails").value="";
+ overlay.classList.remove("hidden");
+ try{
+  const {data:{session},error:sessionError}=await supabaseClient.auth.getSession();
+  if(sessionError||!session){message.innerText="Please sign in again before submitting a report.";select.innerHTML='<option value="">Unable to load players</option>';return}
+  const {data:players,error}=await supabaseClient.rpc("list_room_report_targets",{p_room_id:currentRoomId});
+  if(error){message.innerText="Unable to load room players. Please try again.";select.innerHTML='<option value="">Unable to load players</option>';return}
+  select.innerHTML='<option value="">Choose a player</option>';
+  let available=0;
+  (players||[]).forEach(player=>{
+   if(!player.reported_auth_user_id||player.reported_auth_user_id===session.user.id)return;
+   const option=document.createElement("option");option.value=player.reported_auth_user_id;option.textContent=player.nickname||"PLAYAM player";select.appendChild(option);available++;
+  });
+  if(!available){message.innerText="There are no other eligible players in this room to report.";return}
+  submit.disabled=false;
+ }catch(error){message.innerText="Something went wrong while loading players. Please try again."}
+}
+async function submitPlayerReport(){
+ if(reportSubmitting)return;
+ const target=document.getElementById("reportTarget").value;
+ const reason=document.getElementById("reportReason").value;
+ const details=document.getElementById("reportDetails").value.trim();
+ const message=document.getElementById("reportFormMessage");
+ const submit=document.getElementById("submitReportButton");
+ if(!target){message.innerText="Please choose the player you want to report.";return}
+ if(!reason){message.innerText="Please choose a reason for the report.";return}
+ if(details.length>2000){message.innerText="Details must be 2,000 characters or fewer.";return}
+ reportSubmitting=true;submit.disabled=true;message.innerText="Sending your report...";
+ try{
+  const {data:{session},error:sessionError}=await supabaseClient.auth.getSession();
+  if(sessionError||!session)throw new Error("Your session has expired. Please sign in again.");
+  const {error}=await supabaseClient.rpc("submit_player_report",{p_reported_auth_user_id:target,p_reason:reason,p_details:details||null,p_room_id:currentRoomId});
+  if(error)throw error;
+  reportSubmitted=true;
+  message.innerText="Your report has been submitted securely. Thank you for helping keep PLAYAM safe.";
+  document.getElementById("reportTarget").value="";document.getElementById("reportReason").value="";document.getElementById("reportDetails").value="";
+  setTimeout(closeReportPlayer,1800);
+ }catch(error){message.innerText=error.message||"Your report could not be submitted. Please try again."}
+ finally{reportSubmitting=false;submit.disabled=reportSubmitted}
+}
+document.addEventListener("keydown",event=>{if(event.key==="Escape")closeReportPlayer()});
 
 /* RESULTS AND NAVIGATION */
 async function showResults(){
