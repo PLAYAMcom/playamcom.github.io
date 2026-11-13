@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -26,7 +25,6 @@ small{color:#bbb}
 <div class="banner">PLAYAM STAGING ONLY — TEST ACCOUNTS ONLY</div>
 <h1>🎮 PLAYAM Report Test</h1>
 <p><small>This page connects only to the PLAYAM-Staging Supabase project.</small></p>
-
 <section id="login">
 <h3>Test account login</h3>
 <label>Email</label>
@@ -35,17 +33,14 @@ small{color:#bbb}
 <input id="password" type="password" autocomplete="current-password" placeholder="Test account password">
 <button id="loginBtn" onclick="login()">LOG IN</button>
 </section>
-
 <section id="testing" class="hidden">
 <p id="signedIn"></p>
 <button onclick="logout()">LOG OUT</button>
-
 <hr>
 <h3>1. Find the test room</h3>
 <label>Room code</label>
 <input id="roomCode" placeholder="Enter the room code">
 <button id="loadRoomBtn" onclick="loadRoom()">LOAD ROOM PLAYERS</button>
-
 <div id="reportArea" class="hidden">
 <hr>
 <h3>2. Report another player</h3>
@@ -54,8 +49,7 @@ small{color:#bbb}
 <option value="">Choose a player</option>
 </select>
 
-<label>Reason</label>
-<select id="reason">
+Reason
 <option value="">Choose a reason</option>
 <option value="Harassment or bullying">Harassment or bullying</option>
 <option value="Hate speech or abusive behaviour">Hate speech or abusive behaviour</option>
@@ -65,57 +59,48 @@ small{color:#bbb}
 <option value="Other">Other</option>
 </select>
 
-<label>Details (optional)</label>
+Details (optional)
+
 <textarea id="details" maxlength="2000" placeholder="Describe what happened"></textarea>
-<small>Maximum 2,000 characters.</small>
-<button id="submitBtn" onclick="submitReport()">SUBMIT REPORT</button>
+
+Maximum 2,000 characters.
+SUBMIT REPORT
+
 </div>
 </section>
-
 <div id="status" role="status"></div>
 </main>
-
 <script>
 const SUPABASE_URL = "https://pwnjrdedeoxbmtfywhkk.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_6zZlj2moK_zv9lAA_0xdzA_nBDueD50";
-
 const client = supabase.createClient(
   SUPABASE_URL,
   SUPABASE_PUBLISHABLE_KEY
 );
-
 let roomId = null;
 let submitting = false;
-
 function status(message) {
   document.getElementById("status").textContent = message;
 }
-
 async function login() {
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value;
   const button = document.getElementById("loginBtn");
-
   if (!email || !password) {
     status("Enter your test account email and password.");
     return;
   }
-
   button.disabled = true;
   status("Signing in...");
-
   try {
     const {data, error} = await client.auth.signInWithPassword({
       email, password
     });
-
     if (error) throw error;
-
     document.getElementById("login").classList.add("hidden");
     document.getElementById("testing").classList.remove("hidden");
     document.getElementById("signedIn").textContent =
       "Signed in: " + data.user.email;
-
     document.getElementById("password").value = "";
     status("Login successful. Enter your test room code.");
   } catch (error) {
@@ -124,53 +109,46 @@ async function login() {
     button.disabled = false;
   }
 }
-
 async function loadRoom() {
   const code = document.getElementById("roomCode").value.trim();
   const button = document.getElementById("loadRoomBtn");
-
   if (!code) {
     status("Enter the room code first.");
     return;
   }
-
   button.disabled = true;
   status("Checking room...");
-
   try {
-    const {data: room, error: roomError} = await client
+    const {data: rooms, error: roomError} = await client
       .from("rooms")
       .select("id,code")
       .eq("code", code)
-      .single();
-
+      .limit(2);
     if (roomError) throw roomError;
-    roomId = room.id;
-
+    if (!rooms || rooms.length === 0) {
+      throw new Error("Room not found. Check the room code.");
+    }
+    if (rooms.length > 1) {
+      throw new Error("More than one room has this code. Use a newly created room.");
+    }
+    roomId = rooms[0].id;
     const {data: players, error} = await client.rpc(
       "list_room_report_targets",
       {p_room_id: roomId}
     );
-
     if (error) throw error;
-
     const target = document.getElementById("target");
     target.innerHTML = '<option value="">Choose a player</option>';
-
     let count = 0;
-
     (players || []).forEach(player => {
       if (!player.reported_auth_user_id) return;
-
       const option = document.createElement("option");
       option.value = player.reported_auth_user_id;
       option.textContent = player.nickname || "PLAYAM player";
       target.appendChild(option);
       count++;
     });
-
     document.getElementById("reportArea").classList.remove("hidden");
-
     status(count
       ? "Room loaded. " + count + " eligible player(s) returned."
       : "Room loaded, but no eligible players were returned. Check that both test accounts joined this room.");
@@ -182,31 +160,24 @@ async function loadRoom() {
     button.disabled = false;
   }
 }
-
 async function submitReport() {
   if (submitting) return;
-
   const target = document.getElementById("target").value;
   const reason = document.getElementById("reason").value;
   const details = document.getElementById("details").value.trim();
   const button = document.getElementById("submitBtn");
-
   if (!roomId) return status("Load a room first.");
   if (!target) return status("Choose a player.");
   if (!reason) return status("Choose a report reason.");
   if (details.length > 2000) return status("Details are too long.");
-
   submitting = true;
   button.disabled = true;
   status("Submitting report...");
-
   try {
     const {data:{session}, error:sessionError} =
       await client.auth.getSession();
-
     if (sessionError) throw sessionError;
     if (!session) throw new Error("Please sign in again.");
-
     const {data, error} = await client.rpc(
       "submit_player_report",
       {
@@ -216,9 +187,7 @@ async function submitReport() {
         p_room_id: roomId
       }
     );
-
     if (error) throw error;
-
     status("SUCCESS: Report submitted to Staging.\nReturned report ID: " +
       String(data));
     document.getElementById("submitBtn").textContent = "REPORT SUBMITTED";
@@ -229,7 +198,6 @@ async function submitReport() {
     button.disabled = true;
   }
 }
-
 async function logout() {
   await client.auth.signOut();
   roomId = null;
