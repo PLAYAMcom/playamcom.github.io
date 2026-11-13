@@ -657,6 +657,12 @@ document.addEventListener("keydown",event=>{if(event.key==="Escape")closeReportP
 async function showResults(){
  hideScreens();document.getElementById("resultsScreen").classList.remove("hidden");
  const box=document.getElementById("resultsList");box.innerHTML="Loading results...";
+ if(currentGame!=="friendship-court"){
+  box.innerHTML="";
+  const note=document.createElement("div");note.className="result-item";
+  note.textContent="Thanks for playing! This is a casual game mode, so no points are awarded.";
+  box.appendChild(note);return;
+ }
  const {data,error}=await supabaseClient.from("players").select("id,nickname,score").eq("room_id",currentRoomId).order("score",{ascending:false});
  if(error){box.innerHTML=error.message;return}
  box.innerHTML="";
