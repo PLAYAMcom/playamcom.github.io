@@ -1,0 +1,62 @@
+# PLAYAM Staging Test Report
+
+**Date:** 2026-11-16  
+**Target branch:** `codex/playam-staging-mobile`  
+**Test page:** `staging-game.html`  
+**Purpose:** Pre-deployment source-readiness and two-player mobile test record.
+
+## Scope and safety
+- This report covers the isolated staging gameplay page only.
+- The page is configured for the PLAYAM staging Supabase project.
+- The production Supabase project URL is absent from the staging page.
+- No production deployment, merge to `main`, database migration, or production data change was performed.
+- Vercel is not yet connected in this ChatGPT session, so no hosted preview has been deployed.
+
+## Automated source checks
+
+| Check | Result |
+|---|---|
+| Staging Supabase URL present | PASS |
+| Production Supabase URL absent | PASS |
+| Visible staging-only warning | PASS |
+| Portrait responsive rules | PASS |
+| Narrow-screen responsive rules | PASS |
+| Landscape responsive rules | PASS |
+| Safe-area handling | PASS |
+| Reduced-motion handling | PASS |
+| Room session storage key present | PASS |
+| Server-side room membership validation on restore | PASS |
+| Ready RPC includes room code | PASS |
+| Start-game RPC includes room code | PASS |
+| Submit-answer RPC includes room code | PASS |
+
+**Source checks: 13/13 PASS.**
+
+These are source/configuration checks, not proof that the page renders or gameplay works in a real browser.
+
+## Runtime and two-player tests
+
+Status for all items below: **NOT RUN — hosted staging preview is not yet available.**
+
+- [ ] Open preview on two separate devices/browser sessions.
+- [ ] Sign in with staging test account A and account B.
+- [ ] Account A creates a Friendship Court room.
+- [ ] Account B joins using the room code.
+- [ ] Both players appear in the lobby.
+- [ ] Both players can toggle ready state.
+- [ ] Host starts the game.
+- [ ] Questions and timer display correctly.
+- [ ] Both players submit answers.
+- [ ] Voting/results flow completes correctly.
+- [ ] Refresh/reopen restores only a server-verified room membership.
+- [ ] Test portrait, landscape, and narrow-screen layouts.
+- [ ] Confirm no production URL, data, or account is used.
+
+## Known limitations
+- Browser-level visual testing has not been performed.
+- Real two-player gameplay has not been exercised.
+- Staging question-bank completeness and end-to-end persistence must be verified during runtime testing.
+- No conclusion that PLAYAM is ready for public launch should be drawn from the source checks alone.
+
+## Next gate
+Connect Vercel, deploy only `codex/playam-staging-mobile` as a separate staging preview, verify the deployed page still targets staging, then execute the runtime checklist with the two staging test accounts. Do not merge or deploy to production as part of this test.
