@@ -68,3 +68,35 @@ New file: `finance-admin-staging.html`
 A human administrator's inspection of a statement is still a manual evidence control, not an automated bank balance integration. File extension and MIME metadata are not malware/content-signature scanning. Do not treat a verified reconciliation as spendable reward funding until the cash-availability calculation, liabilities/reserve exclusions, and funded-commitment gate are implemented and tested.
 
 Cash rewards must remain disabled. No production deployment or payment activation is authorised by this work.
+
+
+## Cash position and reserve report added
+
+A further staging-only migration added `playam_get_cash_position_v1()`, a read-only RPC restricted to active finance administrators with MFA assurance `aal2`.
+
+It reports, by currency:
+- Latest verified statements per recorded account, counting only statements dated within the last 7 days.
+- Creator available, pending, and reserved-withdrawal balances as separate liability components.
+- Unpaid verified reward commitments.
+- Cash after those liabilities.
+- The configured three-month reserve target and a provisional NGN estimate after reserve.
+
+The finance-admin page now has a "Cash position & three-month reserve" section to call and display this report.
+
+### Current staging data and limits
+
+At the time of verification:
+- Cash reconciliations: 0.
+- Creator earnings wallet rows: 0.
+- Funded reward commitment rows: 0.
+- Essential monthly expense baseline: not configured.
+- Reserve target: 3 months.
+- Cash rewards: disabled.
+
+Therefore the report cannot show an actual available cash amount yet. It explicitly returns `safe_to_commit_new_cash_rewards=false` and lists the missing evidence and account-coverage blockers.
+
+The function is `SECURITY DEFINER` with an empty search path and performs its own active finance-admin plus `aal2` checks. Anonymous EXECUTE is revoked; authenticated EXECUTE is required for the signed-in admin page. A no-auth invocation was checked and rejected. Supabase's security advisor still flags authenticated-callable SECURITY DEFINER functions as a review warning; this function's internal authorisation guard must be included in the manual review.
+
+### Important accounting caveat
+
+This is a conservative, provisional management estimate, not a bank feed or a live bank balance. It cannot prove all PLAYAM accounts were entered, nor account for transactions that happened after a statement date. The report deliberately never authorises reward commitments. Verified bank/API integrations, account completeness attestation, fresh reconciliations and independent operational tests remain necessary.
