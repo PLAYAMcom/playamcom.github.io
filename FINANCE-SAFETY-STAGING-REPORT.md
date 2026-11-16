@@ -100,3 +100,26 @@ The function is `SECURITY DEFINER` with an empty search path and performs its ow
 ### Important accounting caveat
 
 This is a conservative, provisional management estimate, not a bank feed or a live bank balance. It cannot prove all PLAYAM accounts were entered, nor account for transactions that happened after a statement date. The report deliberately never authorises reward commitments. Verified bank/API integrations, account completeness attestation, fresh reconciliations and independent operational tests remain necessary.
+
+
+## Income and expense ledger interface
+
+Added an "Income and expense ledger" section to `finance-admin-staging.html`.
+
+- Uses the existing MFA-protected `playam_record_financial_entry_v1` function to record income and expense entries.
+- Supports the existing categories for LIVE platform share, advertising, sponsorship, marketplace income, payment fees, creator withdrawal fees, refunds/chargebacks, fraud losses, hosting, messaging, security, support, moderation, marketing, staffing, legal/accounting, taxes and other items.
+- Stores amounts in integer minor units and uses a unique idempotency key per submission.
+- Uses the existing financial summary RPC for income, expense and net operating totals by currency.
+- Added `playam_list_financial_entries_v1`, a read-only listing function restricted to active finance administrators with MFA assurance `aal2`.
+- The finance ledger remains append-only; corrections should be entered as traceable reversing entries rather than editing history.
+
+### Validation and limits
+
+- Confirmed the page contains the ledger form and calls the existing recording, summary and new listing RPCs.
+- Confirmed the page references staging Supabase only; no production project reference is present.
+- Confirmed anonymous execution of the new ledger-list RPC is denied.
+- Existing ledger table has RLS enabled and existing database immutability trigger retained.
+- No financial entries were inserted during this work.
+- Browser form submission and real finance-admin MFA access have not yet been tested.
+
+The ledger is an administrative record, not an automatic feed from bank, Paystack, ad networks, or invoices. Amounts must be reconciled against source statements and transaction reports. Net operating result in the ledger is not the same as cash available or audited profit.
