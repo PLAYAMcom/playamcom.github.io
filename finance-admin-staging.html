@@ -29,7 +29,12 @@
 <section id="app" class="hidden">
 <div class="panel"><div class="row"><strong id="identity">Finance administrator</strong><span class="small">Staging environment</span><button id="refresh" class="secondary">Refresh records</button><button id="logout" class="secondary">Sign out</button></div><div id="globalStatus" class="status" role="status"></div></div>
 <div class="panel">
-<h2>Income and expense ledger</h2>
+<div class="panel" id="managementDashboard">
+<h2>Financial management overview</h2>
+<p class="small">Consolidated, currency-separated view of verified cash, recorded liabilities and operating results. This is informational only; it never authorises rewards or payouts.</p>
+<div class="grid"><div><label>Period from</label><input id="dashFrom" type="date"></div><div><label>Period to</label><input id="dashTo" type="date"></div></div>
+<button id="loadDashboard">Refresh management overview</button><div id="dashboardStatus" class="status" role="status"></div><div id="dashboardResults"></div>
+</div><h2>Income and expense ledger</h2>
 <p class="small">Append-only finance records. Enter actual amounts in naira or the selected currency; the system stores minor units. Record income and expenses separately. Correct mistakes with a clearly described reversing entry, not by editing old records.</p>
 <div class="grid">
 <div><label>Entry type</label><select id="ledgerType"><option value="expense">Expense</option><option value="income">Income</option></select></div>
@@ -385,6 +390,35 @@ async function loadCashPosition(){
  $('cashPositionResults').innerHTML=html;
  status('cashPositionStatus','Calculation complete · '+new Date(d.generated_at).toLocaleString());
 }
+async function loadManagementDashboard(){
+ const from=$('dashFrom').value||'2000-01-01',to=$('dashTo').value||new Date().toISOString().slice(0,10);
+ if(to<from||to>new Date().toISOString().slice(0,10)){status('dashboardStatus','Choose a valid reporting period ending today or earlier.');return}
+ status('dashboardStatus','Loading financial overview…');$('dashboardResults').innerHTML='';
+ try{
+  const [cash,liabilities,ledger]=await Promise.all([client.rpc('playam_get_cash_position_v1'),client.rpc('playam_get_liability_summary_v1'),client.rpc('playam_get_financial_summary_v1',{p_from:from,p_to:to})]);
+  if(cash.error)throw cash.error;if(liabilities.error)throw liabilities.error;if(ledger.error)throw ledger.error;
+  const c=cash.data||{},l=liabilities.data||{},inc=ledger.data||[];
+  const ps=Array.isArray(c.currency_positions)?c.currency_positions:[],ls=Array.isArray(l.currency_totals)?l.currency_totals:[];
+  const currencies=[...new Set([...ps.map(x=>x.currency),...ls.map(x=>x.currency),...inc.map(x=>x.currency)])].sort();
+  let h='<article class="record"><strong>New cash rewards authorised: NO</strong><p>Cash rewards setting: '+(c.cash_rewards_enabled?'Enabled in settings':'Disabled')+'</p><p>Cash account coverage attested: '+(c.cash_account_coverage_complete?'Yes':'No')+'</p><p>Recent verified accounts: '+escapeHtml(c.recent_verified_account_statement_count??0)+' · Stale accounts: '+escapeHtml(c.stale_verified_account_statement_count??0)+'</p><p>Reserve target: '+escapeHtml(c.reserve_target_months??'—')+' months · '+escapeHtml(c.reserve_target_minor==null?'Not configured':money(c.reserve_target_minor,'NGN'))+'</p><p>Essential monthly expenses: '+escapeHtml(c.essential_monthly_expense_minor==null?'Not configured':money(c.essential_monthly_expense_minor,'NGN'))+'</p></article>';
+  if(c.blocking_reasons?.length)h+='<article class="record"><strong>Reward blockers</strong><ul>'+c.blocking_reasons.map(x=>'<li>'+escapeHtml(x)+'</li>').join('')+'</ul></article>';
+  for(const cur of currencies){
+   const p=ps.find(x=>x.currency===cur)||{},lrow=ls.find(x=>x.currency===cur)||{},e=inc.find(x=>x.currency===cur)||{};
+   h+='<article class="record"><h3>'+escapeHtml(cur)+'</h3>'+
+   '<p>Recent verified cash: '+escapeHtml(p.verified_cash_last_7_days_minor==null?'No recent statement':money(p.verified_cash_last_7_days_minor,cur))+'</p>'+
+   '<p>Creator balances owed: '+escapeHtml(p.creator_total_liability_minor==null?'No data':money(p.creator_total_liability_minor,cur))+'</p>'+
+   '<p>Unpaid verified reward commitments: '+escapeHtml(p.unpaid_verified_reward_commitments_minor==null?'No data':money(p.unpaid_verified_reward_commitments_minor,cur))+'</p>'+
+   '<p>Other outstanding payables: '+escapeHtml(p.other_outstanding_liabilities_minor==null?money(lrow.open_minor||0,cur):money(p.other_outstanding_liabilities_minor,cur))+'</p>'+
+   '<p>Cash after recorded liabilities: '+escapeHtml(p.cash_after_all_recorded_liabilities_minor==null?'Not calculable':money(p.cash_after_all_recorded_liabilities_minor,cur))+'</p>'+
+   '<p>Income: '+escapeHtml(money(e.total_income_minor||0,cur))+' · Expenses: '+escapeHtml(money(e.total_expenses_minor||0,cur))+' · Net recorded result: '+escapeHtml(money(e.net_operating_minor||0,cur))+'</p>'+
+   (cur==='NGN'?'<p>Estimated cash after reserve: '+escapeHtml(p.estimated_discretionary_cash_after_reserve_minor==null?'Not calculable':money(p.estimated_discretionary_cash_after_reserve_minor,cur))+'</p>':'')+
+   '<p class="small">Overdue payables: '+escapeHtml(money(lrow.overdue_minor||0,cur))+' · Open items: '+escapeHtml(lrow.items||0)+'</p></article>';
+  }
+  h+='<p class="small">Period '+escapeHtml(from)+' to '+escapeHtml(to)+'. Ledger totals include only recorded entries and are not audited profit. Cash is a statement-based estimate, not a live bank balance; omitted accounts, costs or liabilities can make it incomplete.</p>';
+  $('dashboardResults').innerHTML=h;status('dashboardStatus','Overview refreshed.');
+ }catch(e){status('dashboardStatus','Could not load overview: '+e.message)}
+}
+$('loadDashboard').onclick=loadManagementDashboard;
 $('cashPosition').onclick=loadCashPosition;
 $('refresh').onclick=loadRecords;$('load').onclick=loadRecords;$('filter').onchange=loadRecords;
 client.auth.onAuthStateChange(()=>{setTimeout(()=>refreshSession().catch(e=>status('globalStatus',e.message)),0)});
