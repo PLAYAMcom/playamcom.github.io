@@ -497,7 +497,7 @@ async function joinRoom(){
  const {data,error}=await supabaseClient.rpc("join_playam_room",{p_code:code,p_nickname:nickname});
  if(error){showMessage(error.message);return}
  if(!data||!data.length||!data[0].room_code){showMessage("You joined, but room details were not returned.");return}
- currentRoomCode=data[0].room_code;currentPlayerId=data[0].player_id;currentNickname=nickname;openLobby();
+ currentRoomCode=data[0].room_code;currentPlayerId=data[0].player_id;currentNickname=nickname;saveRoomSession();openLobby();
 }
 
 /* LOBBY */
