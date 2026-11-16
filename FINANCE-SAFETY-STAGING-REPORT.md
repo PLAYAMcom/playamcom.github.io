@@ -177,3 +177,21 @@ The view keeps currencies separate, displays the reserve and cash-account covera
 - No production deployment, payment activation, reward activation, or Friendship Court/gameplay changes were made.
 
 This dashboard is not a launch approval, accounting certification, bank reconciliation guarantee, or permission to spend. Full account coverage, real source-document reconciliation, ledger completeness, administrator testing and a separate launch decision remain required.
+
+
+## Batch 21 — Controlled staging safety checks
+
+Performed read-only inspection of the cash-position, liability-summary, financial-ledger and liability-settlement database functions, then ran non-persistent SQL guard-logic checks against representative edge cases.
+
+### Results
+
+- 9 synthetic rule scenarios passed: unverified funding blocks commitment; commitment above received funding is rejected; paid amount above commitment is rejected; a commitment within verified funding is valid; settlement above the original liability is rejected; full settlement closes a liability; partial settlement remains open; missing essential-expense baseline blocks reserve calculation; zero recent statements blocks new cash rewards.
+- Unauthenticated calls to the cash-position and liability-summary RPCs were wrapped in exception checks; both were rejected as required. This verifies the no-auth guard, not a real signed-in MFA administrator session.
+- Confirmed zero records remain in cash reconciliations, reconciliation audit, funded reward commitments, liability register, liability settlement events and financial entries after the tests.
+- Re-fetched the finance admin page and confirmed the dashboard handler, escaping/currency formatting helpers and all three RPC references are present. Confirmed it references the staging project and not the production project.
+
+### Important test limits
+
+The nine rule scenarios are synthetic SQL logic checks, not end-to-end inserts through the authenticated application. No sample money records were created, no actual finance administrator browser/MFA session was available, and no payout, webhook, bank transfer, reward or real payment was attempted. Duplicate webhook/idempotency, concurrent settlement, document upload/review, and provider reconciliation still require authenticated staging integration tests.
+
+Cash rewards remain disabled and the cash-account coverage flag remains false. No production, gameplay, Friendship Court, payment activation or deployment changes were made.
