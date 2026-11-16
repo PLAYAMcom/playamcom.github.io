@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>PLAYAM Finance Admin — Staging</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#0b0714;color:#f7f2ff;font:15px system-ui,-apple-system,Segoe UI,sans-serif}main{max-width:1050px;margin:auto;padding:20px}.banner{background:#5a2a18;border:1px solid #b86b32;padding:12px;border-radius:10px;font-weight:800}.panel{background:#171022;border:1px solid #352344;border-radius:14px;padding:18px;margin:16px 0}h1{font-size:clamp(24px,5vw,36px)}h2{font-size:19px}.muted{color:#b9adc5}label{display:block;margin-top:10px}input,select,textarea,button{font:inherit;border-radius:9px;padding:12px;border:1px solid #59436b}input,select,textarea{width:100%;margin:6px 0 12px;background:#0e0a16;color:white}textarea{min-height:70px}button{background:#a83de0;color:white;border:0;font-weight:700;cursor:pointer;margin:3px}button.secondary{background:#352344}button:disabled{opacity:.5;cursor:not-allowed}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}.status{white-space:pre-wrap;color:#ffc5d5;margin-top:10px}.record{border:1px solid #49345b;border-radius:12px;padding:14px;margin:12px 0;overflow-wrap:anywhere}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.small{font-size:13px;color:#c9b9d6}.hidden{display:none!important}.warning{color:#ffd18a}@media(max-width:540px){main{padding:12px}}
+</style>
+</head>
+<body><main>
+<div class="banner">PLAYAM STAGING ONLY — TEST ACCOUNTS ONLY — NOT PRODUCTION</div>
+<h1>Finance evidence & cash reconciliation</h1>
+<p class="muted">Restricted finance-admin workspace. Every action requires an authorised finance administrator with verified MFA. A second administrator must inspect evidence before verification.</p>
+<section id="login" class="panel">
+<h2>Administrator sign in</h2>
+<label>Email</label><input id="email" type="email" autocomplete="username">
+<label>Password</label><input id="password" type="password" autocomplete="current-password">
+<button id="signIn">Sign in</button><div id="loginStatus" class="status" role="status"></div>
+</section>
+<section id="mfa" class="panel hidden">
+<h2>Verify administrator MFA</h2>
+<p class="muted">Enter the current six-digit code from your registered authenticator app.</p>
+<label>Authenticator code</label><input id="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="6">
+<button id="verifyMfa">Verify MFA</button><div id="mfaStatus" class="status" role="status"></div>
+</section>
+<section id="app" class="hidden">
+<div class="panel"><div class="row"><strong id="identity">Finance administrator</strong><span class="small">Staging environment</span><button id="refresh" class="secondary">Refresh records</button><button id="logout" class="secondary">Sign out</button></div><div id="globalStatus" class="status" role="status"></div></div>
+<div class="panel">
+<h2>Record a cash statement</h2>
+<p class="small">Enter the statement details exactly as shown. Do not upload documents containing full card numbers, passwords, PINs, access tokens or unnecessary personal data. Redact sensitive details before upload.</p>
+<div class="grid">
+<div><label>Account label (masked)</label><input id="account" maxlength="100" placeholder="e.g. Operating account •••• 1234"></div>
+<div><label>Bank / payment provider</label><input id="provider" maxlength="120" placeholder="e.g. Bank or Paystack"></div>
+<div><label>Currency</label><select id="currency"><option value="NGN">NGN — Nigerian naira</option><option value="USD">USD — US dollar</option><option value="GBP">GBP — Pound sterling</option></select></div>
+<div><label>Statement date</label><input id="statementDate" type="date"></div>
+<div><label>Statement reference</label><input id="statementRef" maxlength="160"></div>
+<div><label>Closing balance</label><input id="balance" type="number" min="0" step="0.01" placeholder="Amount in currency units"></div>
+</div>
+<label>Notes (optional)</label><textarea id="notes" maxlength="1000"></textarea>
+<button id="record">Save pending statement</button>
+<div id="recordStatus" class="status" role="status"></div>
+</div>
+<div class="panel">
+<h2>Pending evidence review</h2>
+<p class="small">Record owner uploads the redacted statement. A different finance administrator opens and inspects it before entering the matching balance and verifying.</p>
+<div class="row"><label for="filter">Show records</label><select id="filter"><option value="pending_verification">Pending verification</option><option value="verified">Verified</option><option value="rejected">Rejected</option><option value="all">All records</option></select><button id="load">Load records</button></div>
+<div id="recordsStatus" class="status"></div><div id="records"></div>
+</div>
+</section>
+<script>
+const SUPABASE_URL="https://pwnjrdedeoxbmtfywhkk.supabase.co";
+const SUPABASE_KEY="sb_publishable_6zZlj2moK_zv9lAA_0xdzA_nBDueD50";
+const BUCKET='playam-finance-evidence';
+const client=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const $=id=>document.getElementById(id);
+const money=(minor,currency)=>new Intl.NumberFormat(undefined,{style:'currency',currency}).format(Number(minor)/100);
+let currentUser=null;
+let pendingMfaFactor=null;
+function show(id,on){$(id).classList.toggle('hidden',!on)}
+function status(id,msg){$(id).textContent=msg}
+function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function minorFromInput(v){const n=Number(v);if(!Number.isFinite(n)||n<0||Math.round(n*100)>Number.MAX_SAFE_INTEGER)throw new Error('Enter a valid non-negative amount.');return Math.round(n*100)}
+async function ensureAal2(){
+ const {data,error}=await client.auth.mfa.getAuthenticatorAssuranceLevel();
+ if(error)throw error;
+ if(data.currentLevel==='aal2')return true;
+ if(data.nextLevel!=='aal2')throw new Error('This administrator account must enrol an authenticator before finance access can continue.');
+ const {data:factors,error:factorError}=await client.auth.mfa.listFactors();
+ if(factorError)throw factorError;
+ const factor=(factors.totp||[]).find(x=>x.status==='verified');
+ if(!factor)throw new Error('No verified authenticator is enrolled. Ask the system administrator to complete MFA setup before using finance tools.');
+ pendingMfaFactor=factor.id;
+ show('login',false);show('mfa',true);
+ return false;
+}
+async function refreshSession(){
+ const {data:{session}}=await client.auth.getSession();
+ if(!session){show('login',true);show('mfa',false);show('app',false);return}
+ currentUser=session.user;
+ const ready=await ensureAal2();
+ if(ready){show('login',false);show('mfa',false);show('app',true);$('identity').textContent='Signed in: '+(currentUser.email||currentUser.id);await loadRecords()}
+}
+$('signIn').onclick=async()=>{
+ status('loginStatus','Signing in…');
+ const {error}=await client.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});
+ if(error){status('loginStatus',error.message);return}
+ try{await refreshSession()}catch(e){status('loginStatus',e.message)}
+};
+$('verifyMfa').onclick=async()=>{
+ const code=$('otp').value.trim();
+ if(!pendingMfaFactor||!/^\d{6}$/.test(code)){status('mfaStatus','Enter the six-digit authenticator code.');return}
+ status('mfaStatus','Verifying…');
+ const {data:challenge,error:challengeError}=await client.auth.mfa.challenge({factorId:pendingMfaFactor});
+ if(challengeError){status('mfaStatus',challengeError.message);return}
+ const {error}=await client.auth.mfa.verify({factorId:pendingMfaFactor,challengeId:challenge.id,code});
+ if(error){status('mfaStatus',error.message);return}
+ $('otp').value='';
+ try{await refreshSession()}catch(e){status('mfaStatus',e.message)}
+};
+$('logout').onclick=async()=>{await client.auth.signOut();currentUser=null;show('login',true);show('mfa',false);show('app',false)};
+async function loadRecords(){
+ status('recordsStatus','Loading reconciliation records…');$('records').innerHTML='';
+ const {data,error}=await client.rpc('playam_list_cash_reconciliations_v1',{p_status:$('filter').value,p_limit:50});
+ if(error){status('recordsStatus','Could not load records: '+error.message);return}
+ const rows=Array.isArray(data)?data:[];
+ status('recordsStatus',rows.length+' record(s).');
+ $('records').innerHTML=rows.map(r=>{
+  const id=escapeHtml(r.reconciliation_id);
+  const hasEvidence=!!r.evidence_object_name;
+  const isOwner=r.reconciled_by===currentUser?.id;
+  const canVerify=r.status==='pending_verification'&&hasEvidence&&!isOwner;
+  const canUpload=r.status==='pending_verification'&&!hasEvidence&&isOwner;
+  return '<article class="record">'+
+   '<strong>'+escapeHtml(r.account_label)+' — '+escapeHtml(r.institution_or_provider)+'</strong>'+
+   '<p>'+escapeHtml(r.currency)+' '+escapeHtml(r.statement_reference)+' · '+escapeHtml(r.statement_date)+'</p>'+
+   '<p>Statement balance: <strong>'+escapeHtml(money(r.closing_balance_minor,r.currency))+'</strong></p>'+
+   '<p>Status: '+escapeHtml(r.status)+'</p>'+
+   '<p class="small">Recorded by: '+escapeHtml(r.reconciled_by)+' · Evidence: '+(hasEvidence?'attached':'not attached')+'</p>'+
+   (hasEvidence?'<p class="small">Evidence: '+escapeHtml(r.evidence_content_type)+' · '+escapeHtml(r.evidence_size_bytes)+' bytes</p><button class="secondary" data-view="'+id+'">Open evidence for inspection</button>':'')+
+   (canUpload?'<label>Upload redacted statement (PDF/JPEG/PNG, max 10 MB)</label><input type="file" accept="application/pdf,image/jpeg,image/png" data-file="'+id+'"><button data-upload="'+id+'">Upload evidence</button>':'')+
+   (canVerify?'<label>Confirm balance from inspected statement</label><input type="number" min="0" step="0.01" placeholder="Verified amount" data-verified="'+id+'"><label>Review notes</label><textarea maxlength="1000" placeholder="Record what you checked" data-note="'+id+'"></textarea><button data-verify="'+id+'">Verify cash statement</button>':'')+
+   (r.status==='pending_verification'&&!hasEvidence&&!isOwner?'<p class="warning">Waiting for the statement recorder to attach evidence.</p>':'')+
+   '</article>';
+ }).join('');
+}
+$('record').onclick=async()=>{
+ try{
+  const amount=minorFromInput($('balance').value);
+  const date=$('statementDate').value;
+  if(!date)throw new Error('Choose a statement date.');
+  status('recordStatus','Saving pending statement…');
+  const {data,error}=await client.rpc('playam_record_cash_reconciliation_v1',{
+   p_account_label:$('account').value.trim(),p_institution_or_provider:$('provider').value.trim(),
+   p_currency:$('currency').value,p_statement_date:date,p_statement_reference:$('statementRef').value.trim(),
+   p_closing_balance_minor:amount,p_notes:$('notes').value.trim()||null
+  });
+  if(error)throw error;
+  status('recordStatus','Statement recorded as pending. Reference: '+data+'. Upload its redacted evidence below.');
+  await loadRecords();
+ }catch(e){status('recordStatus',e.message)}
+};
+$('records').addEventListener('click',async ev=>{
+ const view=ev.target.closest('[data-view]');
+ const upload=ev.target.closest('[data-upload]');
+ const verify=ev.target.closest('[data-verify]');
+ try{
+  if(view){
+   const id=view.dataset.view;
+   const {data,error}=await client.rpc('playam_list_cash_reconciliations_v1',{p_status:'all',p_limit:100});
+   if(error)throw error;
+   const row=(data||[]).find(x=>x.reconciliation_id===id);
+   if(!row?.evidence_object_name)throw new Error('Evidence record not found.');
+   const {data:signed,error:signError}=await client.storage.from(BUCKET).createSignedUrl(row.evidence_object_name,60);
+   if(signError)throw signError;
+   window.open(signed.signedUrl,'_blank','noopener,noreferrer');
+  }
+  if(upload){
+   const id=upload.dataset.upload;
+   const input=$('records').querySelector('input[data-file="'+id+'"]');
+   const file=input?.files?.[0];
+   if(!file)throw new Error('Choose a statement file first.');
+   const allowed=['application/pdf','image/jpeg','image/png'];
+   if(!allowed.includes(file.type)||file.size<1||file.size>10485760)throw new Error('Only PDF, JPEG or PNG files up to 10 MB are accepted.');
+   const safeName=file.name.replace(/[^a-zA-Z0-9._-]/g,'_').slice(-100)||'statement';
+   const objectName=id+'/'+crypto.randomUUID()+'-'+safeName;
+   status('recordsStatus','Uploading private evidence…');
+   const {error:upError}=await client.storage.from(BUCKET).upload(objectName,file,{contentType:file.type,upsert:false});
+   if(upError)throw upError;
+   const {error:attachError}=await client.rpc('playam_attach_cash_reconciliation_evidence_v1',{
+    p_reconciliation_id:id,p_object_name:objectName,p_content_type:file.type,p_size_bytes:file.size
+   });
+   if(attachError)throw attachError;
+   status('recordsStatus','Evidence uploaded and attached. A different finance administrator must inspect it.');
+   await loadRecords();
+  }
+  if(verify){
+   const id=verify.dataset.verify;
+   const input=$('records').querySelector('input[data-verified="'+id+'"]');
+   const note=$('records').querySelector('textarea[data-note="'+id+'"]');
+   const rowList=await client.rpc('playam_list_cash_reconciliations_v1',{p_status:'pending_verification',p_limit:100});
+   if(rowList.error)throw rowList.error;
+   const row=(rowList.data||[]).find(x=>x.reconciliation_id===id);
+   if(!row)throw new Error('Pending reconciliation not found.');
+   const verified=minorFromInput(input.value);
+   if(!confirm('Confirm that you independently opened and inspected the attached statement and that the balance matches?'))return;
+   const {data,error}=await client.rpc('playam_verify_cash_reconciliation_v1',{
+    p_reconciliation_id:id,p_verified_balance_minor:verified,p_verification_note:note.value.trim()||null
+   });
+   if(error)throw error;
+   status('recordsStatus','Cash statement verified. This does not by itself authorise a reward payment.');
+   await loadRecords();
+  }
+ }catch(e){status('recordsStatus',e.message)}
+});
+$('refresh').onclick=loadRecords;$('load').onclick=loadRecords;$('filter').onchange=loadRecords;
+client.auth.onAuthStateChange(()=>{setTimeout(()=>refreshSession().catch(e=>status('globalStatus',e.message)),0)});
+refreshSession().catch(e=>status('loginStatus',e.message));
+</script></section></main></body></html>
