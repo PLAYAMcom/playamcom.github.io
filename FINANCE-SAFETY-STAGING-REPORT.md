@@ -154,3 +154,26 @@ Updated `playam_get_cash_position_v1` to deduct open/partially settled liabiliti
 - The liability register is manual and depends on accurate, complete administrator entries. It is not connected to supplier invoices, tax systems, refund processors, or bank feeds.
 - Browser workflow, MFA admin access, and settlement reconciliation have not yet been tested with real finance-admin accounts.
 - Creator balances and funded reward commitments remain separate sources and must not be duplicated in this register.
+
+
+## Unified financial management overview
+
+Added a consolidated overview to `finance-admin-staging.html` on the staging-only finance branch.
+
+The page calls the existing MFA-protected functions:
+- `playam_get_cash_position_v1` for recent verified statement cash, creator balances, verified reward commitments, other recorded liabilities, reserve estimate and reward blockers.
+- `playam_get_liability_summary_v1` for open and overdue payable totals.
+- `playam_get_financial_summary_v1` for recorded income, expenses and net operating result over a selectable date range.
+
+The view keeps currencies separate, displays the reserve and cash-account coverage warnings, and explicitly states that new cash rewards are not authorised. It describes ledger profit as recorded operating result, not audited profit, and cash as a provisional statement-based estimate, not a live bank balance.
+
+### Verification and remaining limits
+
+- Confirmed the updated page was committed and fetched back from `codex/playam-finance-safety`.
+- Confirmed the dashboard markup, event handler and all three RPC calls are present.
+- Confirmed the page uses the staging Supabase project reference and contains no production project reference.
+- The staging security advisor currently reports 25 RLS-enabled tables without policies, 40 authenticated-callable SECURITY DEFINER functions, and leaked-password protection disabled. These are review findings, not all confirmed vulnerabilities; individual functions require authorization review. No blanket permission changes were made.
+- No live browser test with a finance administrator, MFA, or populated financial records has been completed. No sample balances or liabilities were inserted.
+- No production deployment, payment activation, reward activation, or Friendship Court/gameplay changes were made.
+
+This dashboard is not a launch approval, accounting certification, bank reconciliation guarantee, or permission to spend. Full account coverage, real source-document reconciliation, ledger completeness, administrator testing and a separate launch decision remain required.
