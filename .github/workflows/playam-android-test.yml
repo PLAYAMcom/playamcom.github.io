@@ -17,6 +17,11 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: codex/playam-mobile-app
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
