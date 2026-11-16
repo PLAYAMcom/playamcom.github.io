@@ -53,6 +53,32 @@
 <div id="ledgerSummary"></div><div id="ledgerRows"></div>
 </div>
 <div class="panel">
+<h2>Outstanding liabilities register</h2>
+<p class="small">Record supplier bills, taxes, refunds, chargeback exposure and sponsor refund obligations. Creator wallet balances and sponsored reward commitments are tracked separately; do not enter them twice.</p>
+<div class="grid">
+<div><label>Liability type</label><select id="liabilityType"><option value="supplier_bill">Supplier / operating bill</option><option value="tax_payable">Tax payable</option><option value="refund_payable">Customer refund payable</option><option value="chargeback_exposure">Chargeback exposure</option><option value="sponsor_refund_obligation">Sponsor refund obligation</option><option value="other_payable">Other payable</option></select></div>
+<div><label>Payee / counterparty</label><input id="liabilityParty" maxlength="160"></div>
+<div><label>Amount owed</label><input id="liabilityAmount" type="number" min="0.01" step="0.01"></div>
+<div><label>Currency</label><select id="liabilityCurrency"><option value="NGN">NGN</option><option value="USD">USD</option><option value="GBP">GBP</option><option value="EUR">EUR</option></select></div>
+<div><label>Due date</label><input id="liabilityDue" type="date"></div>
+<div><label>Invoice / case reference</label><input id="liabilityRef" maxlength="160"></div>
+</div>
+<label>Description</label><textarea id="liabilityDescription" maxlength="1000"></textarea>
+<button id="saveLiability">Record liability</button><div id="liabilityStatus" class="status" role="status"></div>
+<hr><h3>Record a settlement</h3>
+<p class="small">Only record a settlement after confirming the payment actually occurred. It cannot exceed the outstanding amount.</p>
+<div class="grid">
+<div><label>Outstanding liability</label><select id="settleLiability"><option value="">Load liabilities first</option></select></div>
+<div><label>Amount paid</label><input id="settleAmount" type="number" min="0.01" step="0.01"></div>
+<div><label>Payment reference</label><input id="settleRef" maxlength="160"></div>
+</div>
+<label>Settlement notes</label><textarea id="settleNotes" maxlength="500"></textarea>
+<button id="recordSettlement" class="secondary">Record verified settlement</button>
+<hr><h3>Outstanding summary</h3>
+<button id="loadLiabilities" class="secondary">Refresh liabilities</button>
+<div id="liabilitySummary"></div><div id="liabilityRows"></div>
+</div>
+<div class="panel">
 <h2>Cash position & three-month reserve</h2>
 <p class="small">Read-only calculation. Only the latest verified statement per recorded account is counted, and only when dated within 7 days. Creator available, pending and reserved earnings and unpaid verified reward commitments are deducted. This report is not authority to promise or pay rewards.</p>
 <button id="cashPosition">Calculate cash position</button>
@@ -275,6 +301,59 @@ async function loadLedgerReport(){
 $('saveLedger').onclick=saveLedgerEntry;
 $('loadLedger').onclick=()=>loadLedgerReport().catch(e=>status('ledgerStatus',e.message));
 syncLedgerCategories();
+let liabilityCache=[];
+async function loadLiabilities(){
+ status('liabilityStatus','Loading liabilities…');
+ const [summary,items]=await Promise.all([
+  client.rpc('playam_get_liability_summary_v1'),
+  client.rpc('playam_list_liabilities_v1',{p_status:'all',p_limit:200})
+ ]);
+ if(summary.error)throw summary.error;if(items.error)throw items.error;
+ liabilityCache=items.data||[];
+ const totals=summary.data?.currency_totals||[];
+ $('liabilitySummary').innerHTML=totals.length?totals.map(x=>'<article class="record"><strong>'+escapeHtml(x.currency)+'</strong><p>Outstanding: '+escapeHtml(money(x.open_minor||0,x.currency))+'</p><p>Overdue: '+escapeHtml(money(x.overdue_minor||0,x.currency))+'</p><p>Open items: '+escapeHtml(x.items)+'</p></article>').join(''):'<p class="small">No liabilities recorded.</p>';
+ $('liabilityRows').innerHTML='<h3>Liability records</h3>'+liabilityCache.map(x=>'<article class="record"><strong>'+escapeHtml(x.liability_type.replaceAll('_',' '))+' — '+escapeHtml(x.counterparty_label)+'</strong><p>'+escapeHtml(x.description)+'</p><p>Original: '+escapeHtml(money(x.original_amount_minor,x.currency))+' · Settled: '+escapeHtml(money(x.settled_amount_minor,x.currency))+' · Outstanding: '+escapeHtml(money(x.outstanding_amount_minor,x.currency))+'</p><p>Status: '+escapeHtml(x.status)+' · Due: '+escapeHtml(x.due_date||'Not specified')+'</p><p class="small">'+escapeHtml(x.external_reference||'No reference')+' · '+escapeHtml(x.liability_id)+'</p></article>').join('');
+ const open=liabilityCache.filter(x=>['open','partially_settled'].includes(x.status));
+ $('settleLiability').innerHTML='<option value="">Choose liability</option>'+open.map(x=>'<option value="'+escapeHtml(x.liability_id)+'">'+escapeHtml(x.counterparty_label+' · '+money(x.outstanding_amount_minor,x.currency))+'</option>').join('');
+ status('liabilityStatus','Loaded '+liabilityCache.length+' records.');
+}
+async function saveLiability(){
+ try{
+  const amount=minorFromInput($('liabilityAmount').value);
+  if(amount<=0)throw new Error('Amount must be greater than zero.');
+  const description=$('liabilityDescription').value.trim();
+  if(description.length<3)throw new Error('Describe the obligation.');
+  status('liabilityStatus','Recording…');
+  const {data,error}=await client.rpc('playam_create_liability_v1',{
+   p_liability_type:$('liabilityType').value,p_counterparty_label:$('liabilityParty').value.trim(),
+   p_currency:$('liabilityCurrency').value,p_amount_minor:amount,
+   p_due_date:$('liabilityDue').value||null,p_external_reference:$('liabilityRef').value.trim()||null,
+   p_description:description
+  });
+  if(error)throw error;
+  status('liabilityStatus','Recorded liability '+data);
+  $('liabilityAmount').value='';$('liabilityParty').value='';$('liabilityDescription').value='';$('liabilityRef').value='';
+  await loadLiabilities();
+ }catch(e){status('liabilityStatus',e.message)}
+}
+async function settleLiability(){
+ try{
+  const id=$('settleLiability').value;if(!id)throw new Error('Choose a liability.');
+  const amount=minorFromInput($('settleAmount').value);if(amount<=0)throw new Error('Settlement must be greater than zero.');
+  if(!confirm('Confirm payment has actually been made and checked against its bank/payment reference?'))return;
+  const {data,error}=await client.rpc('playam_settle_liability_v1',{
+   p_liability_id:id,p_amount_minor:amount,p_external_reference:$('settleRef').value.trim()||null,
+   p_notes:$('settleNotes').value.trim()||null
+  });
+  if(error)throw error;
+  status('liabilityStatus','Settlement recorded. Outstanding: '+money(data.outstanding_amount_minor,liabilityCache.find(x=>x.liability_id===id)?.currency||'NGN'));
+  $('settleAmount').value='';$('settleRef').value='';$('settleNotes').value='';
+  await loadLiabilities();
+ }catch(e){status('liabilityStatus',e.message)}
+}
+$('saveLiability').onclick=saveLiability;
+$('recordSettlement').onclick=settleLiability;
+$('loadLiabilities').onclick=()=>loadLiabilities().catch(e=>status('liabilityStatus',e.message));
 async function loadCashPosition(){
  status('cashPositionStatus','Calculating from staging records…');
  $('cashPositionResults').innerHTML='';
