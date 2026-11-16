@@ -1,0 +1,36 @@
+name: PLAYAM Android test build
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  android-debug:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out staging app
+        uses: actions/checkout@v4
+        with:
+          ref: codex/playam-mobile-app
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install app dependencies
+        run: npm install
+      - name: Generate Android project
+        run: npx cap add android
+      - name: Sync PLAYAM web app
+        run: npx cap sync android
+      - name: Build debug APK
+        working-directory: android
+        run: ./gradlew assembleDebug
+      - name: Upload installable test APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: playam-android-staging-debug
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
