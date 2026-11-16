@@ -1,6 +1,9 @@
 name: PLAYAM Android test build
 
 on:
+  push:
+    branches:
+      - codex/playam-mobile-app
   workflow_dispatch:
 
 permissions:
