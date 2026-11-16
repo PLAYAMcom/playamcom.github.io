@@ -123,3 +123,34 @@ Added an "Income and expense ledger" section to `finance-admin-staging.html`.
 - Browser form submission and real finance-admin MFA access have not yet been tested.
 
 The ledger is an administrative record, not an automatic feed from bank, Paystack, ad networks, or invoices. Amounts must be reconciled against source statements and transaction reports. Net operating result in the ledger is not the same as cash available or audited profit.
+
+
+## Liability register added
+
+Added staging-only tables:
+- `playam_liability_register` for supplier bills, tax payable, customer refunds, chargeback exposure, sponsor refund obligations and other payables.
+- `playam_liability_register_events` for creation and settlement history.
+
+Protected RPCs:
+- `playam_create_liability_v1`
+- `playam_settle_liability_v1`
+- `playam_list_liabilities_v1`
+- `playam_get_liability_summary_v1`
+
+All four require an authenticated active finance administrator or super administrator with MFA assurance `aal2`. Direct client table access is revoked and RLS is enabled. Anonymous execution was checked and denied. Settlement is locked to the row, must be positive, cannot exceed the outstanding amount, and creates a separate event record.
+
+The finance-admin staging page now includes forms to create liabilities, record verified settlements, and review open/overdue totals by currency.
+
+### Cash position integration
+
+Updated `playam_get_cash_position_v1` to deduct open/partially settled liabilities from the provisional cash position, in addition to creator wallet liabilities and unpaid verified reward commitments. The report labels these separately to help avoid double counting.
+
+### Current state and limitations
+
+- Liability records: 0.
+- Liability event records: 0.
+- No real liabilities or payments were fabricated or entered.
+- The cash calculation still returns `safe_to_commit_new_cash_rewards=false` and `cash_account_coverage_complete=false`.
+- The liability register is manual and depends on accurate, complete administrator entries. It is not connected to supplier invoices, tax systems, refund processors, or bank feeds.
+- Browser workflow, MFA admin access, and settlement reconciliation have not yet been tested with real finance-admin accounts.
+- Creator balances and funded reward commitments remain separate sources and must not be duplicated in this register.
