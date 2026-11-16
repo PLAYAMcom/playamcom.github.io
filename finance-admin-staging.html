@@ -29,6 +29,13 @@
 <section id="app" class="hidden">
 <div class="panel"><div class="row"><strong id="identity">Finance administrator</strong><span class="small">Staging environment</span><button id="refresh" class="secondary">Refresh records</button><button id="logout" class="secondary">Sign out</button></div><div id="globalStatus" class="status" role="status"></div></div>
 <div class="panel">
+<h2>Cash position & three-month reserve</h2>
+<p class="small">Read-only calculation. Only the latest verified statement per recorded account is counted, and only when dated within 7 days. Creator available, pending and reserved earnings and unpaid verified reward commitments are deducted. This report is not authority to promise or pay rewards.</p>
+<button id="cashPosition">Calculate cash position</button>
+<div id="cashPositionStatus" class="status" role="status"></div>
+<div id="cashPositionResults"></div>
+</div>
+<div class="panel">
 <h2>Record a cash statement</h2>
 <p class="small">Enter the statement details exactly as shown. Do not upload documents containing full card numbers, passwords, PINs, access tokens or unnecessary personal data. Redact sensitive details before upload.</p>
 <div class="grid">
@@ -195,6 +202,38 @@ $('records').addEventListener('click',async ev=>{
   }
  }catch(e){status('recordsStatus',e.message)}
 });
+async function loadCashPosition(){
+ status('cashPositionStatus','Calculating from staging records…');
+ $('cashPositionResults').innerHTML='';
+ const {data,error}=await client.rpc('playam_get_cash_position_v1');
+ if(error){status('cashPositionStatus','Could not calculate: '+error.message);return}
+ const d=data||{};
+ const fmt=(v,c='NGN')=>v===null||v===undefined?'Not configured':money(v,c);
+ const positions=Array.isArray(d.currency_positions)?d.currency_positions:[];
+ let html='<p><strong>Cash rewards: '+(d.cash_rewards_enabled?'Enabled in settings':'DISABLED')+'</strong></p>';
+ html+='<p>Reserve target: '+escapeHtml(fmt(d.reserve_target_minor))+' ('+escapeHtml(d.reserve_target_months)+' months)</p>';
+ html+='<p>Essential monthly expense baseline: '+escapeHtml(fmt(d.essential_monthly_expense_minor))+'</p>';
+ html+='<p>Recent verified statements: '+escapeHtml(d.recent_verified_account_statement_count)+' · Older statements: '+escapeHtml(d.stale_verified_account_statement_count)+'</p>';
+ html+='<p class="warning"><strong>New cash rewards authorised: NO</strong></p>';
+ for(const p of positions){
+  html+='<article class="record"><strong>'+escapeHtml(p.currency)+'</strong>'+
+   '<p>Recent verified cash: '+escapeHtml(fmt(p.verified_cash_last_7_days_minor,p.currency))+'</p>'+
+   '<p>Creator available liability: '+escapeHtml(fmt(p.creator_available_liability_minor,p.currency))+'</p>'+
+   '<p>Creator pending liability: '+escapeHtml(fmt(p.creator_pending_liability_minor,p.currency))+'</p>'+
+   '<p>Creator reserved withdrawal liability: '+escapeHtml(fmt(p.creator_reserved_withdrawal_liability_minor,p.currency))+'</p>'+
+   '<p>Unpaid verified reward commitments: '+escapeHtml(fmt(p.unpaid_verified_reward_commitments_minor,p.currency))+'</p>'+
+   '<p>Cash after creator and reward liabilities: '+escapeHtml(fmt(p.cash_after_creator_and_reward_liabilities_minor,p.currency))+'</p>'+
+   '<p>Three-month reserve: '+escapeHtml(fmt(p.three_month_reserve_target_minor,p.currency))+'</p>'+
+   '<p>Estimated cash after reserve: '+escapeHtml(fmt(p.estimated_discretionary_cash_after_reserve_minor,p.currency))+'</p>'+
+   '<p>Recent statement for this currency: '+(p.statement_is_recent?'Yes':'No')+'</p></article>';
+ }
+ html+='<h3>Reasons new cash rewards remain blocked</h3><ul>';
+ for(const reason of (d.blocking_reasons||[]))html+='<li>'+escapeHtml(reason)+'</li>';
+ html+='</ul><p class="small">This is a provisional estimate, not a bank balance guarantee. It cannot confirm every account is included, and must not be used to activate rewards or authorise payouts.</p>';
+ $('cashPositionResults').innerHTML=html;
+ status('cashPositionStatus','Calculation complete · '+new Date(d.generated_at).toLocaleString());
+}
+$('cashPosition').onclick=loadCashPosition;
 $('refresh').onclick=loadRecords;$('load').onclick=loadRecords;$('filter').onchange=loadRecords;
 client.auth.onAuthStateChange(()=>{setTimeout(()=>refreshSession().catch(e=>status('globalStatus',e.message)),0)});
 refreshSession().catch(e=>status('loginStatus',e.message));
