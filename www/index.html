@@ -396,7 +396,7 @@ let soloQuestions=[],soloAnswers=[],soloQuestionIndex=0,soloDifficulty="starter"
 
 const screenIds=["homeScreen","findPlayerScreen","settingsScreen","soloSetupScreen","soloGameScreen","soloResultsScreen","createScreen","joinScreen","lobbyScreen","gameScreen","resultsScreen"];
 
-function showMessage(t){document.getElementById("message").innerText=t||""}
+function showMessage(t){const authScreen=document.getElementById("authScreen");const authVisible=authScreen&&!authScreen.classList.contains("hidden");const target=document.getElementById(authVisible?"authMessage":"message");if(target)target.innerText=t||""}
 function hideScreens(){screenIds.forEach(id=>document.getElementById(id).classList.add("hidden"))}
 function setNav(id){document.querySelectorAll(".navbtn").forEach(b=>b.classList.remove("active"));if(id)document.getElementById(id)?.classList.add("active")}
 function showScreen(id,nav=""){hideScreens();document.getElementById(id).classList.remove("hidden");setNav(nav);showMessage("")}
