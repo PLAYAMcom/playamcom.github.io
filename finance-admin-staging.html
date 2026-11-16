@@ -29,6 +29,30 @@
 <section id="app" class="hidden">
 <div class="panel"><div class="row"><strong id="identity">Finance administrator</strong><span class="small">Staging environment</span><button id="refresh" class="secondary">Refresh records</button><button id="logout" class="secondary">Sign out</button></div><div id="globalStatus" class="status" role="status"></div></div>
 <div class="panel">
+<h2>Income and expense ledger</h2>
+<p class="small">Append-only finance records. Enter actual amounts in naira or the selected currency; the system stores minor units. Record income and expenses separately. Correct mistakes with a clearly described reversing entry, not by editing old records.</p>
+<div class="grid">
+<div><label>Entry type</label><select id="ledgerType"><option value="expense">Expense</option><option value="income">Income</option></select></div>
+<div><label>Category</label><select id="ledgerCategory">
+<option value="payment_processing_fees">Payment processing fees</option><option value="creator_withdrawal_fees">Creator withdrawal fees</option><option value="refunds_chargebacks">Refunds / chargebacks</option><option value="fraud_losses">Fraud losses</option><option value="hosting_database_storage_bandwidth">Hosting / database / storage / bandwidth</option><option value="email_sms">Email / SMS</option><option value="security_monitoring">Security / monitoring</option><option value="customer_support">Customer support</option><option value="moderation">Moderation</option><option value="marketing">Marketing</option><option value="staffing_administration">Staffing / administration</option><option value="legal_accounting">Legal / accounting</option><option value="taxes">Taxes</option><option value="other_expense">Other expense</option><option value="live_platform_share">LIVE platform share</option><option value="advertising_revenue">Advertising revenue</option><option value="sponsorship_revenue">Sponsorship revenue</option><option value="marketplace_revenue">Marketplace revenue</option><option value="other_income">Other income</option>
+</select></div>
+<div><label>Amount</label><input id="ledgerAmount" type="number" min="0.01" step="0.01"></div>
+<div><label>Currency</label><select id="ledgerCurrency"><option value="NGN">NGN</option><option value="USD">USD</option><option value="GBP">GBP</option></select></div>
+<div><label>Date incurred / received</label><input id="ledgerDate" type="date"></div>
+<div><label>Invoice / transaction reference (optional)</label><input id="ledgerRef" maxlength="160"></div>
+</div>
+<label>Description</label><textarea id="ledgerDescription" maxlength="500" placeholder="What was paid or received? Include enough detail for later review."></textarea>
+<button id="saveLedger">Save finance entry</button><div id="ledgerStatus" class="status" role="status"></div>
+<hr>
+<h3>Ledger summary</h3>
+<div class="grid">
+<div><label>From</label><input id="ledgerFrom" type="date"></div>
+<div><label>To</label><input id="ledgerTo" type="date"></div>
+</div>
+<button id="loadLedger" class="secondary">Load summary and entries</button>
+<div id="ledgerSummary"></div><div id="ledgerRows"></div>
+</div>
+<div class="panel">
 <h2>Cash position & three-month reserve</h2>
 <p class="small">Read-only calculation. Only the latest verified statement per recorded account is counted, and only when dated within 7 days. Creator available, pending and reserved earnings and unpaid verified reward commitments are deducted. This report is not authority to promise or pay rewards.</p>
 <button id="cashPosition">Calculate cash position</button>
@@ -202,6 +226,55 @@ $('records').addEventListener('click',async ev=>{
   }
  }catch(e){status('recordsStatus',e.message)}
 });
+const incomeCategories=['live_platform_share','advertising_revenue','sponsorship_revenue','marketplace_revenue','other_income'];
+function syncLedgerCategories(){
+ const type=$('ledgerType').value;
+ for(const opt of $('ledgerCategory').options)opt.hidden=type==='income'?!incomeCategories.includes(opt.value):incomeCategories.includes(opt.value);
+ const first=Array.from($('ledgerCategory').options).find(o=>!o.hidden);
+ if(first&&!incomeCategories.includes($('ledgerCategory').value)&&type==='income')$('ledgerCategory').value=first.value;
+ if(first&&incomeCategories.includes($('ledgerCategory').value)&&type==='expense')$('ledgerCategory').value=first.value;
+}
+$('ledgerType').onchange=syncLedgerCategories;
+async function saveLedgerEntry(){
+ try{
+  const amount=minorFromInput($('ledgerAmount').value);
+  if(amount<=0)throw new Error('Amount must be greater than zero.');
+  const type=$('ledgerType').value,category=$('ledgerCategory').value;
+  if(!incomeCategories.includes(category)&&type==='income')throw new Error('Choose an income category.');
+  if(incomeCategories.includes(category)&&type==='expense')throw new Error('Choose an expense category.');
+  const description=$('ledgerDescription').value.trim();
+  if(description.length<3)throw new Error('Add a clear description.');
+  const date=$('ledgerDate').value||new Date().toISOString().slice(0,10);
+  const key='fin-'+crypto.randomUUID();
+  status('ledgerStatus','Saving finance entry…');
+  const {data,error}=await client.rpc('playam_record_financial_entry_v1',{
+   p_entry_type:type,p_category:category,p_amount_minor:amount,p_currency:$('ledgerCurrency').value,
+   p_occurred_on:date,p_description:description,p_external_reference:$('ledgerRef').value.trim()||null,
+   p_idempotency_key:key
+  });
+  if(error)throw error;
+  status('ledgerStatus','Saved immutable finance entry: '+data);
+  $('ledgerAmount').value='';$('ledgerDescription').value='';$('ledgerRef').value='';
+  await loadLedgerReport();
+ }catch(e){status('ledgerStatus',e.message)}
+}
+async function loadLedgerReport(){
+ const from=$('ledgerFrom').value||null,to=$('ledgerTo').value||null;
+ status('ledgerStatus','Loading ledger…');
+ const [summary,entries]=await Promise.all([
+  client.rpc('playam_get_financial_summary_v1',{p_from:from||'2000-01-01',p_to:to||new Date().toISOString().slice(0,10)}),
+  client.rpc('playam_list_financial_entries_v1',{p_from:from,p_to:to,p_entry_type:'all',p_limit:100})
+ ]);
+ if(summary.error)throw summary.error;if(entries.error)throw entries.error;
+ const totals=summary.data||[];
+ $('ledgerSummary').innerHTML=totals.length?totals.map(x=>'<article class="record"><strong>'+escapeHtml(x.currency)+'</strong><p>Income: '+escapeHtml(money(x.total_income_minor,x.currency))+'</p><p>Expenses: '+escapeHtml(money(x.total_expenses_minor,x.currency))+'</p><p>Net operating result: '+escapeHtml(money(x.net_operating_minor,x.currency))+'</p></article>').join(''):'<p class="small">No income or expense entries in this period.</p>';
+ const rows=entries.data||[];
+ $('ledgerRows').innerHTML='<h3>Latest entries (up to 100)</h3>'+rows.map(x=>'<article class="record"><strong>'+escapeHtml(x.entry_type.toUpperCase())+' · '+escapeHtml(x.category)+'</strong><p>'+escapeHtml(x.occurred_on)+' · '+escapeHtml(money(x.amount_minor,x.currency))+'</p><p>'+escapeHtml(x.description)+'</p><p class="small">'+escapeHtml(x.external_reference||'No external reference')+' · '+escapeHtml(x.entry_id)+'</p></article>').join('');
+ status('ledgerStatus','Loaded '+rows.length+' ledger entries.');
+}
+$('saveLedger').onclick=saveLedgerEntry;
+$('loadLedger').onclick=()=>loadLedgerReport().catch(e=>status('ledgerStatus',e.message));
+syncLedgerCategories();
 async function loadCashPosition(){
  status('cashPositionStatus','Calculating from staging records…');
  $('cashPositionResults').innerHTML='';
