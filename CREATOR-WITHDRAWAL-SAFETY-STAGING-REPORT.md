@@ -512,3 +512,53 @@ Reviewed the staging wallet trigger, fee-quote confirmation RPC, creator cancell
 ### Outcome
 
 Read-only audit only. No database schema, wallet balances, ledger rows, Edge Functions, production resources, or Friendship Court code changed in this batch.
+
+
+
+## Batch 39 — Withdrawal integration permissions and webhook coverage audit (read-only)
+
+Reviewed the current staging Supabase project `pwnjrdedeoxbmtfywhkk`, deployed Edge Function source, withdrawal RPC definitions and Git feature-branch report.
+
+### Verified staging Edge Function state
+
+- `paystack-creator-payout` is deployed and active (version 2). It calls `playam_prepare_creator_withdrawal_transfer_v1` before contacting Paystack, validates NGN gross/net/fee arithmetic, and sends the net amount only if the preparation RPC returns one valid prepared transfer.
+- The database preparation RPC still unconditionally raises the staging-disabled exception. Therefore the active Edge Function cannot reach the Paystack transfer request through the current database path; it returns a not-ready response and no transfer is initiated.
+- `paystack-webhook` is deployed and active (version 8). It validates the HMAC-SHA512 signature, verifies transfer details directly with Paystack, checks the approved net amount/reference/currency, records the actual transfer fee, and then invokes the paid settlement RPC. Failure handling verifies the provider's failed status before releasing the gross reserve.
+- For `transfer.reversed`, the webhook calls the five-argument transfer-reversal recorder. That recorder creates a recovery-review liability only; it does not debit the creator wallet.
+- The webhook's normal success path calls the provider-fee-verified recorder. The deployed webhook source does not call the provider-fee-reversed event path. Automatic ingestion of a separate provider fee-reversal event is therefore not demonstrated and needs a defined provider event/reconciliation source before it can be claimed as automated.
+
+### Fee and reversal accounting observations
+
+- The fee quote function currently blocks both no-solution fee-tier transition intervals and keeps stamp duty separate with payer `pending_policy`.
+- The fee recorder records verified actual fee, refunds a lower-than-quoted fee difference to the creator, records a platform overquote expense through the fee-cost trigger, and supports separately recorded provider-fee reversals.
+- The transfer-reversal queue and recorder are present, but no recovery-resolution/write-off mutation is implemented or approved.
+- The creator wallet trigger still permits trusted `admin_adjustment` entries to affect available balance. This is not an acceptable general-purpose reversal recovery mechanism without a dedicated policy-enforcing workflow.
+
+### Exact permission checks
+
+- Quote creation and quote confirmation: `anon=false`, `authenticated=true`, `service_role=false`; both are owner-scoped SECURITY DEFINER RPCs with empty search_path.
+- Transfer preparation and fee recording: `anon=false`, `authenticated=false`, `service_role=true`.
+- Both transfer-reversal recorder overloads: `anon=false`, `authenticated=false`, `service_role=true`.
+- Administrator reversal and audit readers: `anon=false`, `authenticated=true`, `service_role=false`; each reader independently checks aal2 and active finance/super-admin role.
+- Withdrawal quote, fee-event, fee-cost, reversal and audit tables all have RLS enabled; direct SELECT is denied to anon and authenticated roles and available to service_role.
+- Current row counts are zero for fee quotes, fee events, platform fee-cost events, transfer reversals and withdrawal audit events. Thus no real or synthetic transaction data has been used to prove end-to-end reconciliation.
+
+### Current Supabase advisor snapshot
+
+- Security: 39 RLS-enabled tables without policies (INFO), 63 authenticated-callable SECURITY DEFINER functions (WARN), and leaked-password protection disabled (WARN).
+- Performance: 25 unindexed foreign keys (INFO) and 103 unused indexes (INFO). The unused-index list must not trigger blanket index deletion on a low-traffic staging project.
+- Health: no findings.
+- These are project-wide findings. The 39 no-policy tables include intentionally direct-inaccessible finance tables; the 63 SECURITY DEFINER functions require object-by-object review. No broad permission changes were made.
+
+### Remaining blockers confirmed
+
+1. Stamp-duty payer policy is still unresolved. Affected quote confirmations and payout readiness remain blocked.
+2. Transfer preparation is still disabled in staging. No Paystack sandbox or live transfer can proceed through the current database path.
+3. Separate provider fee-reversal ingestion is not wired in the deployed webhook source.
+4. Transfer reversal recovery policy and dual-control resolution workflow remain unapproved/unimplemented.
+5. Signed-in creator quote/confirmation, two-admin MFA, signed webhook and provider sandbox tests remain outstanding.
+6. No real bank/provider statement has been reconciled; dashboard results cannot yet be treated as audited profit or verified available cash.
+
+### Outcome
+
+Read-only inspection and permission/advisor checks only. No database migration, Edge Function deployment, GitHub application code change, withdrawal quote, wallet ledger entry, reversal record or financial event was created. No Paystack transfer was attempted. Production and Friendship Court remain untouched; creator cash rewards and payouts remain disabled.
