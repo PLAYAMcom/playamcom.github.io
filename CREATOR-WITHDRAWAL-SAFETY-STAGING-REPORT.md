@@ -272,3 +272,38 @@ Added a stale transfer reconciliation panel:
 - The current payout-preparation RPC remains deliberately blocked. The preflight and stale queue are administrative diagnostics, not permission to pay.
 - No browser session, live Paystack sandbox transfer or end-to-end duplicate webhook test was performed.
 - No production changes.
+
+
+## Batch 31 — Paystack transfer reversal liability accounting
+
+### Database
+
+- Added private `playam_creator_withdrawal_reversals` table, service-role-only, with unique provider/reference and idempotency constraints.
+- A reversal record links to the original paid withdrawal, creator, exact Paystack reference, verified reversed net amount, optional provider fee, and recovery status.
+- Replaced the reversal recorder so it accepts only a previously paid NGN Paystack withdrawal and requires the verified reversed amount to equal the original net transfer amount.
+- Duplicate reversal events for the same Paystack reference resolve to the existing record; conflicting request/amount data is rejected.
+- Added MFA finance-admin-only reversal queue RPC. It lists outstanding recovery liabilities without changing creator balances.
+
+### Paystack webhook
+
+- Deployed staging `paystack-webhook` version 8.
+- On `transfer.reversed`, it still verifies the transfer directly with Paystack and requires provider status `reversed`.
+- It passes the verified transfer amount and optional provider fee into the service-role-only reversal recorder.
+- The webhook records the reversal liability and returns the record status; it does not debit the creator wallet or automatically net the reversal against future earnings.
+
+### Administrator page
+
+- Added a reversal recovery queue to `creator-withdrawal-admin-staging.html`.
+- Queue is protected by the existing authenticator MFA and finance-role gate.
+- Shows creator, original withdrawal, Paystack reference, reversed amount, fee when supplied and recovery status.
+- Explicitly warns that this view does not debit creator funds, freeze accounts, write off amounts or offset future earnings.
+
+### Verification and limitations
+
+- Source checks confirm webhook version 8 verifies reversed provider status and calls the reversal recorder with the verified net amount.
+- Admin page source check confirms MFA remains in place and reversal queue is connected.
+- Reversal table currently contains zero records; no synthetic or real financial records were inserted.
+- No Paystack transfer or reversal was executed.
+- No actual signed-in MFA admin session or browser runtime test was performed.
+- Creator recovery, write-off, future-earnings offset and accounting treatment remain deliberately unimplemented pending an explicit fair recovery policy and legal/accounting review.
+- All changes are staging project/feature-branch only; production untouched.
