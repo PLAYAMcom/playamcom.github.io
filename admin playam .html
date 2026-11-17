@@ -362,7 +362,7 @@ $('verifyMfa').onclick=async()=>{
   $('mfaStatus').textContent='No active MFA challenge. Please sign in again.';
   return;
  }
- if(!/^\\d{6}$/.test(code)){
+ if(!/^\d{6}$/.test(code)){
   $('mfaStatus').textContent='Enter the six-digit authenticator code.';
   return;
  }
