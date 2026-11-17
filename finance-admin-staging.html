@@ -8,7 +8,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#0b0714;color:#f7f2ff;font:15px system-ui,-apple-system,Segoe UI,sans-serif}main{max-width:1050px;margin:auto;padding:20px}.banner{background:#5a2a18;border:1px solid #b86b32;padding:12px;border-radius:10px;font-weight:800}.panel{background:#171022;border:1px solid #352344;border-radius:14px;padding:18px;margin:16px 0}h1{font-size:clamp(24px,5vw,36px)}h2{font-size:19px}.muted{color:#b9adc5}label{display:block;margin-top:10px}input,select,textarea,button{font:inherit;border-radius:9px;padding:12px;border:1px solid #59436b}input,select,textarea{width:100%;margin:6px 0 12px;background:#0e0a16;color:white}textarea{min-height:70px}button{background:#a83de0;color:white;border:0;font-weight:700;cursor:pointer;margin:3px}button.secondary{background:#352344}button:disabled{opacity:.5;cursor:not-allowed}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}.status{white-space:pre-wrap;color:#ffc5d5;margin-top:10px}.record{border:1px solid #49345b;border-radius:12px;padding:14px;margin:12px 0;overflow-wrap:anywhere}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.small{font-size:13px;color:#c9b9d6}.hidden{display:none!important}.warning{color:#ffd18a}@media(max-width:540px){main{padding:12px}}
-</style>
+\n#adManagement h3{margin:22px 0 10px;color:#e7a8ff;font-size:16px}#adManagement .record{background:#100b19;border:1px solid #443052;border-radius:12px;padding:14px;margin:10px 0;overflow-wrap:anywhere}#adManagement .record button{margin-top:8px}#adManagement .metric{background:#100b19;border:1px solid #443052;border-radius:12px;padding:12px}#adManagement .metric strong{display:block;font-size:21px;margin-top:5px}#adManagement .metric small{color:#b9adc5}#adManagement .status{min-height:20px}\n</style>
 </head>
 <body><main>
 <div class="banner">PLAYAM STAGING ONLY — TEST ACCOUNTS ONLY — NOT PRODUCTION</div>
@@ -28,6 +28,46 @@
 </section>
 <section id="app" class="hidden">
 <div class="panel"><div class="row"><strong id="identity">Finance administrator</strong><span class="small">Staging environment</span><button id="refresh" class="secondary">Refresh records</button><button id="logout" class="secondary">Sign out</button></div><div id="globalStatus" class="status" role="status"></div></div>
+
+<div class="panel" id="adManagement">
+<h2>Advertising management — Staging</h2>
+<p class="small">Protected advertising workspace. Advertisers and campaigns require review; direct campaigns remain separate from ad-network campaigns. Campaign creatives are not delivered until approved and within their scheduled dates. This dashboard does not activate Production advertising.</p>
+<div class="row"><button id="adRefresh" class="secondary">Refresh advertising</button><span id="adStatus" class="status" role="status"></span></div>
+<div id="adMetrics" class="grid"></div>
+<h3>Verified advertising receipts by channel</h3><div id="adRevenue" class="grid"></div>
+<h3>Register advertiser</h3>
+<div class="grid">
+<div><label>Legal business name</label><input id="adLegalName" maxlength="200"></div>
+<div><label>Display name (optional)</label><input id="adDisplayName" maxlength="200"></div>
+<div><label>Contact email</label><input id="adContactEmail" type="email" maxlength="254"></div>
+<div><label>Verification reference</label><input id="adVerificationRef" maxlength="200"></div>
+</div><button id="adCreateAdvertiser">Submit advertiser for review</button>
+<div id="adAdvertisers"></div>
+<h3>Create campaign</h3>
+<div class="grid">
+<div><label>Approved advertiser</label><select id="adCampaignAdvertiser"><option value="">Choose advertiser</option></select></div>
+<div><label>Campaign name</label><input id="adCampaignName" maxlength="200"></div>
+<div><label>Revenue channel</label><select id="adChannel"><option value="direct">Direct advertiser</option><option value="ad_network">Automatic ad network</option></select></div>
+<div><label>Budget</label><input id="adBudget" type="number" min="0" step="0.01" value="0"></div>
+<div><label>Currency</label><select id="adCurrency"><option value="NGN">NGN</option><option value="USD">USD</option><option value="GBP">GBP</option></select></div>
+<div><label>Start date and time</label><input id="adStarts" type="datetime-local"></div>
+<div><label>End date and time</label><input id="adEnds" type="datetime-local"></div>
+<div><label>External campaign reference (optional)</label><input id="adExternalRef" maxlength="200"></div>
+</div><button id="adCreateCampaign">Create campaign for review</button>
+<h3>Submit / update campaign creative</h3>
+<div class="grid">
+<div><label>Campaign</label><select id="adCreativeCampaign"><option value="">Choose campaign</option></select></div>
+<div><label>Headline (3–80 characters)</label><input id="adHeadline" maxlength="80"></div>
+<div><label>Short description (max 180)</label><input id="adBody" maxlength="180"></div>
+<div><label>Image URL (HTTPS, optional)</label><input id="adImageUrl" type="url"></div>
+<div><label>Destination URL (HTTPS)</label><input id="adClickUrl" type="url" required></div>
+</div><button id="adSaveCreative">Submit creative for approval</button>
+<h3>Advertisers</h3><div id="adAdvertiserRows"></div>
+<h3>Campaigns and delivery</h3><div id="adCampaignRows"></div>
+<h3>Pending advertising cash verification</h3>
+<p class="small">A different finance administrator must verify a cash event from the person who recorded it. Only verified receipts are counted as revenue.</p>
+<div id="adCashRows"></div>
+</div>
 <div class="panel">
 <h2>Income and expense ledger</h2>
 <p class="small">Append-only finance records. Enter actual amounts in naira or the selected currency; the system stores minor units. Record income and expenses separately. Correct mistakes with a clearly described reversing entry, not by editing old records.</p>
@@ -165,7 +205,120 @@ $('verifyMfa').onclick=async()=>{
  try{await refreshSession()}catch(e){status('mfaStatus',e.message)}
 };
 $('logout').onclick=async()=>{await client.auth.signOut();currentUser=null;show('login',true);show('mfa',false);show('app',false)};
-async function loadRecords(){
+
+let adDashboardCache=null;
+function adMoney(v,c='NGN'){return money(Number(v||0),c)}
+function adOption(label,value){return '<option value="'+escapeHtml(value)+'">'+escapeHtml(label)+'</option>'}
+async function loadAdDashboard(){
+ status('adStatus','Loading protected advertising records…');
+ const {data,error}=await client.rpc('playam_ad_admin_dashboard_v1');
+ if(error)throw error;
+ adDashboardCache=data||{};
+ const overview=adDashboardCache.overview||{};
+ const advertisers=adDashboardCache.advertisers||[];
+ const campaigns=adDashboardCache.campaigns||[];
+ const metrics=[
+  ['Advertisers awaiting review',overview.advertisers?.pending||0],
+  ['Approved advertisers',overview.advertisers?.approved||0],
+  ['Campaigns awaiting review',overview.campaigns?.pending_review||0],
+  ['Scheduled campaigns',overview.campaigns?.scheduled||0],
+  ['Active campaigns',overview.campaigns?.active||0],
+  ['Unverified ad receipts',overview.unverified_ad_cash_events||0]
+ ];
+ $('adMetrics').innerHTML=metrics.map(x=>'<div class="metric"><small>'+escapeHtml(x[0])+'</small><strong>'+escapeHtml(x[1])+'</strong></div>').join('');
+ const revenues=adDashboardCache.revenue_by_channel||[];
+ $('adRevenue').innerHTML=['direct','ad_network'].map(channel=>{
+  const rows=revenues.filter(x=>x.channel===channel);
+  return '<div class="metric"><small>'+ (channel==='direct'?'Direct advertising':'Automatic ad networks')+'</small><strong>'+
+   (rows.length?rows.map(x=>escapeHtml(adMoney(x.verified_net_minor,x.currency))+' '+escapeHtml(x.currency)).join('<br>'):'No verified revenue')+'</strong></div>';
+ }).join('');
+ $('adAdvertisers').innerHTML='<p class="small">Advertisers are added below and remain pending until reviewed.</p>';
+ $('adAdvertiserRows').innerHTML=advertisers.length?advertisers.map(a=>'<article class="record"><strong>'+escapeHtml(a.display_name||a.legal_name)+'</strong><p>'+escapeHtml(a.legal_name)+' · '+escapeHtml(a.contact_email||'No email')+'</p><p>Status: <strong>'+escapeHtml(a.status)+'</strong> · Reference: '+escapeHtml(a.verification_reference||'Not supplied')+'</p><small>'+escapeHtml(a.id)+'</small>'+
+  (['pending_review','approved','suspended'].includes(a.status)?'<div><button data-advertiser="'+escapeHtml(a.id)+'" data-decision="approved">Approve</button><button class="secondary" data-advertiser="'+escapeHtml(a.id)+'" data-decision="rejected">Reject</button><button class="secondary" data-advertiser="'+escapeHtml(a.id)+'" data-decision="suspended">Suspend</button></div>':'')+'</article>').join(''):'<p class="small">No advertisers registered.</p>';
+ const approved=advertisers.filter(a=>a.status==='approved');
+ $('adCampaignAdvertiser').innerHTML='<option value="">Choose advertiser</option>'+approved.map(a=>adOption(a.display_name||a.legal_name,a.id)).join('');
+ $('adCreativeCampaign').innerHTML='<option value="">Choose campaign</option>'+campaigns.map(c=>adOption(c.campaign_name+' · '+c.status,c.id)).join('');
+ $('adCampaignRows').innerHTML=campaigns.length?campaigns.map(c=>'<article class="record"><strong>'+escapeHtml(c.campaign_name)+'</strong><p>'+escapeHtml(c.advertiser_name)+' · '+(c.channel==='direct'?'Direct advertiser':'Ad network')+'</p><p>Status: '+escapeHtml(c.status)+' · Creative: '+escapeHtml(c.creative_review_status)+' · Placement: '+escapeHtml(c.placement_key)+'</p><p>Budget: '+escapeHtml(adMoney(c.budget_minor,c.currency))+' · Verified net receipts: '+escapeHtml(adMoney(c.verified_receipts_minor,c.currency))+'</p><p>Impressions: '+escapeHtml(c.impressions)+' · Clicks: '+escapeHtml(c.clicks)+'</p><p>Schedule: '+escapeHtml(new Date(c.starts_at).toLocaleString())+' – '+escapeHtml(new Date(c.ends_at).toLocaleString())+'</p><p>Creative: '+escapeHtml(c.creative_headline||'Not submitted')+'</p><small>'+escapeHtml(c.id)+'</small>'+
+  (c.status==='pending_review'?'<div><button data-campaign="'+escapeHtml(c.id)+'" data-decision="approved">Approve creative</button><button class="secondary" data-campaign="'+escapeHtml(c.id)+'" data-decision="changes_requested">Request changes</button><button class="secondary" data-campaign="'+escapeHtml(c.id)+'" data-decision="rejected">Reject</button></div>':'')+'</article>').join(''):'<p class="small">No campaigns created.</p>';
+ const cash=adDashboardCache.pending_cash_events||[];
+ $('adCashRows').innerHTML=cash.length?cash.map(x=>'<article class="record"><strong>'+escapeHtml(x.campaign_name)+' · '+escapeHtml(x.event_type)+'</strong><p>'+escapeHtml(adMoney(x.amount_minor,x.currency))+' · '+escapeHtml(x.currency)+' · '+escapeHtml(x.payment_provider||'Provider not specified')+'</p><p>Reference: '+escapeHtml(x.provider_transaction_ref||'Not supplied')+' · Recorded by '+escapeHtml(x.recorded_by||'Unknown')+'</p><p>'+escapeHtml(x.notes||'No notes')+'</p><div><button data-adcash="'+escapeHtml(x.id)+'" data-decision="verified">Verify receipt</button><button class="secondary" data-adcash="'+escapeHtml(x.id)+'" data-decision="failed">Mark failed</button><button class="secondary" data-adcash="'+escapeHtml(x.id)+'" data-decision="reversed">Mark reversed</button></div></article>').join(''):'<p class="small">No pending ad cash events.</p>';
+ status('adStatus','Advertising records refreshed · '+new Date().toLocaleString());
+}
+$('adRefresh').onclick=()=>loadAdDashboard().catch(e=>status('adStatus',e.message));
+$('adCreateAdvertiser').onclick=async()=>{
+ try{
+  const legal=$('adLegalName').value.trim();if(legal.length<2)throw new Error('Enter the advertiser legal name.');
+  const {data,error}=await client.rpc('playam_ad_create_advertiser_v1',{
+   p_legal_name:legal,p_display_name:$('adDisplayName').value.trim()||null,
+   p_contact_email:$('adContactEmail').value.trim()||null,p_verification_reference:$('adVerificationRef').value.trim()||null
+  });
+  if(error)throw error;
+  status('adStatus','Advertiser submitted for review: '+data);
+  $('adLegalName').value='';$('adDisplayName').value='';$('adContactEmail').value='';$('adVerificationRef').value='';
+  await loadAdDashboard();
+ }catch(e){status('adStatus',e.message)}
+};
+$('adCreateCampaign').onclick=async()=>{
+ try{
+  const advertiser=$('adCampaignAdvertiser').value,name=$('adCampaignName').value.trim();
+  const start=$('adStarts').value,end=$('adEnds').value;
+  if(!advertiser||name.length<2||!start||!end)throw new Error('Complete advertiser, campaign name and dates.');
+  if(new Date(end)<=new Date(start))throw new Error('End date must be after start date.');
+  const amount=minorFromInput($('adBudget').value);
+  const {data,error}=await client.rpc('playam_ad_create_campaign_v1',{
+   p_advertiser_id:advertiser,p_channel:$('adChannel').value,p_campaign_name:name,
+   p_budget_minor:amount,p_starts_at:new Date(start).toISOString(),p_ends_at:new Date(end).toISOString(),
+   p_currency:$('adCurrency').value,p_external_campaign_ref:$('adExternalRef').value.trim()||null
+  });
+  if(error)throw error;
+  status('adStatus','Campaign created in pending review. Add its creative below. Reference: '+data);
+  $('adCampaignName').value='';$('adBudget').value='0';$('adExternalRef').value='';
+  await loadAdDashboard();$('adCreativeCampaign').value=data;
+ }catch(e){status('adStatus',e.message)}
+};
+$('adSaveCreative').onclick=async()=>{
+ try{
+  const id=$('adCreativeCampaign').value;if(!id)throw new Error('Choose a campaign.');
+  const headline=$('adHeadline').value.trim(),click=$('adClickUrl').value.trim();
+  if(headline.length<3||headline.length>80)throw new Error('Headline must be 3–80 characters.');
+  if(!click.startsWith('https://'))throw new Error('Destination must use HTTPS.');
+  const image=$('adImageUrl').value.trim();if(image&&!image.startsWith('https://'))throw new Error('Image URL must use HTTPS.');
+  const {error}=await client.rpc('playam_ad_update_creative_v1',{
+   p_campaign_id:id,p_headline:headline,p_body:$('adBody').value.trim()||null,
+   p_image_url:image||null,p_click_url:click,p_placement_key:'games-below'
+  });
+  if(error)throw error;
+  status('adStatus','Creative submitted for approval. Campaign delivery remains blocked pending review.');
+  $('adHeadline').value='';$('adBody').value='';$('adImageUrl').value='';$('adClickUrl').value='';
+  await loadAdDashboard();
+ }catch(e){status('adStatus',e.message)}
+};
+$('adAdvertiserRows').addEventListener('click',async ev=>{
+ const b=ev.target.closest('[data-advertiser]');if(!b)return;
+ try{
+  const reason=window.prompt('Reason for this advertiser decision (required):');if(!reason?.trim())return;
+  const {error}=await client.rpc('playam_ad_review_advertiser_v1',{p_advertiser_id:b.dataset.advertiser,p_decision:b.dataset.decision,p_reason:reason.trim()});
+  if(error)throw error;status('adStatus','Advertiser decision recorded.');await loadAdDashboard();
+ }catch(e){status('adStatus',e.message)}
+});
+$('adCampaignRows').addEventListener('click',async ev=>{
+ const b=ev.target.closest('[data-campaign]');if(!b)return;
+ try{
+  const reason=window.prompt('Review reason / notes (required):');if(!reason?.trim())return;
+  const {error}=await client.rpc('playam_ad_review_campaign_v1',{p_campaign_id:b.dataset.campaign,p_decision:b.dataset.decision,p_reason:reason.trim()});
+  if(error)throw error;status('adStatus','Campaign review decision recorded.');await loadAdDashboard();
+ }catch(e){status('adStatus',e.message)}
+});
+$('adCashRows').addEventListener('click',async ev=>{
+ const b=ev.target.closest('[data-adcash]');if(!b)return;
+ try{
+  const reason=window.prompt('Verification reason / evidence inspected (required):');if(!reason?.trim())return;
+  if(b.dataset.decision==='verified'&&!window.confirm('Confirm you independently checked the payment evidence and confirmed the money was received?'))return;
+  const {error}=await client.rpc('playam_ad_verify_cash_event_v1',{p_event_id:b.dataset.adcash,p_decision:b.dataset.decision,p_reason:reason.trim()});
+  if(error)throw error;status('adStatus','Advertising cash verification decision recorded.');await loadAdDashboard();
+ }catch(e){status('adStatus',e.message)}
+});
+\nasync function loadRecords(){
  status('recordsStatus','Loading reconciliation records…');$('records').innerHTML='';
  const {data,error}=await client.rpc('playam_list_cash_reconciliations_v1',{p_status:$('filter').value,p_limit:50});
  if(error){status('recordsStatus','Could not load records: '+error.message);return}
