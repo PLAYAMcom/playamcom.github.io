@@ -252,6 +252,7 @@ textarea{line-height:1.5;resize:vertical}
 .video-stage-copy h3{font-size:22px;line-height:1.12;margin:9px 0}
 .video-stage-copy p{font-size:11px;line-height:1.5;color:#e3d8ef;margin:0}
 .video-stage-actions{position:absolute;right:15px;bottom:20px;display:flex;flex-direction:column;gap:17px;font-size:20px}
+.shorts-toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px;align-items:center;margin:12px 0}.shorts-toolbar input{margin:0;min-width:0}.shorts-upload-button{white-space:nowrap;padding:12px 14px}.shorts-status{min-height:20px;color:#c4a5ef;font-size:12px;margin:8px 2px}.shorts-list{display:flex;flex-direction:column;gap:18px;margin:12px 0 28px}.shorts-card{position:relative;width:100%;max-width:520px;margin:0 auto;overflow:hidden;border:1px solid #40345f;border-radius:22px;background:#111020;scroll-snap-align:start}.shorts-card video{display:block;width:100%;max-height:68dvh;min-height:220px;aspect-ratio:9/16;object-fit:contain;background:#05050b}.shorts-card-copy{padding:12px 14px 15px}.shorts-card-creator{font-size:12px;font-weight:900;color:#d5a7ff;margin-bottom:5px}.shorts-card-caption{font-size:13px;line-height:1.45;color:#eee;margin:0;overflow-wrap:anywhere}.shorts-empty{padding:25px 16px;text-align:center;color:#bdb4d2;background:#171528;border:1px dashed #51416f;border-radius:18px;font-size:13px;line-height:1.5}@media(max-width:760px){.shorts-toolbar{grid-template-columns:1fr}.shorts-upload-button{width:100%}.shorts-card{border-radius:18px}.shorts-card video{max-height:62dvh}}
 .feed-feature-note{font-size:10px;line-height:1.45;color:#a9a0c7;margin:4px 2px}
 .live-pill{font-size:11px;color:#ff7999;font-weight:900}
 .feed-live-visual,.feed-community-visual,.feed-earn-visual{flex:1;min-height:250px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:22px;border-radius:24px;background:radial-gradient(circle at 50% 35%,rgba(237,76,189,.2),transparent 48%),linear-gradient(145deg,#211d39,#111326);border:1px solid #40345f;margin:16px 0}
@@ -443,10 +444,12 @@ textarea{line-height:1.5;resize:vertical}
    </section>
 
    <section class="feed-page feed-video-page" id="feedVideos">
-    <div class="feed-page-head"><div><div class="feed-kicker">SCROLL • WATCH • DISCOVER</div><h2>PLAYAM Shorts</h2></div><span class="feed-page-count">02 / 06</span></div>
-    <div class="video-stage"><div class="video-stage-glow"></div><div class="video-play-mark">▶</div><div class="video-stage-label">YOUR VERTICAL VIDEO FEED</div><div class="video-stage-copy"><h3>Discover the PLAYAM community</h3><p>Short videos will appear here in a swipe-up viewing experience.</p></div><div class="video-stage-actions"><span>♡</span><span>◯</span><span>↗</span></div></div>
-    <p class="feed-feature-note">Video upload, playback and creator discovery are not connected in this staging build yet.</p>
-   </section>
+     <div class="feed-page-head"><div><div class="feed-kicker">SCROLL • WATCH • DISCOVER</div><h2>PLAYAM Shorts</h2></div><span class="feed-page-count">02 / 06</span></div>
+     <div class="shorts-toolbar"><input id="playamVideoCaption" type="text" maxlength="220" placeholder="Add a caption (optional)" aria-label="Video caption"><button class="primary shorts-upload-button" type="button" onclick="document.getElementById('playamVideoFile').click()">＋ UPLOAD VIDEO</button><input id="playamVideoFile" type="file" accept="video/mp4,video/webm,video/quicktime" hidden onchange="uploadPlayamVideo(event)"></div>
+     <p id="playamVideoStatus" class="shorts-status" role="status" aria-live="polite">Choose an MP4, WebM or MOV video. Maximum size: 100 MB.</p>
+     <div id="playamShortsList" class="shorts-list" aria-live="polite"><div class="shorts-empty">Loading PLAYAM Shorts…</div></div>
+     <p class="feed-feature-note">Staging preview: signed-in players can upload videos and watch published clips. Please report any playback issue.</p>
+    </section>
 
 
    <section class="feed-page feed-community-page" id="feedMessages">
@@ -731,7 +734,45 @@ function goHomeSection(id){
  if(document.getElementById("homeScreen").classList.contains("hidden"))showHome();
  requestAnimationFrame(()=>target.scrollIntoView({behavior:"smooth",block:"start"}));
  document.querySelectorAll(".mobile-tab").forEach(b=>b.classList.toggle("active",b.getAttribute("onclick")?.includes("'"+id+"'")));
+ if(id==="feedVideos")loadPlayamVideos();
 }
+
+/* PLAYAM SHORTS — STAGING MVP */
+let playamVideosLoading=false,playamVideoLoadSequence=0;
+function setPlayamVideoStatus(message,isError=false){const el=document.getElementById("playamVideoStatus");if(el){el.textContent=message||"";el.style.color=isError?"#ff9bb8":"#c4a5ef"}}
+async function uploadPlayamVideo(event){
+ const input=event?.target,file=input?.files?.[0];if(!file)return;
+ if(!["video/mp4","video/webm","video/quicktime"].includes(file.type)){setPlayamVideoStatus("Please choose an MP4, WebM or MOV video.",true);input.value="";return}
+ if(file.size>100*1024*1024){setPlayamVideoStatus("This video is larger than the 100 MB staging limit.",true);input.value="";return}
+ const {data:{user},error:userError}=await supabaseClient.auth.getUser();if(userError||!user){setPlayamVideoStatus("Please sign in before uploading a video.",true);input.value="";return}
+ const caption=document.getElementById("playamVideoCaption")?.value.trim()||"",ext=file.type==="video/webm"?"webm":file.type==="video/quicktime"?"mov":"mp4";
+ const objectName=(globalThis.crypto?.randomUUID?.()||("v"+Date.now().toString(36)+Math.random().toString(36).slice(2)))+"."+ext,storagePath=user.id+"/"+objectName,meta=user.user_metadata||{};
+ let creatorName=String(meta.full_name||meta.name||"").trim();if(!creatorName)creatorName=(user.email||"PLAYAM Player").split("@")[0];creatorName=creatorName.slice(0,60)||"PLAYAM Player";
+ const button=document.querySelector(".shorts-upload-button");if(button)button.disabled=true;setPlayamVideoStatus("Uploading your video securely…");
+ try{
+  const {error:upErr}=await supabaseClient.storage.from("playam-videos-staging").upload(storagePath,file,{cacheControl:"3600",upsert:false,contentType:file.type});if(upErr)throw upErr;
+  const {error:dbErr}=await supabaseClient.from("playam_videos").insert({owner_id:user.id,storage_path:storagePath,caption,creator_name:creatorName,status:"published"});
+  if(dbErr){await supabaseClient.storage.from("playam-videos-staging").remove([storagePath]);throw dbErr}
+  document.getElementById("playamVideoCaption").value="";input.value="";setPlayamVideoStatus("Upload complete. Your video is now in PLAYAM Shorts.");await loadPlayamVideos();
+ }catch(e){console.error("PLAYAM Shorts upload failed",e);setPlayamVideoStatus(e?.message||"Upload failed. Please try again.",true)}
+ finally{if(button)button.disabled=false}
+}
+async function loadPlayamVideos(){
+ if(playamVideosLoading)return;const list=document.getElementById("playamShortsList");if(!list)return;
+ const requestId=++playamVideoLoadSequence;playamVideosLoading=true;list.innerHTML='<div class="shorts-empty">Loading PLAYAM Shorts…</div>';
+ try{
+  const {data:rows,error}=await supabaseClient.from("playam_videos").select("id,owner_id,storage_path,caption,creator_name,created_at").eq("status","published").order("created_at",{ascending:false}).limit(30);if(error)throw error;if(requestId!==playamVideoLoadSequence)return;
+  if(!rows?.length){list.innerHTML='<div class="shorts-empty">No videos yet. Be the first to share a PLAYAM moment.</div>';return}list.replaceChildren();
+  for(const row of rows){
+   const {data:signed,error:sErr}=await supabaseClient.storage.from("playam-videos-staging").createSignedUrl(row.storage_path,3600);if(requestId!==playamVideoLoadSequence)return;if(sErr||!signed?.signedUrl)continue;
+   const card=document.createElement("article");card.className="shorts-card";const video=document.createElement("video");video.controls=true;video.playsInline=true;video.preload="metadata";video.setAttribute("playsinline","");video.setAttribute("webkit-playsinline","");video.src=signed.signedUrl;video.addEventListener("error",()=>setPlayamVideoStatus("A video could not be played. Check the file format and try refreshing.",true));
+   const copy=document.createElement("div");copy.className="shorts-card-copy";const creator=document.createElement("div");creator.className="shorts-card-creator";creator.textContent=row.creator_name||"PLAYAM Player";const captionEl=document.createElement("p");captionEl.className="shorts-card-caption";captionEl.textContent=row.caption||"";copy.append(creator,captionEl);card.append(video,copy);list.append(card);
+  }
+  if(!list.children.length)list.innerHTML='<div class="shorts-empty">Videos are listed, but none could be prepared for playback. Please refresh and try again.</div>';
+ }catch(e){console.error("PLAYAM Shorts feed failed",e);list.innerHTML='<div class="shorts-empty">PLAYAM Shorts could not load. Please refresh and try again.</div>';setPlayamVideoStatus(e?.message||"Unable to load videos.",true)}
+ finally{playamVideosLoading=false}
+}
+
 function showCreateRoomForGame(gameKey){
  const select=document.getElementById("game");
  if(!select||![...select.options].some(o=>o.value===gameKey)){showMessage("That game is not available in this staging build yet.");return}
