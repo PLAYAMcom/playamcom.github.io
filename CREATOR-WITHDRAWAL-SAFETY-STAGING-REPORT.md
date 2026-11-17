@@ -480,3 +480,35 @@ Updated `finance-admin-staging.html` on branch `codex/playam-creator-withdrawal-
 Verification: migration succeeded; function definition re-read; execute privileges verified (`anon=false`, `authenticated=true`, with MFA and finance-role checks enforced inside the function). Dashboard change committed. No actual fee events or ledger records were created, so there is no real expense amount to report yet. No signed-in MFA browser run or rendered dashboard test was performed.
 
 Remaining accounting caution: finance administrators must not manually duplicate the same Paystack overquote expense in `playam_financial_entries`; the automatic fee-cost subledger is now included in the financial summary. Other provider transfer fees at or below the creator's accepted quote are not automatically booked as PLAYAM expense under this specific subledger. Stamp duty payer remains pending policy. Creator payouts remain disabled. No production or Friendship Court changes.
+
+
+## Batch 38 — Creator wallet ledger lifecycle audit (read-only)
+
+Reviewed the staging wallet trigger, fee-quote confirmation RPC, creator cancellation, administrator rejection/approval, payout failure/success settlement, fee refunds/reversals, table grants, and RLS on project `pwnjrdedeoxbmtfywhkk`.
+
+### Lifecycle findings
+
+- Fee quote confirmation locks the creator-owned quote and eligible destination, locks the NGN wallet row, checks available funds, creates the pending withdrawal request, writes a gross-amount reserve ledger entry, and marks the quote accepted in the same transaction. The trigger moves gross amount from available to reserved.
+- Creator cancellation is restricted to the request owner, pending status, and before first administrator approval. It marks the request cancelled and releases the exact gross reserve.
+- Administrator rejection requires aal2 and an active finance/super-admin role, a different actor from the creator, and a pending/approved request. It marks the request rejected and releases the exact gross reserve.
+- Verified payout failure changes processing to failed and releases the gross reserve. Repeated failure webhook delivery is a no-op once failed.
+- Verified payout success checks the request/provider reference, fee quote arithmetic, actual fee reconciliation and stamp-duty policy, then moves the gross reserve to withdrawn. The Paystack transfer itself is intended to be the net amount; creator bears only the accepted fee while PLAYAM absorbs any provider overquote recorded separately.
+- A lower-than-quoted verified provider fee refunds the difference through an idempotent ledger adjustment. Provider fee reversals refund only the incremental portion the creator actually bore, after first offsetting any PLAYAM-absorbed overquote.
+- Legacy generic withdrawal and withdrawal-reversal transaction types are rejected by the wallet trigger.
+
+### Access findings
+
+- Wallet balances and withdrawal requests: RLS enabled; authenticated users can read but cannot insert; anonymous users cannot read or insert.
+- Earnings transaction ledger: RLS enabled; authenticated and anonymous users cannot read or insert; service role can read/insert.
+- Balance changes occur through the security-definer ledger trigger; wallet and ledger are not directly writable by ordinary clients.
+
+### Issues / limitations
+
+- The wallet trigger's `admin_adjustment` branch permits positive or negative available-balance changes, provided the resulting available balance is nonnegative. Direct client inserts are denied by table grants/RLS, but this remains a powerful trusted-backend primitive. Future reversal recovery must not call it without a dedicated policy-enforcing function, strong authorization, dual-control review, evidence, and idempotency.
+- The wallet table has a single wallet row per creator and a currency field; all current withdrawal logic explicitly selects NGN. Multi-currency expansion needs a deliberate composite-key migration rather than assuming the current structure supports it.
+- No real signed-in creator/admin account lifecycle test was run. No synthetic wallet rows or financial ledger entries were inserted for this audit. This was source/permission review, not end-to-end balance proof.
+- Request creation through the legacy withdrawal RPC remains blocked; fee-confirmation is the intended route. Payout preparation remains blocked. No Paystack transfer or webhook was triggered.
+
+### Outcome
+
+Read-only audit only. No database schema, wallet balances, ledger rows, Edge Functions, production resources, or Friendship Court code changed in this batch.
