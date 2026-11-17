@@ -469,3 +469,14 @@ The arithmetic checks returned the expected incremental refund amounts for the f
 - The new cost subledger is not yet included in the finance dashboard's consolidated operating-expense summary; it is separately recorded and must be reconciled into that summary before PLAYAM treats dashboard net operating results as complete.
 - No actual fee event, creator wallet refund, Paystack sandbox transfer, signed webhook, or browser MFA test was executed. No wallet/financial data rows were created by these checks.
 - Payout preparation remains disabled. Stamp-duty payer policy remains pending. Production and Friendship Court remain unchanged.
+
+
+## Batch 37 — Withdrawal fee costs integrated into finance reporting
+
+Applied staging migration `include_withdrawal_fee_cost_events_in_financial_summary` to project `pwnjrdedeoxbmtfywhkk`. The MFA-protected `playam_get_financial_summary_v1(p_from,p_to)` now combines ordinary append-only financial entries with the private creator withdrawal fee-cost subledger. It includes verified overquote expense events and subtracts later provider-fee reversals in the period in which each event is recorded. The combined totals remain currency-separated and category breakdown includes `creator_withdrawal_fees`.
+
+Updated `finance-admin-staging.html` on branch `codex/playam-creator-withdrawal-safety` to show the net creator-withdrawal fee overquote cost within each currency's management overview, calculated from the financial summary category breakdown. The dashboard still describes results as recorded operating results, not audited profit.
+
+Verification: migration succeeded; function definition re-read; execute privileges verified (`anon=false`, `authenticated=true`, with MFA and finance-role checks enforced inside the function). Dashboard change committed. No actual fee events or ledger records were created, so there is no real expense amount to report yet. No signed-in MFA browser run or rendered dashboard test was performed.
+
+Remaining accounting caution: finance administrators must not manually duplicate the same Paystack overquote expense in `playam_financial_entries`; the automatic fee-cost subledger is now included in the financial summary. Other provider transfer fees at or below the creator's accepted quote are not automatically booked as PLAYAM expense under this specific subledger. Stamp duty payer remains pending policy. Creator payouts remain disabled. No production or Friendship Court changes.
