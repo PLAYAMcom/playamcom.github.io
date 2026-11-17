@@ -404,3 +404,32 @@ The quote RPC's current fee-tier calculation says it selects the Paystack fee ti
 ### Outcome
 
 Read-only inspection only. No Edge Function was changed or deployed, no database records were inserted, no creator wallet changed, no Paystack transfer was attempted, and no production/Friendship Court changes occurred. Payouts remain disabled in staging.
+
+
+## Batch 35 — Corrected Paystack fee quote boundaries (staging database only)
+
+Applied migration `correct_creator_withdrawal_fee_quote_tier_boundaries` to staging project `pwnjrdedeoxbmtfywhkk` only. Replaced `playam_create_creator_withdrawal_fee_quote_v1` while preserving its authenticated-only execution model and the existing owner/destination/balance/expiry/idempotency checks.
+
+### Fee calculation now
+
+The calculation is based on the net transfer amount, matching Paystack's published NGN transfer fee bands: ₦10 for transfers up to ₦5,000; ₦25 for transfers above ₦5,000 through ₦50,000; and ₦50 above ₦50,000. The quote function now blocks both gross-amount intervals where no self-consistent net amount and fee tier exist:
+
+- ₦5,010.01–₦5,025.00 gross, around the ₦5,000 net-transfer threshold.
+- ₦50,025.01–₦50,050.00 gross, around the ₦50,000 net-transfer threshold.
+
+It also rejects net transfers below Paystack's published ₦50 minimum. Stamp duty remains a separate ₦50 government charge for qualifying transfers at or above ₦10,000; its payer remains `pending_policy`, and confirmation continues to block where stamp duty applies.
+
+### Verification performed
+
+- A 12-point synthetic SQL boundary check covered both sides of both fee thresholds, both blocked intervals, the minimum transfer amount, and a higher amount. All 8 quoteable samples matched the fee tier implied by their calculated net transfer; all 4 samples inside the two ambiguous intervals were blocked.
+- Function privileges checked: `anon` cannot execute; `authenticated` can execute; `service_role` cannot execute.
+- Migration applied successfully.
+- No actual authenticated creator quote was created, because no signed-in creator test session was used. This was a logic/boundary check, not an end-to-end RPC test.
+
+### Advisor snapshot
+
+Supabase security advisor still reports 38 RLS-enabled tables without policies and 63 authenticated-callable SECURITY DEFINER functions across the wider staging project. These are existing project-wide findings requiring object-by-object review; no blanket policy or permission changes were made. Performance advisor returned no lints in this check. Health advisor returned no findings.
+
+### Outcome and remaining blocks
+
+No creator wallet or financial rows were changed; no Paystack API call or transfer was made. Payout preparation remains disabled. Stamp-duty payer policy, provider-fee mismatch handling review, authenticated creator/admin browser tests, signed webhook tests, and sandbox transfer/reconciliation drills remain outstanding. Production and Friendship Court were not changed.
