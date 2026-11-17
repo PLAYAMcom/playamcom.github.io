@@ -135,6 +135,33 @@ textarea{line-height:1.5;resize:vertical}
  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
 }
 
+
+/* PLAYAM FULL-HEIGHT PORTRAIT PASS — STAGING ONLY */
+@media(max-width:760px){
+ html,body{width:100%;min-width:0;overflow-x:hidden}
+ body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+ #app{min-height:100dvh;min-height:100vh}
+ .staging-banner{position:sticky;top:0;z-index:1000}
+ .sidebar{position:fixed;left:0;right:0;top:auto;bottom:0;z-index:950;width:100%;height:auto;max-height:calc(76px + env(safe-area-inset-bottom));min-height:64px;padding:7px max(8px,env(safe-area-inset-left)) calc(7px + env(safe-area-inset-bottom));display:flex;flex-direction:row;align-items:center;gap:5px;overflow-x:auto;overflow-y:hidden;white-space:nowrap;background:rgba(16,16,32,.98);border-top:1px solid #51416f;border-bottom:0;box-shadow:0 -8px 24px rgba(0,0,0,.32);overscroll-behavior-x:contain;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+ .sidebar::-webkit-scrollbar{display:none}
+ .sidebar>.brand,.sidebar>.side-label{display:none}
+ .sidebar>.navbtn,.sidebar .sidebar-bottom>.navbtn{display:inline-flex;flex:0 0 auto;align-items:center;justify-content:center;min-height:48px;padding:10px 12px;border-radius:12px;font-size:12px;white-space:nowrap;scroll-snap-align:center}
+ .sidebar .sidebar-bottom{display:flex;flex:0 0 auto;align-items:center;gap:5px;margin:0}
+ .main{width:100%;max-width:none;min-width:0;margin:0;min-height:calc(100dvh - 42px - 76px);padding:clamp(12px,3.5vw,18px);padding-bottom:calc(28px + 76px + env(safe-area-inset-bottom))}
+ .topbar{width:100%;gap:10px}
+ .screen-card,.hero,.game-card,.small-card{max-width:100%;min-width:0}
+ .screen-card{min-height:calc(100dvh - 170px);display:block}
+ input,select,textarea{max-width:100%;min-width:0}
+ button{max-width:100%;touch-action:manipulation}
+}
+@media(max-width:380px){.sidebar>.navbtn,.sidebar .sidebar-bottom>.navbtn{padding:9px 10px;font-size:11px}}
+@media(orientation:landscape) and (max-height:520px) and (max-width:900px){
+ body{padding-bottom:calc(62px + env(safe-area-inset-bottom))}
+ .sidebar{min-height:54px;max-height:calc(62px + env(safe-area-inset-bottom));padding-top:4px;padding-bottom:calc(4px + env(safe-area-inset-bottom))}
+ .sidebar>.navbtn,.sidebar .sidebar-bottom>.navbtn{min-height:42px;padding:7px 10px}
+ .main{min-height:calc(100dvh - 62px);padding-bottom:calc(70px + env(safe-area-inset-bottom))}
+}
+
 </style>
 </head>
 <body>
