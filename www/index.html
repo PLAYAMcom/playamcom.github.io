@@ -323,6 +323,12 @@ textarea{line-height:1.5;resize:vertical}
 #coinPaymentStatus{min-height:18px;line-height:1.4;margin:10px 0;color:#e3c1ff;font-size:11px}
 @media(max-width:420px){.coin-package-grid{grid-template-columns:1fr 1fr}.coin-package-card{padding:10px}.coin-package-card .coin-price{font-size:14px}}
 
+
+/* PLAYAM sponsored placement — reserved, Staging only */
+.playam-ad-slot{width:100%;max-width:100%;min-height:72px;margin:12px 0 14px;padding:10px 12px;border:1px solid #39304f;border-radius:14px;background:linear-gradient(110deg,#171426,#201a31);color:#d9d1e8;overflow:hidden}
+.playam-ad-slot .playam-ad-label{display:block;margin-bottom:5px;color:#bca2df;font-size:9px;font-weight:900;letter-spacing:.14em;text-transform:uppercase}
+.playam-ad-slot .playam-ad-copy{font-size:12px;line-height:1.4}
+.playam-ad-slot.hidden{display:none!important}
 </style>
 </head>
 <body>
@@ -428,6 +434,7 @@ textarea{line-height:1.5;resize:vertical}
      <article class="feed-game-card"><span class="feed-game-icon">📊</span><div><h3>Scoreboard</h3><p>Follow scores and player rankings.</p></div><button class="secondary" type="button" disabled>COMING SOON</button></article>
      <article class="feed-game-card"><span class="feed-game-icon">🌟</span><div><h3>Legend</h3><p>A PLAYAM social game experience.</p></div><button class="secondary" type="button" disabled>COMING SOON</button></article>
     <div class="feed-inline-actions"><button class="secondary" onclick="showCreateRoom()">＋ CREATE ROOM</button><button class="secondary" onclick="showJoinRoom()">JOIN WITH CODE</button></div>
+    <aside id="playamGamesAdSlot" class="playam-ad-slot hidden" data-playam-ad-slot="games-below" aria-label="Sponsored placement"><span class="playam-ad-label">Sponsored</span><div class="playam-ad-copy"></div></aside>
    </section>
 
    <section class="feed-page feed-video-page" id="feedVideos">
