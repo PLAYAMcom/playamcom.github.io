@@ -99,7 +99,8 @@ label{display:block;margin-top:13px;font-weight:bold}
   <button class="secondary" style="width:100%;margin-top:8px" onclick="signIn()">LOG IN TO EXISTING ACCOUNT</button>
  </div>
  <div class="auth-method">
-  <h3>Phone number login</h3>
+  <h3>Phone number login or registration</h3>
+  <p class="small">New to PLAYAM? Verify your phone number to create an account. Already registered? Use the same number to log in. An email address is not required.</p>
   <input id="phone" type="tel" placeholder="Phone number, e.g. +2348012345678" autocomplete="tel">
   <button class="secondary" style="width:100%;margin-top:8px" onclick="sendPhoneOtp()">SEND SMS CODE</button>
   <input id="phoneOtp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6-digit verification code">
@@ -428,7 +429,7 @@ async function sendPhoneOtp(){
  const phone=document.getElementById("phone").value.trim();
  if(!/^\+[1-9]\d{7,14}$/.test(phone)){showMessage("Enter a valid international phone number, including + and country code.");return}
  showMessage("Requesting a verification code...");
- const {error}=await supabaseClient.auth.signInWithOtp({phone});
+ const {error}=await supabaseClient.auth.signInWithOtp({phone,options:{shouldCreateUser:true}});
  if(error){showMessage("Phone login is not ready yet: "+error.message);return}
  showMessage("A verification code has been requested. Check your SMS messages.");
 }
