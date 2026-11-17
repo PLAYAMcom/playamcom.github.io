@@ -182,3 +182,39 @@ Verified the three service-only payout/fee RPCs are SECURITY DEFINER with execut
 - Paystack's live `fee_charged` response behaviour has not been exercised with a real provider transfer.
 - The separate stamp-duty payer remains pending. Affected withdrawals remain blocked.
 - The staging edge function source is deployed in the staging Supabase project. Production Supabase was not changed.
+
+
+## Batch 28 — MFA-protected administrator withdrawal review
+
+### Database
+
+- Added `playam_admin_list_creator_withdrawals_v1()`: returns up to 100 pending, approved or processing requests only to an authenticated user with `aal2` and an active `super_admin` or `finance_admin` role.
+- Hardened `playam_approve_creator_withdrawal_v1(uuid)`: before approval it now requires internally consistent fee-confirmed gross, creator fee and net transfer values. If stamp duty applies, approval is blocked until its payer is resolved.
+- Existing approval policy retained: one MFA finance admin for ordinary requests; two different MFA finance admins for requests at or above the configured threshold.
+- Existing rejection RPC remains MFA finance-admin restricted and releases the reserved amount through the ledger with an audit event.
+- Verified list/approve/reject RPCs are SECURITY DEFINER with anon=false, authenticated=true, service_role=false.
+
+### Administrator review page
+
+Added `creator-withdrawal-admin-staging.html`:
+- Staging Supabase project only.
+- Email/password sign-in followed by verified authenticator MFA (aal2).
+- Restricted queue listing.
+- Displays gross, estimated creator fee, net transfer, stamp-duty policy, fee reconciliation status, destination ID and approval history.
+- Requires confirmation before approval.
+- Rejection requires a reason and confirmation.
+- No Paystack payout or transfer action is exposed on this page.
+
+### Verification
+
+- Source inspection confirmed MFA flow, queue RPC, approve/reject RPCs, staging project ID, and absence of any Paystack payout call.
+- Database permissions for list/approve/reject verified.
+- No actual signed-in administrator session or MFA code was used; no approval or rejection was performed.
+- No withdrawal records were present during the check.
+- The page is a source artifact on the staging feature branch; it has not been deployed to a staging web host or tested in a browser.
+
+### Payout safety remains
+
+- Transfer preparation remains blocked.
+- No production changes, real transfers or cash reward activation.
+- Stamp-duty payer policy remains unresolved.
