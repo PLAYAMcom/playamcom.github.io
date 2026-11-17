@@ -404,8 +404,10 @@ async function loadManagementDashboard(){
   if(c.blocking_reasons?.length)h+='<article class="record"><strong>Reward blockers</strong><ul>'+c.blocking_reasons.map(x=>'<li>'+escapeHtml(x)+'</li>').join('')+'</ul></article>';
   for(const cur of currencies){
    const p=ps.find(x=>x.currency===cur)||{},lrow=ls.find(x=>x.currency===cur)||{},e=inc.find(x=>x.currency===cur)||{};
+   const withdrawalFeeNet=(e.category_breakdown||[]).filter(x=>x.entry_type==='expense'&&x.category==='creator_withdrawal_fees').reduce((sum,x)=>sum+Number(x.amount_minor||0),0);
    h+='<article class="record"><h3>'+escapeHtml(cur)+'</h3>'+
    '<p>Recent verified cash: '+escapeHtml(p.verified_cash_last_7_days_minor==null?'No recent statement':money(p.verified_cash_last_7_days_minor,cur))+'</p>'+
+   '<p>Creator withdrawal fee overquote cost (net of provider reversals): '+escapeHtml(money(withdrawalFeeNet,cur))+'</p>'+
    '<p>Creator balances owed: '+escapeHtml(p.creator_total_liability_minor==null?'No data':money(p.creator_total_liability_minor,cur))+'</p>'+
    '<p>Unpaid verified reward commitments: '+escapeHtml(p.unpaid_verified_reward_commitments_minor==null?'No data':money(p.unpaid_verified_reward_commitments_minor,cur))+'</p>'+
    '<p>Other outstanding payables: '+escapeHtml(p.other_outstanding_liabilities_minor==null?money(lrow.open_minor||0,cur):money(p.other_outstanding_liabilities_minor,cur))+'</p>'+
