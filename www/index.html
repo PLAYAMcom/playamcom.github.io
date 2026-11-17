@@ -739,6 +739,21 @@ function goHomeSection(id){
 
 /* PLAYAM SHORTS — STAGING MVP */
 let playamVideosLoading=false,playamVideoLoadSequence=0;
+async function validatePlayamVideoFile(file){
+ const url=URL.createObjectURL(file),probe=document.createElement("video");
+ probe.preload="auto";probe.muted=true;probe.playsInline=true;probe.src=url;
+ try{
+  await new Promise((resolve,reject)=>{
+   let settled=false;
+   const finish=(err)=>{if(settled)return;settled=true;clearTimeout(timer);probe.removeEventListener("loadeddata",onReady);probe.removeEventListener("error",onError);err?reject(err):resolve()};
+   const onReady=()=>finish();
+   const onError=()=>finish(new Error("This video cannot be decoded on this device. Please export it as MP4 with H.264 video and AAC audio, then try again."));
+   const timer=setTimeout(()=>finish(new Error("The video could not be checked. Try a shorter MP4 exported with H.264 video and AAC audio.")),15000);
+   probe.addEventListener("loadeddata",onReady,{once:true});probe.addEventListener("error",onError,{once:true});probe.load();
+  });
+  if(!Number.isFinite(probe.duration)||probe.duration<=0)throw new Error("The video file has no readable duration. Please export it again as MP4 (H.264/AAC).");
+ }finally{probe.pause();probe.removeAttribute("src");probe.load();URL.revokeObjectURL(url)}
+}
 function setPlayamVideoStatus(message,isError=false){const el=document.getElementById("playamVideoStatus");if(el){el.textContent=message||"";el.style.color=isError?"#ff9bb8":"#c4a5ef"}}
 async function uploadPlayamVideo(event){
  const input=event?.target,file=input?.files?.[0];if(!file)return;
@@ -748,8 +763,10 @@ async function uploadPlayamVideo(event){
  const caption=document.getElementById("playamVideoCaption")?.value.trim()||"",ext=file.type==="video/webm"?"webm":file.type==="video/quicktime"?"mov":"mp4";
  const objectName=(globalThis.crypto?.randomUUID?.()||("v"+Date.now().toString(36)+Math.random().toString(36).slice(2)))+"."+ext,storagePath=user.id+"/"+objectName,meta=user.user_metadata||{};
  let creatorName=String(meta.full_name||meta.name||"").trim();if(!creatorName)creatorName=(user.email||"PLAYAM Player").split("@")[0];creatorName=creatorName.slice(0,60)||"PLAYAM Player";
- const button=document.querySelector(".shorts-upload-button");if(button)button.disabled=true;setPlayamVideoStatus("Uploading your video securely…");
+ const button=document.querySelector(".shorts-upload-button");if(button)button.disabled=true;setPlayamVideoStatus("Checking that your video can play on this device…");
  try{
+  await validatePlayamVideoFile(file);
+  setPlayamVideoStatus("Video check passed. Uploading securely…");
   const {error:upErr}=await supabaseClient.storage.from("playam-videos-staging").upload(storagePath,file,{cacheControl:"3600",upsert:false,contentType:file.type});if(upErr)throw upErr;
   const {error:dbErr}=await supabaseClient.from("playam_videos").insert({owner_id:user.id,storage_path:storagePath,caption,creator_name:creatorName,status:"published"});
   if(dbErr){await supabaseClient.storage.from("playam-videos-staging").remove([storagePath]);throw dbErr}
@@ -765,7 +782,7 @@ async function loadPlayamVideos(){
   if(!rows?.length){list.innerHTML='<div class="shorts-empty">No videos yet. Be the first to share a PLAYAM moment.</div>';return}list.replaceChildren();
   for(const row of rows){
    const {data:signed,error:sErr}=await supabaseClient.storage.from("playam-videos-staging").createSignedUrl(row.storage_path,3600);if(requestId!==playamVideoLoadSequence)return;if(sErr||!signed?.signedUrl)continue;
-   const card=document.createElement("article");card.className="shorts-card";const video=document.createElement("video");video.controls=true;video.playsInline=true;video.preload="metadata";video.setAttribute("playsinline","");video.setAttribute("webkit-playsinline","");video.src=signed.signedUrl;video.addEventListener("error",()=>setPlayamVideoStatus("A video could not be played. Check the file format and try refreshing.",true));
+   const card=document.createElement("article");card.className="shorts-card";const video=document.createElement("video");video.controls=true;video.playsInline=true;video.preload="metadata";video.setAttribute("playsinline","");video.setAttribute("webkit-playsinline","");video.src=signed.signedUrl;video.addEventListener("error",()=>{const code=video.error?.code;const reason=code===2?"A network problem interrupted video loading. Refresh and try again.":(code===3||code===4)?"This video codec is not supported by this device. Re-export it as MP4 with H.264 video and AAC audio.":"A video could not be loaded. Refresh and try again.";setPlayamVideoStatus(reason,true)});
    const copy=document.createElement("div");copy.className="shorts-card-copy";const creator=document.createElement("div");creator.className="shorts-card-creator";creator.textContent=row.creator_name||"PLAYAM Player";const captionEl=document.createElement("p");captionEl.className="shorts-card-caption";captionEl.textContent=row.caption||"";copy.append(creator,captionEl);card.append(video,copy);list.append(card);
   }
   if(!list.children.length)list.innerHTML='<div class="shorts-empty">Videos are listed, but none could be prepared for playback. Please refresh and try again.</div>';
