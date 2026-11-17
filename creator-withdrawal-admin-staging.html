@@ -9,6 +9,7 @@
 <section id="login" class="panel"><h2>Administrator sign in</h2><label>Email</label><input id="email" type="email" autocomplete="username"><label>Password</label><input id="password" type="password" autocomplete="current-password"><button id="signIn">Sign in</button><div id="loginStatus" class="status" role="status"></div></section>
 <section id="mfa" class="panel hidden"><h2>Verify authenticator</h2><label>Six-digit code</label><input id="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="6"><button id="verifyMfa">Verify MFA</button><div id="mfaStatus" class="status" role="status"></div></section>
 <section id="app" class="hidden"><div class="panel row"><strong id="identity">Finance administrator</strong><button id="refresh" class="secondary">Refresh queue</button><button id="logout" class="secondary">Sign out</button><div id="globalStatus" class="status"></div></div>
+<div class="panel"><h2>Stale transfer reconciliation</h2><p class="warning">These requests have remained in processing for at least 10 minutes. Do not retry or release funds until the exact Paystack reference is checked in the Paystack dashboard or verified API. This queue never sends transfers or releases reservations.</p><button id="staleRefresh" class="secondary">Refresh stale transfers</button><div id="staleStatus" class="status" role="status"></div><div id="staleQueue"></div></div>
 <div class="panel"><h2>Pending review</h2><p class="small">Approve only after checking the creator request, destination, quote and relevant risk information through authorised internal records. First approval on a large withdrawal does not release it; a different finance admin must approve second. Rejection requires a clear reason and releases the reserved amount.</p><div id="queueStatus" class="status" role="status"></div><div id="queue"></div></div></section>
 <script>
 const SUPABASE_URL="https://pwnjrdedeoxbmtfywhkk.supabase.co";
@@ -31,11 +32,19 @@ async function refreshSession(){
  const {data:{session}}=await db.auth.getSession();
  if(!session){currentUser=null;show("login",true);show("mfa",false);show("app",false);return}
  currentUser=session.user;
- if(await checkMfa()){show("login",false);show("mfa",false);show("app",true);$("identity").textContent="Signed in: "+(currentUser.email||currentUser.id);await loadQueue()}
+ if(await checkMfa()){show("login",false);show("mfa",false);show("app",true);$("identity").textContent="Signed in: "+(currentUser.email||currentUser.id);await loadQueue();await loadStale()}
 }
 $("signIn").onclick=async()=>{status("loginStatus","Signing in…");const {error}=await db.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});if(error){status("loginStatus",error.message);return}try{await refreshSession()}catch(e){status("loginStatus",e.message)}};
 $("verifyMfa").onclick=async()=>{const code=$("otp").value.trim();if(!pendingFactor||!/^\d{6}$/.test(code)){status("mfaStatus","Enter the six-digit authenticator code.");return}status("mfaStatus","Verifying…");const {data:ch,error:ce}=await db.auth.mfa.challenge({factorId:pendingFactor});if(ce){status("mfaStatus",ce.message);return}const {error}=await db.auth.mfa.verify({factorId:pendingFactor,challengeId:ch.id,code});if(error){status("mfaStatus",error.message);return}$("otp").value="";try{await refreshSession()}catch(e){status("mfaStatus",e.message)}};
 $("logout").onclick=async()=>{await db.auth.signOut();currentUser=null;show("app",false);show("mfa",false);show("login",true)};
+async function loadStale(){
+ status("staleStatus","Checking for processing requests older than 10 minutes…");$("staleQueue").innerHTML="";
+ const {data,error}=await db.rpc("playam_admin_list_stale_creator_withdrawals_v1",{p_older_than_minutes:10});
+ if(error){status("staleStatus","Could not load reconciliation queue: "+error.message);return}
+ const rows=Array.isArray(data)?data:[];
+ status("staleStatus",rows.length+" stale request(s). No automatic retry or release is permitted.");
+ $("staleQueue").innerHTML=rows.map(r=>'<article class="record"><strong>'+money(r.gross_amount_minor)+'</strong><p>Creator: <code>'+esc(r.creator_auth_user_id)+'</code></p><p>Net transfer: '+money(r.net_transfer_minor)+' · Fee quote: '+money(r.creator_fee_quoted_minor)+'</p><p>Age: '+esc(r.age_minutes)+' minutes · Processing since: '+esc(new Date(r.processing_at).toLocaleString())+'</p><p>Paystack reference: <code>'+esc(r.payout_reference||"Missing — escalate")+'</code> <button class="secondary" data-copy-ref="'+esc(r.payout_reference||"")+'">Copy reference</button></p><p class="warning">Check this exact reference with Paystack. Do not create a new transfer reference. If provider status is unknown, keep funds reserved and escalate for manual review.</p></article>').join("")||'<p class="muted">No stale processing requests.</p>';
+}
 async function loadQueue(){
  status("queueStatus","Loading restricted withdrawal queue…");$("queue").innerHTML="";
  const {data,error}=await db.rpc("playam_admin_list_creator_withdrawals_v1");
@@ -80,7 +89,8 @@ $("queue").addEventListener("click",async ev=>{
   if(reject){const id=reject.dataset.reject;const reason=$("queue").querySelector('textarea[data-reason="'+id+'"]').value.trim();if(reason.length<3)throw new Error("Enter a clear rejection reason.");if(!confirm("Reject this request and release its reserved creator funds?"))return;reject.disabled=true;const {error}=await db.rpc("playam_reject_creator_withdrawal_v1",{p_request_id:id,p_reason:reason});if(error)throw error;status("queueStatus","Request rejected and reservation release recorded.");await loadQueue()}
  }catch(e){status("queueStatus","Action not completed: "+e.message);await loadQueue()}
 });
-$("refresh").onclick=loadQueue;
+$("refresh").onclick=async()=>{await loadQueue();await loadStale()};$("staleRefresh").onclick=loadStale;
+$("staleQueue").addEventListener("click",async ev=>{const b=ev.target.closest("[data-copy-ref]");if(!b||!b.dataset.copyRef)return;try{await navigator.clipboard.writeText(b.dataset.copyRef);status("staleStatus","Reference copied. Verify it in Paystack before taking any action.")}catch{status("staleStatus","Copy unavailable; select the reference text manually.")}});
 db.auth.onAuthStateChange(()=>setTimeout(()=>refreshSession().catch(e=>status("globalStatus",e.message)),0));
 refreshSession().catch(e=>status("loginStatus",e.message));
 </script></main></body></html>
