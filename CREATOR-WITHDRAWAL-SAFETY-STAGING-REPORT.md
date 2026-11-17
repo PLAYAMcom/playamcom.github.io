@@ -115,3 +115,30 @@ Updated `creator-withdrawal-staging.html` on the feature branch.
 - The transfer-preparation function remains deliberately blocked.
 - Stamp-duty payer remains pending, so affected quotes cannot be confirmed.
 - Do not enable creator withdrawals or cash rewards based on static/syntax checks alone.
+
+
+## Batch 26 — Connect creator quote/consent page and harden fee-tier boundary
+
+### Staging creator page
+
+Connected the creator staging page to:
+- `playam_list_creator_withdrawal_destinations_v1` to list only the signed-in creator's verified, eligible Paystack NGN destinations.
+- `playam_create_creator_withdrawal_fee_quote_v1` to request an expiring database quote.
+- `playam_confirm_creator_withdrawal_fee_quote_v1` to explicitly accept the displayed quote and create a pending staging request with gross wallet reservation.
+
+The page shows gross withdrawal, estimated creator fee, net transfer, stamp-duty amount and quote expiry. A checkbox is required before confirmation. Quotes where stamp duty applies remain blocked while payer policy is pending. The page wording now accurately explains that eligible staging confirmations reserve funds, but no Paystack payout is sent.
+
+### Fee-tier boundary hardening
+
+A calculation review identified a narrow range where a net-based provider fee tier has no self-consistent estimate: gross amounts ₦5,010.01–₦5,025.00. A ₦10 fee pushes the net amount into the next fee tier, while a ₦25 fee pushes it back into the lower tier. The quote RPC now rejects that range with a clear instruction to choose a slightly lower or higher amount, rather than risk overquoting the creator.
+
+Verified the boundary guard is present and quote RPC grants remain anon=false, authenticated=true, service_role=false.
+
+### Verification limits
+
+- Confirmed source wiring for all three RPCs, explicit consent, stamp-duty block and no Paystack transfer call.
+- Confirmed quote function permissions and fee-tier boundary guard in staging.
+- No real signed-in creator session has been used to exercise the UI end-to-end.
+- No live quote or confirmation has been made; no wallet reservation or payout has occurred during this implementation.
+- Browser-level accessibility, responsive layout and Supabase API runtime behaviour remain to be tested.
+- Net transfer payout, Paystack webhook verification, actual fee reconciliation, fee refunds/reversals and admin payout approval remain unfinished. Existing payout preparation is still blocked.
