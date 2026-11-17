@@ -276,7 +276,7 @@ textarea{line-height:1.5;resize:vertical}
  .main::-webkit-scrollbar{display:none}
  .topbar{display:none}
  #homeScreen.playam-vertical-feed{display:block;min-height:100%;padding:0}
- .feed-page{position:relative;display:flex;flex-direction:column;justify-content:space-between;gap:12px;width:100%;min-height:100%;height:100%;padding:clamp(18px,5vw,26px) 16px 18px;scroll-snap-align:start;scroll-snap-stop:always;overflow-y:auto;overscroll-behavior-y:contain}
+ .feed-page{position:relative;display:flex;flex-direction:column;justify-content:space-between;gap:12px;flex:0 0 auto;width:100%;min-height:calc(100dvh - 102px - env(safe-area-inset-bottom));height:calc(100dvh - 102px - env(safe-area-inset-bottom));padding:clamp(18px,5vw,26px) 16px 18px;scroll-snap-align:start;scroll-snap-stop:always;overflow-y:auto;overscroll-behavior-y:contain}
  .feed-welcome{justify-content:space-between}
  .feed-games-page{justify-content:flex-start}
  .feed-game-grid{gap:8px;margin:8px 0}
