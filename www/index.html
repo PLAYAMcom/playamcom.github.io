@@ -160,6 +160,58 @@ textarea{line-height:1.5;resize:vertical}
  .main{min-height:calc(100dvh - 62px);padding-bottom:calc(70px + env(safe-area-inset-bottom))}
 }
 
+
+/* PLAYAM TRUE PORTRAIT APP LAYOUT — STAGING ONLY */
+@media(max-width:760px){
+ .staging-banner{height:38px;min-height:38px;padding:9px 8px;font-size:10px;line-height:20px;white-space:nowrap;overflow:hidden}
+ #app{display:block;height:calc(100dvh - 38px);min-height:0;overflow:hidden}
+ .sidebar{position:fixed;left:0;right:0;top:auto;bottom:0;z-index:950;width:100%;height:auto;min-height:72px;max-height:calc(72px + env(safe-area-inset-bottom));padding:7px max(8px,env(safe-area-inset-left)) calc(7px + env(safe-area-inset-bottom));display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:4px;overflow-x:auto;overflow-y:hidden;background:rgba(16,16,32,.98);border-top:1px solid #51416f;border-right:0;box-shadow:0 -8px 24px rgba(0,0,0,.32);-webkit-overflow-scrolling:touch}
+ .sidebar>.brand,.sidebar>.side-label{display:none}
+ .sidebar>.navbtn,.sidebar .sidebar-bottom>.navbtn{display:inline-flex;flex:0 0 auto;align-items:center;justify-content:center;min-height:50px;padding:9px 10px;border-radius:13px;font-size:11px;white-space:nowrap}
+ .sidebar .sidebar-bottom{display:flex;flex:0 0 auto;align-items:center;gap:4px;margin:0}
+ .main{display:block;width:100%;height:calc(100dvh - 38px - 72px - env(safe-area-inset-bottom));min-height:0;max-width:none;margin:0;padding:12px 12px 18px;overflow-x:hidden;overflow-y:auto;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+ .main::-webkit-scrollbar{display:none}
+ .topbar{position:sticky;top:-12px;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:8px;margin:-12px -12px 12px;padding:12px;background:rgba(9,9,20,.96);backdrop-filter:blur(14px);border-bottom:1px solid rgba(130,100,180,.22)}
+ .topbar .small{font-size:10px;letter-spacing:.08em}
+ .welcome{font-size:clamp(19px,5vw,24px);margin:4px 0 0;line-height:1.15}
+ .online{font-size:10px;padding:7px 9px;white-space:nowrap}
+ #homeScreen{display:flex;flex-direction:column;gap:12px;min-height:100%}
+ .hero{display:flex;flex-direction:column;justify-content:center;min-height:clamp(170px,25dvh,240px);margin:0;padding:22px 19px;border-radius:22px;background:radial-gradient(circle at 90% 10%,rgba(237,76,189,.22),transparent 38%),linear-gradient(145deg,#302052,#171a3a 65%,#31204d)}
+ .hero h2{font-size:clamp(23px,6vw,30px);line-height:1.12;margin:0 0 10px}
+ .hero p{font-size:14px;line-height:1.5;margin:0}
+ .section-title{font-size:16px;margin:8px 2px 0}
+ .game-grid,.small-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:11px}
+ .game-card{min-height:0;padding:17px;border-radius:18px;display:grid;grid-template-columns:42px minmax(0,1fr);column-gap:10px;align-items:start}
+ .game-card .emoji{grid-row:1 / span 2;font-size:30px;margin:0}
+ .game-card h3{font-size:17px;margin:2px 0 4px}
+ .game-card p{grid-column:2;margin:0 0 8px;font-size:12px;line-height:1.4}
+ .game-card button{grid-column:1 / -1;margin-top:6px}
+ .small-grid .small-card,.small-card{padding:15px;border-radius:16px}
+ .screen-card{width:100%;max-width:none;min-height:100%;padding:18px 15px;margin:0;border-radius:18px}
+ .screen-card h2{font-size:22px;line-height:1.2}
+ .screen-card>button{margin-top:10px}
+ input,select,textarea{font-size:16px;max-width:100%;min-width:0}
+ textarea{min-height:112px}
+ .question-box{font-size:clamp(18px,5vw,23px);line-height:1.4;padding:20px 16px;margin:16px 0}
+ .timer{font-size:30px;padding:12px}
+ #message{margin:10px 0;min-height:18px}
+}
+@media(max-width:380px){
+ .sidebar>.navbtn,.sidebar .sidebar-bottom>.navbtn{font-size:10px;padding:8px}
+ .main{padding-left:10px;padding-right:10px}
+ .topbar{margin-left:-10px;margin-right:-10px;padding-left:10px;padding-right:10px}
+ .game-card{padding:14px}
+}
+@media(orientation:landscape) and (max-height:520px) and (max-width:900px){
+ #app{height:calc(100dvh - 34px)}
+ .staging-banner{height:34px;min-height:34px;padding:7px 8px}
+ .sidebar{min-height:56px;max-height:calc(56px + env(safe-area-inset-bottom));padding-top:3px;padding-bottom:calc(3px + env(safe-area-inset-bottom))}
+ .sidebar>.navbtn,.sidebar .sidebar-bottom>.navbtn{min-height:42px}
+ .main{height:calc(100dvh - 34px - 56px - env(safe-area-inset-bottom));padding-top:8px}
+ .topbar{top:-8px;margin-top:-8px;padding-top:8px}
+ .hero{min-height:125px;padding:14px}
+}
+
 </style>
 </head>
 <body>
