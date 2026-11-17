@@ -562,3 +562,21 @@ Reviewed the current staging Supabase project `pwnjrdedeoxbmtfywhkk`, deployed E
 ### Outcome
 
 Read-only inspection and permission/advisor checks only. No database migration, Edge Function deployment, GitHub application code change, withdrawal quote, wallet ledger entry, reversal record or financial event was created. No Paystack transfer was attempted. Production and Friendship Court remain untouched; creator cash rewards and payouts remain disabled.
+
+
+## Batch 40 — Read-only reversal evidence review panel (staging branch)
+
+Updated `creator-withdrawal-admin-staging.html` on `codex/playam-creator-withdrawal-safety`.
+
+### What changed
+- Expanded the existing MFA-protected reversal queue cards to show provider, currency, creator ID, linked withdrawal ID, Paystack reference, reversed amount, provider fee when supplied, recorded time, and escaped evidence metadata.
+- Added a read-only manual review checklist: verify provider and bank statements; establish whether the recipient received/retained the funds; determine reversal reason; check contractual/legal authority; notify creator and allow dispute; require independent finance approvals for any future recovery/write-off.
+- The panel continues to expose no recovery, debit, offset, account-freeze, write-off or status-mutation control. It uses the existing aal2 finance-admin-only list RPC.
+
+### Verification and limits
+- Re-read the exact database return schema for `playam_admin_list_creator_withdrawal_reversals_v1()` and matched the UI fields to its actual returned names.
+- Updated the existing HTML through a single-file commit. This was a source update only; no web host deployment or signed-in browser test was performed.
+- The staging reversal table currently has zero rows, so populated rendering with actual reversal evidence is not verified.
+- No new database RPC, table, migration or wallet operation was added. No creator balance changed and no reversal was resolved.
+- Recovery policy remains unapproved; there is no safe automated recovery/write-off action.
+- Production, live Paystack, cash rewards and Friendship Court remain untouched.
