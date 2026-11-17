@@ -64,6 +64,19 @@
 </div><button id="adSaveCreative">Submit creative for approval</button>
 <h3>Advertisers</h3><div id="adAdvertiserRows"></div>
 <h3>Campaigns and delivery</h3><div id="adCampaignRows"></div>
+
+<h3>Record an advertising cash event</h3>
+<p class="small">Record a receipt, refund, reversal or network adjustment with a unique reference. The event remains pending until a different finance administrator verifies it.</p>
+<div class="grid">
+<div><label>Campaign</label><select id="adCashCampaign"><option value="">Choose campaign</option></select></div>
+<div><label>Event type</label><select id="adCashType"><option value="receipt">Payment received</option><option value="refund">Refund</option><option value="reversal">Reversal</option><option value="network_adjustment">Network adjustment</option></select></div>
+<div><label>Amount</label><input id="adCashAmount" type="number" min="0.01" step="0.01"></div>
+<div><label>Currency</label><select id="adCashCurrency"><option value="NGN">NGN</option><option value="USD">USD</option><option value="GBP">GBP</option></select></div>
+<div><label>Payment provider</label><input id="adCashProvider" maxlength="80" placeholder="Bank transfer / provider"></div>
+<div><label>Provider transaction reference</label><input id="adCashRef" maxlength="200"></div>
+<div><label>Evidence URL (HTTPS, optional)</label><input id="adCashEvidence" type="url"></div>
+<div><label>Notes</label><input id="adCashNotes" maxlength="500"></div>
+</div><button id="adRecordCash">Record pending cash event</button>
 <h3>Pending advertising cash verification</h3>
 <p class="small">A different finance administrator must verify a cash event from the person who recorded it. Only verified receipts are counted as revenue.</p>
 <div id="adCashRows"></div>
@@ -185,7 +198,7 @@ async function refreshSession(){
  if(!session){show('login',true);show('mfa',false);show('app',false);return}
  currentUser=session.user;
  const ready=await ensureAal2();
- if(ready){show('login',false);show('mfa',false);show('app',true);$('identity').textContent='Signed in: '+(currentUser.email||currentUser.id);await loadRecords()}
+ if(ready){show('login',false);show('mfa',false);show('app',true);$('identity').textContent='Signed in: '+(currentUser.email||currentUser.id);await loadRecords();try{await loadAdDashboard()}catch(adError){status('adStatus','Advertising dashboard unavailable: '+adError.message)}}
 }
 $('signIn').onclick=async()=>{
  status('loginStatus','Signing in…');
@@ -238,6 +251,7 @@ async function loadAdDashboard(){
  const approved=advertisers.filter(a=>a.status==='approved');
  $('adCampaignAdvertiser').innerHTML='<option value="">Choose advertiser</option>'+approved.map(a=>adOption(a.display_name||a.legal_name,a.id)).join('');
  $('adCreativeCampaign').innerHTML='<option value="">Choose campaign</option>'+campaigns.map(c=>adOption(c.campaign_name+' · '+c.status,c.id)).join('');
+ $('adCashCampaign').innerHTML='<option value="">Choose campaign</option>'+campaigns.map(c=>adOption(c.campaign_name+' · '+c.status,c.id)).join('');
  $('adCampaignRows').innerHTML=campaigns.length?campaigns.map(c=>'<article class="record"><strong>'+escapeHtml(c.campaign_name)+'</strong><p>'+escapeHtml(c.advertiser_name)+' · '+(c.channel==='direct'?'Direct advertiser':'Ad network')+'</p><p>Status: '+escapeHtml(c.status)+' · Creative: '+escapeHtml(c.creative_review_status)+' · Placement: '+escapeHtml(c.placement_key)+'</p><p>Budget: '+escapeHtml(adMoney(c.budget_minor,c.currency))+' · Verified net receipts: '+escapeHtml(adMoney(c.verified_receipts_minor,c.currency))+'</p><p>Impressions: '+escapeHtml(c.impressions)+' · Clicks: '+escapeHtml(c.clicks)+'</p><p>Schedule: '+escapeHtml(new Date(c.starts_at).toLocaleString())+' – '+escapeHtml(new Date(c.ends_at).toLocaleString())+'</p><p>Creative: '+escapeHtml(c.creative_headline||'Not submitted')+'</p><small>'+escapeHtml(c.id)+'</small>'+
   (c.status==='pending_review'?'<div><button data-campaign="'+escapeHtml(c.id)+'" data-decision="approved">Approve creative</button><button class="secondary" data-campaign="'+escapeHtml(c.id)+'" data-decision="changes_requested">Request changes</button><button class="secondary" data-campaign="'+escapeHtml(c.id)+'" data-decision="rejected">Reject</button></div>':'')+'</article>').join(''):'<p class="small">No campaigns created.</p>';
  const cash=adDashboardCache.pending_cash_events||[];
@@ -309,6 +323,30 @@ $('adCampaignRows').addEventListener('click',async ev=>{
   if(error)throw error;status('adStatus','Campaign review decision recorded.');await loadAdDashboard();
  }catch(e){status('adStatus',e.message)}
 });
+
+$('adRecordCash').onclick=async()=>{
+ try{
+  const campaign=$('adCashCampaign').value;
+  const type=$('adCashType').value;
+  const amount=minorFromInput($('adCashAmount').value);
+  const currency=$('adCashCurrency').value;
+  const evidence=$('adCashEvidence').value.trim();
+  if(!campaign)throw new Error('Choose the campaign.');
+  if(amount<=0)throw new Error('Amount must be greater than zero.');
+  if(evidence&&!evidence.startsWith('https://'))throw new Error('Evidence URL must use HTTPS.');
+  const idempotency='adcash-'+crypto.randomUUID();
+  const {data,error}=await client.rpc('playam_ad_record_cash_event_v1',{
+   p_campaign_id:campaign,p_event_type:type,p_amount_minor:amount,p_currency:currency,
+   p_idempotency_key:idempotency,p_payment_provider:$('adCashProvider').value.trim()||null,
+   p_provider_transaction_ref:$('adCashRef').value.trim()||null,p_occurred_at:new Date().toISOString(),
+   p_evidence_uri:evidence||null,p_notes:$('adCashNotes').value.trim()||null
+  });
+  if(error)throw error;
+  status('adStatus','Cash event recorded as pending verification. A different finance administrator must verify it. Reference: '+data);
+  $('adCashAmount').value='';$('adCashProvider').value='';$('adCashRef').value='';$('adCashEvidence').value='';$('adCashNotes').value='';
+  await loadAdDashboard();
+ }catch(e){status('adStatus',e.message)}
+};
 $('adCashRows').addEventListener('click',async ev=>{
  const b=ev.target.closest('[data-adcash]');if(!b)return;
  try{
