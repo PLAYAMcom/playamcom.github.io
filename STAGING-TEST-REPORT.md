@@ -60,3 +60,25 @@ Status for all items below: **NOT RUN — hosted staging preview is not yet avai
 
 ## Next gate
 Connect Vercel, deploy only `codex/playam-staging-mobile` as a separate staging preview, verify the deployed page still targets staging, then execute the runtime checklist with the two staging test accounts. Do not merge or deploy to production as part of this test.
+
+
+## Batch 42 — Full-height portrait-first mobile navigation pass
+
+Updated `staging-game.html` on `codex/playam-staging-mobile` and `www/index.html` on `codex/playam-mobile-app`.
+
+### Layout changes
+- On narrow portrait screens, the existing navigation becomes a fixed bottom dock spanning the full screen width.
+- The brand/side-label clutter is hidden in the dock while existing navigation actions remain available and horizontally scrollable.
+- The main content receives bottom clearance so the dock and iPhone safe-area inset do not cover gameplay controls.
+- Dock sizing and content spacing adapt to short landscape screens.
+- Existing game screens, Supabase staging configuration, and Friendship Court interaction code were not intentionally changed.
+
+### Source checks
+- Both updated files retain only the staging Supabase URL; no production Supabase URL is present.
+- The full-height portrait CSS marker appears once in each file.
+- Safe-area insets are included for the fixed dock and content clearance.
+- Narrow-screen and landscape rules are present.
+- This is a CSS/source-level pass only. No browser screenshot, device visual test, two-player runtime test, Android install test or iOS build test was performed.
+
+### Deployment status
+Source changes are committed to the two separate feature branches only. No production deployment or merge was performed. The Vercel staging preview still requires browser/device verification before calling this update complete.
