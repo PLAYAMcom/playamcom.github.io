@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>PLAYAM Withdrawal Review — Staging</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#0b0714;color:#f7f2ff;font:15px system-ui,-apple-system,Segoe UI,sans-serif}main{max-width:980px;margin:auto;padding:18px}.banner{background:#5a2a18;border:1px solid #b86b32;padding:12px;border-radius:10px;font-weight:800}.panel,.record{background:#171022;border:1px solid #49345b;border-radius:14px;padding:16px;margin:14px 0}h1{font-size:clamp(24px,5vw,36px)}label{display:block;margin:10px 0 5px}input,textarea,button{font:inherit;border-radius:9px;padding:12px;border:1px solid #59436b}input,textarea{width:100%;background:#0e0a16;color:white;margin-bottom:10px}textarea{min-height:65px}button{background:#a83de0;color:white;border:0;font-weight:700;cursor:pointer;margin:4px}button.secondary{background:#352344}button:disabled{opacity:.5}.muted,.small{color:#b9adc5}.small{font-size:13px}.status{white-space:pre-wrap;color:#ffc5d5;margin-top:10px}.hidden{display:none!important}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.warning{color:#ffd18a}.pill{display:inline-block;padding:3px 8px;border-radius:20px;background:#352344;margin-left:6px}@media(max-width:540px){main{padding:12px}}
+</style></head><body><main>
+<div class="banner">PLAYAM STAGING ONLY — TEST ACCOUNTS ONLY — NOT PRODUCTION</div>
+<h1>Creator withdrawal approvals</h1>
+<p class="muted">Restricted finance-admin review queue. Every action requires an active finance administrator role and verified authenticator MFA (aal2). Large withdrawals require two different administrators. This page cannot initiate or release Paystack transfers.</p>
+<section id="login" class="panel"><h2>Administrator sign in</h2><label>Email</label><input id="email" type="email" autocomplete="username"><label>Password</label><input id="password" type="password" autocomplete="current-password"><button id="signIn">Sign in</button><div id="loginStatus" class="status" role="status"></div></section>
+<section id="mfa" class="panel hidden"><h2>Verify authenticator</h2><label>Six-digit code</label><input id="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="6"><button id="verifyMfa">Verify MFA</button><div id="mfaStatus" class="status" role="status"></div></section>
+<section id="app" class="hidden"><div class="panel row"><strong id="identity">Finance administrator</strong><button id="refresh" class="secondary">Refresh queue</button><button id="logout" class="secondary">Sign out</button><div id="globalStatus" class="status"></div></div>
+<div class="panel"><h2>Pending review</h2><p class="small">Approve only after checking the creator request, destination, quote and relevant risk information through authorised internal records. First approval on a large withdrawal does not release it; a different finance admin must approve second. Rejection requires a clear reason and releases the reserved amount.</p><div id="queueStatus" class="status" role="status"></div><div id="queue"></div></div></section>
+<script>
+const SUPABASE_URL="https://pwnjrdedeoxbmtfywhkk.supabase.co";
+const SUPABASE_KEY="sb_publishable_6zZlj2moK_zv9lAA_0xdzA_nBDueD50";
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const $=id=>document.getElementById(id);let currentUser=null,pendingFactor=null;
+const show=(id,on)=>$(id).classList.toggle("hidden",!on);
+const status=(id,msg)=>$(id).textContent=msg;
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const money=n=>new Intl.NumberFormat("en-NG",{style:"currency",currency:"NGN"}).format(Number(n||0)/100);
+async function checkMfa(){
+ const {data,error}=await db.auth.mfa.getAuthenticatorAssuranceLevel();if(error)throw error;
+ if(data.currentLevel==="aal2")return true;
+ if(data.nextLevel!=="aal2")throw new Error("Administrator account must enrol authenticator MFA.");
+ const {data:factors,error:e}=await db.auth.mfa.listFactors();if(e)throw e;
+ const factor=(factors.totp||[]).find(x=>x.status==="verified");if(!factor)throw new Error("No verified authenticator found. Ask system administrator to complete MFA enrolment.");
+ pendingFactor=factor.id;show("login",false);show("mfa",true);return false;
+}
+async function refreshSession(){
+ const {data:{session}}=await db.auth.getSession();
+ if(!session){currentUser=null;show("login",true);show("mfa",false);show("app",false);return}
+ currentUser=session.user;
+ if(await checkMfa()){show("login",false);show("mfa",false);show("app",true);$("identity").textContent="Signed in: "+(currentUser.email||currentUser.id);await loadQueue()}
+}
+$("signIn").onclick=async()=>{status("loginStatus","Signing in…");const {error}=await db.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});if(error){status("loginStatus",error.message);return}try{await refreshSession()}catch(e){status("loginStatus",e.message)}};
+$("verifyMfa").onclick=async()=>{const code=$("otp").value.trim();if(!pendingFactor||!/^\d{6}$/.test(code)){status("mfaStatus","Enter the six-digit authenticator code.");return}status("mfaStatus","Verifying…");const {data:ch,error:ce}=await db.auth.mfa.challenge({factorId:pendingFactor});if(ce){status("mfaStatus",ce.message);return}const {error}=await db.auth.mfa.verify({factorId:pendingFactor,challengeId:ch.id,code});if(error){status("mfaStatus",error.message);return}$("otp").value="";try{await refreshSession()}catch(e){status("mfaStatus",e.message)}};
+$("logout").onclick=async()=>{await db.auth.signOut();currentUser=null;show("app",false);show("mfa",false);show("login",true)};
+async function loadQueue(){
+ status("queueStatus","Loading restricted withdrawal queue…");$("queue").innerHTML="";
+ const {data,error}=await db.rpc("playam_admin_list_creator_withdrawals_v1");
+ if(error){status("queueStatus","Could not load queue: "+error.message);return}
+ const rows=Array.isArray(data)?data:[];
+ status("queueStatus",rows.length+" request(s) · refreshed "+new Date().toLocaleTimeString());
+ $("queue").innerHTML=rows.map(r=>{
+  const id=esc(r.request_id),large=!!r.first_approved_by,secondNeeded=large&&!r.second_approved_by;
+  const canApprove=["pending"].includes(r.request_status);
+  const canReject=["pending","approved"].includes(r.request_status);
+  return '<article class="record"><div class="row"><strong>'+money(r.gross_amount_minor)+'</strong><span class="pill">'+esc(r.request_status)+'</span><span class="pill">'+(secondNeeded?"Second approval required":large?"Two approvals recorded":"Standard review")+'</span></div>'+
+  '<p>Creator: <code>'+esc(r.creator_auth_user_id)+'</code></p>'+
+  '<p>Gross: '+money(r.gross_amount_minor)+' · Creator fee estimate: '+money(r.creator_fee_quoted_minor)+' · Net transfer: '+money(r.net_transfer_minor)+'</p>'+
+  '<p>Stamp duty: '+money(r.stamp_duty_minor)+' · Payer: '+esc(r.stamp_duty_payer)+'</p>'+
+  '<p>Fee reconciliation: '+esc(r.fee_reconciliation_status)+' · Destination ID: '+esc(r.payout_destination_id||"Not available")+'</p>'+
+  '<p class="small">Requested: '+esc(new Date(r.requested_at).toLocaleString())+
+  '<br>First approval: '+esc(r.first_approved_by||"None")+
+  '<br>Second approval: '+esc(r.second_approved_by||"None")+'</p>'+
+  (r.stamp_duty_payer==="pending_policy"&&Number(r.stamp_duty_minor)>0?'<p class="warning">Approval blocked: stamp-duty payer policy is unresolved.</p>':'')+
+  (canApprove?'<button data-approve="'+id+'">Approve / record my approval</button>':'')+
+  (canReject?'<label>Reason for rejection (required)</label><textarea maxlength="500" data-reason="'+id+'" placeholder="Explain the review decision"></textarea><button class="secondary" data-reject="'+id+'">Reject and release reservation</button>':'')+
+  '</article>';
+ }).join("")||'<p class="muted">No pending or processing withdrawal requests.</p>';
+}
+$("queue").addEventListener("click",async ev=>{
+ const approve=ev.target.closest("[data-approve]"),reject=ev.target.closest("[data-reject]");
+ try{
+  if(approve){const id=approve.dataset.approve;if(!confirm("Record your administrator approval for this staging withdrawal? Large requests need a different administrator for second approval."))return;approve.disabled=true;const {data,error}=await db.rpc("playam_approve_creator_withdrawal_v1",{p_request_id:id});if(error)throw error;status("queueStatus","Approval result: "+data+". Refreshing…");await loadQueue()}
+  if(reject){const id=reject.dataset.reject;const reason=$("queue").querySelector('textarea[data-reason="'+id+'"]').value.trim();if(reason.length<3)throw new Error("Enter a clear rejection reason.");if(!confirm("Reject this request and release its reserved creator funds?"))return;reject.disabled=true;const {error}=await db.rpc("playam_reject_creator_withdrawal_v1",{p_request_id:id,p_reason:reason});if(error)throw error;status("queueStatus","Request rejected and reservation release recorded.");await loadQueue()}
+ }catch(e){status("queueStatus","Action not completed: "+e.message);await loadQueue()}
+});
+$("refresh").onclick=loadQueue;
+db.auth.onAuthStateChange(()=>setTimeout(()=>refreshSession().catch(e=>status("globalStatus",e.message)),0));
+refreshSession().catch(e=>status("loginStatus",e.message));
+</script></main></body></html>
