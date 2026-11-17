@@ -47,6 +47,11 @@ textarea{min-height:120px}
 .small-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
 .small-card{background:var(--panel);border:1px solid #33334d;border-radius:17px;padding:19px}
 .screen-card{background:var(--panel);border:1px solid #34304f;border-radius:20px;padding:25px;max-width:850px}
+.security-notice{background:#101020;border:1px solid #34304f;border-radius:14px;padding:14px;margin:12px 0}
+.security-notice.unread{border-color:#9b5cff}
+.security-notice h4{margin:0 0 7px}
+.security-notice p{color:var(--muted);font-size:13px;line-height:1.5;margin:0 0 8px}
+.security-notice small{color:var(--muted)}
 .screen-card h2{margin-top:0}
 label{display:block;margin-top:13px;font-weight:bold}
 #message{min-height:22px;color:#ffb4dc;margin:15px 0;text-align:center}
@@ -177,10 +182,17 @@ label{display:block;margin-top:13px;font-weight:bold}
   </section>
 
   <section id="settingsScreen" class="screen-card hidden">
-   <h2>⚙️ Settings</h2>
-   <p class="muted">Manage your PLAYAM account.</p>
-   <button class="back" style="width:100%" onclick="signOut()">LOG OUT</button>
-   <button class="back" style="width:100%" onclick="showHome()">← BACK</button>
+   <h2>🔐 Security & Notifications</h2>
+   <p class="muted">Review important changes to your PLAYAM account.</p>
+   <div class="small-card">
+    <h3>Account security activity</h3>
+    <p class="muted">PLAYAM records password, email and phone changes, account recovery requests, two-factor authentication changes and payout destination changes.</p>
+    <button class="secondary" style="width:100%" onclick="loadSecurityNotifications()">REFRESH ACTIVITY</button>
+    <div id="securityNotifications" aria-live="polite"><p class="muted">Loading security activity...</p></div>
+   </div>
+   <p class="small">If you see a change you did not make, secure your email account and contact PLAYAM Support immediately.</p>
+   <button class="back" style="width:100%;margin-top:12px" onclick="signOut()">LOG OUT</button>
+   <button class="back" style="width:100%;margin-top:8px" onclick="showHome()">← BACK</button>
   </section>
 
   <section id="soloSetupScreen" class="screen-card hidden">
@@ -312,8 +324,8 @@ label{display:block;margin-top:13px;font-weight:bold}
 </div>
 
 <script>
-const SUPABASE_URL="https://erjxmesxmmmaxivvmbsi.supabase.co";
-const SUPABASE_KEY="sb_publishable_8GZmo3tsiGphFbgsCmbdgA_A7blmyc0";
+const SUPABASE_URL="https://pwnjrdedeoxbmtfywhkk.supabase.co";
+const SUPABASE_KEY="sb_publishable_6zZlj2moK_zv9lAA_0xdzA_nBDueD50";
 const supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
 let currentRoomCode="",currentRoomId="",currentPlayerId="",currentNickname="";
@@ -330,7 +342,51 @@ function setNav(id){document.querySelectorAll(".navbtn").forEach(b=>b.classList.
 function showScreen(id,nav=""){hideScreens();document.getElementById(id).classList.remove("hidden");setNav(nav);showMessage("")}
 function showHome(){stopLobbyRefresh();stopGameRefresh();showScreen("homeScreen","navHome")}
 function showFindPlayer(){stopLobbyRefresh();stopGameRefresh();showScreen("findPlayerScreen")}
-function showSettings(){showScreen("settingsScreen")}
+async function showSettings(){showScreen("settingsScreen");await loadSecurityNotifications()}
+
+async function loadSecurityNotifications(){
+ const box=document.getElementById("securityNotifications");
+ if(!box)return;
+ box.innerHTML="<p class='muted'>Loading security activity...</p>";
+ const {data:{user},error:userError}=await supabaseClient.auth.getUser();
+ if(userError||!user){box.innerHTML="<p class='muted'>Please log in to view account activity.</p>";return}
+ const {data,error}=await supabaseClient
+  .from("player_notifications")
+  .select("id,notification_type,title,body,is_read,created_at")
+  .eq("auth_user_id",user.id)
+  .order("created_at",{ascending:false})
+  .limit(30);
+ if(error){box.textContent="Unable to load security activity: "+error.message;return}
+ box.innerHTML="";
+ if(!data||!data.length){box.innerHTML="<p class='muted'>No security notifications yet. Important account changes will appear here.</p>";return}
+ data.forEach(notification=>{
+  const item=document.createElement("div");
+  item.className="security-notice"+(notification.is_read?"":" unread");
+  const title=document.createElement("h4");
+  title.textContent=notification.title||"Account security update";
+  const body=document.createElement("p");
+  body.textContent=notification.body||"There was an update to your PLAYAM account.";
+  const date=document.createElement("small");
+  date.textContent=new Date(notification.created_at).toLocaleString();
+  item.append(title,body,date);
+  if(!notification.is_read){
+   const button=document.createElement("button");
+   button.className="secondary";
+   button.style.width="100%";
+   button.style.marginTop="10px";
+   button.textContent="MARK AS READ";
+   button.onclick=async()=>{
+    button.disabled=true;
+    const {error:updateError}=await supabaseClient.from("player_notifications")
+     .update({is_read:true}).eq("id",notification.id).eq("auth_user_id",user.id);
+    if(updateError){button.disabled=false;button.textContent="RETRY MARK AS READ";return}
+    await loadSecurityNotifications();
+   };
+   item.appendChild(button);
+  }
+  box.appendChild(item);
+ });
+}
 function showCreateRoom(){showScreen("createScreen")}
 function showJoinRoom(){showScreen("joinScreen")}
 function showCreateRoomWithHard(){document.getElementById("game").value="friendship-court";document.getElementById("level").value="hard";showCreateRoom()}
