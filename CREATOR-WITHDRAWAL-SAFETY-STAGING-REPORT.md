@@ -142,3 +142,43 @@ Verified the boundary guard is present and quote RPC grants remain anon=false, a
 - No live quote or confirmation has been made; no wallet reservation or payout has occurred during this implementation.
 - Browser-level accessibility, responsive layout and Supabase API runtime behaviour remain to be tested.
 - Net transfer payout, Paystack webhook verification, actual fee reconciliation, fee refunds/reversals and admin payout approval remain unfinished. Existing payout preparation is still blocked.
+
+
+## Batch 27 — Net payout and actual provider-fee reconciliation safeguards
+
+### Staging Edge Functions updated
+
+Updated deployed staging functions only:
+- `paystack-creator-payout` version 2 now requires a valid gross amount, approved net transfer amount and quoted fee whose arithmetic reconciles. It sends only `net_transfer_minor` to Paystack, and records gross/net/quoted fee in the audit metadata.
+- `paystack-webhook` version 7 now compares Paystack's verified transfer amount against the approved net amount, not the gross creator liability. It still validates the Paystack HMAC-SHA512 signature and verifies transfer details directly with Paystack.
+- On verified transfer success, the webhook requires a valid `fee_charged` value, records the actual provider fee through the service-role-only fee recorder, and only then attempts to mark the withdrawal paid.
+- Webhook verification also checks that the request's net amount and quoted fee reconcile with the gross amount and that the stamp-duty payer is not pending.
+
+### Creator fee reconciliation and wallet credits
+
+Replaced `playam_record_creator_withdrawal_fee_v1` on staging:
+- Records verified actual Paystack fees and provider fee reversals idempotently.
+- When actual fee is lower than the amount quoted to the creator, credits the difference back to the creator's available wallet using an auditable `admin_adjustment` ledger event.
+- When actual fee exceeds the quote, it does not silently deduct the extra from the creator; it records a mismatch for PLAYAM finance reconciliation.
+- When a provider fee is reversed, credits the reversed amount back to the creator's available wallet.
+- Ledger refund entries use deterministic event idempotency keys.
+
+### Settlement guard
+
+Updated `playam_mark_creator_withdrawal_paid_v1` so a withdrawal cannot be marked paid unless:
+- The provider reference matches the request.
+- Gross, quoted fee and net transfer arithmetic reconcile.
+- A verified actual provider fee has been recorded.
+- Fee reconciliation is matched or mismatch (the latter means PLAYAM must absorb any excess rather than charge the creator more).
+- Any applicable stamp-duty payer policy is resolved.
+
+Verified the three service-only payout/fee RPCs are SECURITY DEFINER with execute grants restricted to service_role; anon and authenticated execution are false.
+
+### Important limitations
+
+- The transfer-preparation RPC remains deliberately blocked. No payout can be initiated until administrator approval, the final net-transfer preparation function and end-to-end tests are complete.
+- No Paystack transfer or webhook was sent during this work.
+- No withdrawal requests or fee events were created; staging request table remains empty.
+- Paystack's live `fee_charged` response behaviour has not been exercised with a real provider transfer.
+- The separate stamp-duty payer remains pending. Affected withdrawals remain blocked.
+- The staging edge function source is deployed in the staging Supabase project. Production Supabase was not changed.
