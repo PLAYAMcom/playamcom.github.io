@@ -91,11 +91,27 @@ label{display:block;margin-top:13px;font-weight:bold}
  <div class="logo">PLAYAM 🎮</div>
  <p class="tagline">Laugh. Confess. Play. Keep the secrets. 👀❤️</p>
  <h2>Welcome to PLAYAM</h2>
- <input id="email" type="email" placeholder="Email address">
- <input id="password" type="password" placeholder="Password">
- <button class="primary" style="width:100%;margin-top:8px" onclick="signUp()">CREATE NEW ACCOUNT</button>
- <button class="secondary" style="width:100%;margin-top:8px" onclick="signIn()">LOG IN TO EXISTING ACCOUNT</button>
- <p class="small">Only email and password are required.</p>
+ <div class="auth-method">
+  <h3>Email and password</h3>
+  <input id="email" type="email" placeholder="Email address" autocomplete="email">
+  <input id="password" type="password" placeholder="Password" autocomplete="current-password">
+  <button class="primary" style="width:100%;margin-top:8px" onclick="signUp()">CREATE NEW ACCOUNT</button>
+  <button class="secondary" style="width:100%;margin-top:8px" onclick="signIn()">LOG IN TO EXISTING ACCOUNT</button>
+ </div>
+ <div class="auth-method">
+  <h3>Phone number login</h3>
+  <input id="phone" type="tel" placeholder="Phone number, e.g. +2348012345678" autocomplete="tel">
+  <button class="secondary" style="width:100%;margin-top:8px" onclick="sendPhoneOtp()">SEND SMS CODE</button>
+  <input id="phoneOtp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6-digit verification code">
+  <button class="primary" style="width:100%;margin-top:8px" onclick="verifyPhoneOtp()">VERIFY CODE & LOG IN</button>
+  <p class="small">Use your full international phone number, including country code. SMS delivery requires PLAYAM to finish configuring its SMS provider.</p>
+ </div>
+ <div class="auth-method">
+  <h3>Continue with</h3>
+  <button class="secondary" style="width:100%;margin-top:8px" onclick="signInSocial('google')">CONTINUE WITH GOOGLE</button>
+  <button class="secondary" style="width:100%;margin-top:8px" onclick="signInSocial('apple')">CONTINUE WITH APPLE</button>
+  <p class="small">Google and Apple sign-in will work after their providers are configured for PLAYAM.</p>
+ </div>
  <div id="authMessage"></div>
 </div>
 
@@ -407,6 +423,27 @@ async function signIn(){
  const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});
  if(error){showMessage(error.message);return}
  if(data.session)showHome();else showMessage("Login succeeded, but no active session was returned.");
+}
+async function sendPhoneOtp(){
+ const phone=document.getElementById("phone").value.trim();
+ if(!/^\\+[1-9]\\d{7,14}$/.test(phone)){showMessage("Enter a valid international phone number, including + and country code.");return}
+ showMessage("Requesting a verification code...");
+ const {error}=await supabaseClient.auth.signInWithOtp({phone});
+ if(error){showMessage("Phone login is not ready yet: "+error.message);return}
+ showMessage("A verification code has been requested. Check your SMS messages.");
+}
+async function verifyPhoneOtp(){
+ const phone=document.getElementById("phone").value.trim(),token=document.getElementById("phoneOtp").value.trim();
+ if(!phone||!/^\\d{6}$/.test(token)){showMessage("Enter your phone number and the 6-digit code.");return}
+ showMessage("Verifying your code...");
+ const {data,error}=await supabaseClient.auth.verifyOtp({phone,token,type:"sms"});
+ if(error){showMessage(error.message);return}
+ if(data.session)showHome();else showMessage("Code accepted, but no active session was returned.");
+}
+async function signInSocial(provider){
+ showMessage("Connecting to "+(provider==="google"?"Google":"Apple")+"...");
+ const {error}=await supabaseClient.auth.signInWithOAuth({provider,options:{redirectTo:window.location.origin}});
+ if(error)showMessage("This sign-in provider is not configured yet: "+error.message);
 }
 async function signOut(){
  stopLobbyRefresh();stopGameRefresh();await supabaseClient.auth.signOut();
