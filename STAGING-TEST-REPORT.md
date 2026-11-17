@@ -82,3 +82,25 @@ Updated `staging-game.html` on `codex/playam-staging-mobile` and `www/index.html
 
 ### Deployment status
 Source changes are committed to the two separate feature branches only. No production deployment or merge was performed. The Vercel staging preview still requires browser/device verification before calling this update complete.
+
+
+## Batch 43 — Full-height portrait navigation source correction
+
+Applied the portrait-first CSS pass to `staging-game.html` in this branch and `www/index.html` in `codex/playam-mobile-app`.
+
+### Source verification
+- Both files contain the expected full-height portrait CSS marker exactly once.
+- Both contain the staging Supabase project URL and neither contains the production Supabase project URL.
+- Both include safe-area bottom padding and a fixed full-width bottom navigation treatment.
+- Both include narrow-screen and short-landscape adjustments.
+
+### Preview deployment
+- Created a Vercel deployment in the dedicated `playam-mobile-staging` project with target `staging`.
+- Deployment ID: `dpl_EFXprQmaKssQBcNxn76BedeXGhpu`.
+- Source branch: `codex/playam-mobile-app`.
+- Source commit: `219612db43ff272864d05c6410afa91368ffbce0`.
+- Last observed state during this report update: `BUILDING`. A READY state and browser/device rendering have not yet been verified.
+- Project SSO protection is enabled, so preview access may require authorised team sign-in.
+
+### Scope
+No production deployment, merge, Supabase migration, payout, or Friendship Court gameplay logic change was made. This is a source-level mobile layout update pending actual browser/device testing.
