@@ -374,3 +374,33 @@ Add an auditable recovery decision workflow only after the recovery policy is ap
 ### No activation
 
 No creator wallet changes, payout, cash reward activation, production database change, or Friendship Court/gameplay change occurred.
+
+
+## Batch 34 — Paystack workflow consistency review (read-only)
+
+Inspected the deployed staging Edge Function source for `paystack-creator-payout` and `paystack-webhook`, plus the fee quote/confirmation and reversal RPC definitions.
+
+### Confirmed safeguards
+
+- The payout Edge Function requires a service-role bearer token and validates a withdrawal request ID.
+- It calls the database preparation RPC before contacting Paystack. The preparation RPC currently always raises a staging-disabled exception, so the Edge Function returns 409 and no transfer is initiated.
+- If preparation is ever enabled, the Edge Function checks NGN, gross/net/quoted-fee arithmetic, recipient code and unresolved stamp-duty payer before calling Paystack. Network/ambiguous provider responses leave the deterministic reference for manual reconciliation; they do not trigger an automatic second transfer.
+- The webhook verifies Paystack's HMAC-SHA512 signature, fetches transfer verification from Paystack, checks reference, amount and currency, records actual transfer fee, and only then calls the paid/failure settlement functions.
+- The transfer-reversal webhook path calls the five-argument reversal recorder with the verified reversed amount. That function only accepts a previously paid withdrawal and exact original net transfer amount; it records a recovery-review liability and does not debit the creator wallet.
+- The fee quote confirmation RPC is owner-scoped, locks the quote and destination, enforces a ten-minute expiry and explicit confirmation, checks available funds, and reserves the gross amount only after confirmation. If stamp duty applies and payer remains pending, confirmation is blocked.
+
+### Important unresolved fee-quote boundary
+
+The quote RPC's current fee-tier calculation says it selects the Paystack fee tier using the net transfer amount, but its boundary handling is incomplete around the ₦50,000 threshold. It blocks one ambiguous band around ₦5,010–₦5,025 gross, but does not similarly handle the next boundary around ₦50,025–₦50,050 gross. For amounts in that latter band, the calculated quoted fee can be inconsistent with the tier implied by the resulting net transfer amount. Do not rely on this quote calculation for real creator payouts until the fee-tier basis and boundary treatment are verified against current Paystack documentation and corrected with tests on both sides of every threshold.
+
+### Remaining integration blockers
+
+- Stamp-duty payer policy is still `pending_policy`; any quote where stamp duty applies is blocked at confirmation and payout readiness.
+- The actual transfer-preparation RPC is deliberately disabled, so no live or sandbox payout can be initiated through this path.
+- The quote RPC can reserve gross funds after confirmation, but the creator-facing quote/confirmation experience and end-to-end wallet reconciliation have not been exercised with signed-in test accounts.
+- The webhook's successful-transfer path accepts a verified fee mismatch as a reconciliation state; finance must review any mismatch and the policy that PLAYAM absorbs any amount above the creator's disclosed quote before enabling payouts.
+- No signed webhook test, provider sandbox transfer, ambiguous-response recovery drill, or actual MFA creator/admin browser test was performed in this audit.
+
+### Outcome
+
+Read-only inspection only. No Edge Function was changed or deployed, no database records were inserted, no creator wallet changed, no Paystack transfer was attempted, and no production/Friendship Court changes occurred. Payouts remain disabled in staging.
