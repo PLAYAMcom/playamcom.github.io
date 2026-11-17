@@ -347,3 +347,30 @@ Before implementing any wallet recovery, PLAYAM needs an explicit policy coverin
 ### Next safe milestone
 
 Add an auditable recovery decision workflow only after the recovery policy is approved. Until then, reversal records remain outstanding finance-review liabilities; do not debit creators, offset future earnings, freeze accounts, or write off balances automatically.
+
+
+## Batch 33 — MFA-protected withdrawal audit reader
+
+### Staging database
+
+- Added `playam_admin_list_creator_withdrawal_audit_v1(uuid)`, a read-only audit-list RPC. It requires a signed-in user with `aal2` and an active `super_admin` or `finance_admin` role, optionally filters to one withdrawal request, and returns at most 200 newest events.
+- Execute privileges verified: `anon=false`, `authenticated=true`, `service_role=false`. The function independently enforces MFA and active finance role before returning rows.
+- The existing `playam_creator_withdrawal_audit` table has RLS enabled, zero direct rows visible in this check, and a trigger preventing UPDATE/DELETE. Existing request lifecycle functions write audit events transactionally for approval, rejection, cancellation, processing, paid/failure and reversal events.
+
+### Staging administrator page
+
+- Added a read-only audit trail panel to `creator-withdrawal-admin-staging.html`, showing event type, request ID, actor, timestamp and event metadata.
+- Panel loads after the existing sign-in/MFA gate and refreshes with the admin queue. It has no edit/delete controls and no payout action.
+- Updated page is committed on `codex/playam-creator-withdrawal-safety`; no production deploy was performed.
+
+### Verification limits and advisor findings
+
+- Verified RPC privileges and inspected the audit table immutability trigger and existing audit writes.
+- No signed-in MFA browser session was used; the page's live rendering and event retrieval have not been end-to-end tested. The audit table currently has zero rows, so there are no historical events to display.
+- Supabase security advisors report 37 RLS-enabled tables with no policies (including finance/withdrawal tables that are intended to be inaccessible directly) and 63 authenticated-executable SECURITY DEFINER functions across the project. These findings require object-by-object review: some are intentionally RPC-gated and some are unrelated legacy/game functions. Do not mass-change grants or policies because that could break PLAYAM/Friendship Court. The advisor also reports leaked-password protection disabled; this should be enabled after reviewing auth compatibility.
+- Performance advisors report unindexed foreign keys, including several new withdrawal/reversal foreign keys. Add targeted indexes after confirming query paths; do not remove unused indexes based on a low-traffic staging snapshot.
+- Health advisors returned no findings.
+
+### No activation
+
+No creator wallet changes, payout, cash reward activation, production database change, or Friendship Court/gameplay change occurred.
