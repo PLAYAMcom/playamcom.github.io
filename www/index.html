@@ -252,7 +252,7 @@ textarea{line-height:1.5;resize:vertical}
 .video-stage-copy h3{font-size:22px;line-height:1.12;margin:9px 0}
 .video-stage-copy p{font-size:11px;line-height:1.5;color:#e3d8ef;margin:0}
 .video-stage-actions{position:absolute;right:15px;bottom:20px;display:flex;flex-direction:column;gap:17px;font-size:20px}
-.shorts-toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px;align-items:center;margin:12px 0}.shorts-toolbar input{margin:0;min-width:0}.shorts-upload-button{white-space:nowrap;padding:12px 14px}.shorts-status{min-height:20px;color:#c4a5ef;font-size:12px;margin:8px 2px}.shorts-list{display:flex;flex-direction:column;gap:18px;margin:12px 0 28px}.shorts-card{position:relative;width:100%;max-width:520px;margin:0 auto;overflow:hidden;border:1px solid #40345f;border-radius:22px;background:#111020;scroll-snap-align:start}.shorts-card video{display:block;width:100%;max-height:68dvh;min-height:220px;aspect-ratio:9/16;object-fit:contain;background:#05050b}.shorts-card-copy{padding:12px 14px 15px}.shorts-card-creator{font-size:12px;font-weight:900;color:#d5a7ff;margin-bottom:5px}.shorts-card-caption{font-size:13px;line-height:1.45;color:#eee;margin:0;overflow-wrap:anywhere}.shorts-empty{padding:25px 16px;text-align:center;color:#bdb4d2;background:#171528;border:1px dashed #51416f;border-radius:18px;font-size:13px;line-height:1.5}@media(max-width:760px){.shorts-toolbar{grid-template-columns:1fr}.shorts-upload-button{width:100%}.shorts-card{border-radius:18px}.shorts-card video{max-height:62dvh}}
+.shorts-engagement{display:flex;gap:9px;margin-top:12px;flex-wrap:wrap}.shorts-action{border:1px solid #51416f;border-radius:999px;background:#211d39;color:#eee;padding:9px 14px;font-size:12px;font-weight:800;cursor:pointer}.shorts-action.liked{border-color:#d95ca8;color:#ffb5df}.shorts-comments{margin-top:12px;padding-top:12px;border-top:1px solid #40345f}.shorts-comments-title{font-size:12px;font-weight:900;margin-bottom:9px}.shorts-comment-form{display:flex;gap:8px}.shorts-comment-form input{flex:1;min-width:0;margin:0;padding:10px 12px;border-radius:12px;background:#100f20;color:#fff;border:1px solid #51416f}.shorts-comment-list{display:flex;flex-direction:column;gap:7px;margin-top:10px}.shorts-comment{margin:0;padding:9px 11px;border-radius:12px;background:#211d39;color:#eee;font-size:12px;line-height:1.45;overflow-wrap:anywhere}.shorts-comment-empty{margin:0;color:#bdb4d2;font-size:12px}.shorts-toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px;align-items:center;margin:12px 0}.shorts-toolbar input{margin:0;min-width:0}.shorts-upload-button{white-space:nowrap;padding:12px 14px}.shorts-status{min-height:20px;color:#c4a5ef;font-size:12px;margin:8px 2px}.shorts-list{display:flex;flex-direction:column;gap:18px;margin:12px 0 28px}.shorts-card{position:relative;width:100%;max-width:520px;margin:0 auto;overflow:hidden;border:1px solid #40345f;border-radius:22px;background:#111020;scroll-snap-align:start}.shorts-card video{display:block;width:100%;max-height:68dvh;min-height:220px;aspect-ratio:9/16;object-fit:contain;background:#05050b}.shorts-card-copy{padding:12px 14px 15px}.shorts-card-creator{font-size:12px;font-weight:900;color:#d5a7ff;margin-bottom:5px}.shorts-card-caption{font-size:13px;line-height:1.45;color:#eee;margin:0;overflow-wrap:anywhere}.shorts-empty{padding:25px 16px;text-align:center;color:#bdb4d2;background:#171528;border:1px dashed #51416f;border-radius:18px;font-size:13px;line-height:1.5}@media(max-width:760px){.shorts-toolbar{grid-template-columns:1fr}.shorts-upload-button{width:100%}.shorts-card{border-radius:18px}.shorts-card video{max-height:62dvh}}
 .feed-feature-note{font-size:10px;line-height:1.45;color:#a9a0c7;margin:4px 2px}
 .live-pill{font-size:11px;color:#ff7999;font-weight:900}
 .feed-live-visual,.feed-community-visual,.feed-earn-visual{flex:1;min-height:250px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:22px;border-radius:24px;background:radial-gradient(circle at 50% 35%,rgba(237,76,189,.2),transparent 48%),linear-gradient(145deg,#211d39,#111326);border:1px solid #40345f;margin:16px 0}
@@ -774,6 +774,24 @@ async function uploadPlayamVideo(event){
  }catch(e){console.error("PLAYAM Shorts upload failed",e);setPlayamVideoStatus(e?.message||"Upload failed. Please try again.",true)}
  finally{if(button)button.disabled=false}
 }
+async function loadPlayamVideoComments(videoId,panel){
+ panel.replaceChildren();const heading=document.createElement("div");heading.className="shorts-comments-title";heading.textContent="Comments";panel.append(heading);
+ const form=document.createElement("form");form.className="shorts-comment-form";const input=document.createElement("input");input.type="text";input.maxLength=500;input.placeholder="Write a comment…";input.setAttribute("aria-label","Write a comment");const send=document.createElement("button");send.type="submit";send.className="shorts-action";send.textContent="Send";form.append(input,send);panel.append(form);
+ const list=document.createElement("div");list.className="shorts-comment-list";panel.append(list);
+ const refresh=async()=>{
+  list.replaceChildren();const {data:comments,error}=await supabaseClient.from("playam_video_comments").select("id,body,created_at").eq("video_id",videoId).order("created_at",{ascending:false}).limit(20);
+  if(error)throw error;if(!comments?.length){const empty=document.createElement("p");empty.className="shorts-comment-empty";empty.textContent="No comments yet. Start the conversation.";list.append(empty);return}
+  for(const item of comments){const p=document.createElement("p");p.className="shorts-comment";p.textContent=item.body;list.append(p)}
+ };
+ form.addEventListener("submit",async event=>{
+  event.preventDefault();const body=input.value.trim();if(!body)return;send.disabled=true;
+  try{const {data:{user},error:authErr}=await supabaseClient.auth.getUser();if(authErr||!user)throw new Error("Please sign in to comment.");
+   const {error}=await supabaseClient.from("playam_video_comments").insert({video_id:videoId,user_id:user.id,body});if(error)throw error;input.value="";await refresh();
+  }catch(e){setPlayamVideoStatus(e?.message||"Could not post comment.",true)}finally{send.disabled=false}
+ });
+ try{await refresh()}catch(e){const error=document.createElement("p");error.className="shorts-comment-empty";error.textContent=e?.message||"Comments could not load.";list.append(error)}
+}
+
 async function loadPlayamVideos(){
  if(playamVideosLoading)return;const list=document.getElementById("playamShortsList");if(!list)return;
  const requestId=++playamVideoLoadSequence;playamVideosLoading=true;list.innerHTML='<div class="shorts-empty">Loading PLAYAM Shorts…</div>';
@@ -783,7 +801,27 @@ async function loadPlayamVideos(){
   for(const row of rows){
    const {data:signed,error:sErr}=await supabaseClient.storage.from("playam-videos-staging").createSignedUrl(row.storage_path,3600);if(requestId!==playamVideoLoadSequence)return;if(sErr||!signed?.signedUrl)continue;
    const card=document.createElement("article");card.className="shorts-card";const video=document.createElement("video");video.controls=true;video.playsInline=true;video.preload="metadata";video.setAttribute("playsinline","");video.setAttribute("webkit-playsinline","");video.src=signed.signedUrl;video.addEventListener("error",()=>{const code=video.error?.code;const reason=code===2?"A network problem interrupted video loading. Refresh and try again.":(code===3||code===4)?"This video codec is not supported by this device. Re-export it as MP4 with H.264 video and AAC audio.":"A video could not be loaded. Refresh and try again.";setPlayamVideoStatus(reason,true)});
-   const copy=document.createElement("div");copy.className="shorts-card-copy";const creator=document.createElement("div");creator.className="shorts-card-creator";creator.textContent=row.creator_name||"PLAYAM Player";const captionEl=document.createElement("p");captionEl.className="shorts-card-caption";captionEl.textContent=row.caption||"";copy.append(creator,captionEl);card.append(video,copy);list.append(card);
+   const copy=document.createElement("div");copy.className="shorts-card-copy";const creator=document.createElement("div");creator.className="shorts-card-creator";creator.textContent=row.creator_name||"PLAYAM Player";const captionEl=document.createElement("p");captionEl.className="shorts-card-caption";captionEl.textContent=row.caption||"";copy.append(creator,captionEl);
+   const actions=document.createElement("div");actions.className="shorts-engagement";
+   const likeButton=document.createElement("button");likeButton.type="button";likeButton.className="shorts-action";likeButton.textContent="♡ Like";
+   const commentButton=document.createElement("button");commentButton.type="button";commentButton.className="shorts-action";commentButton.textContent="💬 Comments";
+   const commentPanel=document.createElement("div");commentPanel.className="shorts-comments hidden";
+   likeButton.addEventListener("click",async()=>{
+    likeButton.disabled=true;
+    try{
+     const {data:{user:viewer},error:authErr}=await supabaseClient.auth.getUser();if(authErr||!viewer)throw new Error("Please sign in to like videos.");
+     const {data:existing,error:findErr}=await supabaseClient.from("playam_video_likes").select("id").eq("video_id",row.id).eq("user_id",viewer.id).maybeSingle();if(findErr)throw findErr;
+     if(existing){const {error:removeErr}=await supabaseClient.from("playam_video_likes").delete().eq("id",existing.id);if(removeErr)throw removeErr;likeButton.textContent="♡ Like";likeButton.classList.remove("liked")}
+     else{const {error:addErr}=await supabaseClient.from("playam_video_likes").insert({video_id:row.id,user_id:viewer.id});if(addErr)throw addErr;likeButton.textContent="♥ Liked";likeButton.classList.add("liked")}
+    }catch(e){setPlayamVideoStatus(e?.message||"Could not update like.",true)}finally{likeButton.disabled=false}
+   });
+   commentButton.addEventListener("click",async()=>{
+    commentPanel.classList.toggle("hidden");
+    if(!commentPanel.dataset.loaded||commentPanel.dataset.loaded!=="true"){await loadPlayamVideoComments(row.id,commentPanel);commentPanel.dataset.loaded="true"}
+   });
+   actions.append(likeButton,commentButton);copy.append(actions,commentPanel);card.append(video,copy);list.append(card);
+   const {data:{user:viewer}}=await supabaseClient.auth.getUser();
+   if(viewer){const {data:mine}=await supabaseClient.from("playam_video_likes").select("id").eq("video_id",row.id).eq("user_id",viewer.id).maybeSingle();if(mine){likeButton.textContent="♥ Liked";likeButton.classList.add("liked")}}
   }
   if(!list.children.length)list.innerHTML='<div class="shorts-empty">Videos are listed, but none could be prepared for playback. Please refresh and try again.</div>';
  }catch(e){console.error("PLAYAM Shorts feed failed",e);list.innerHTML='<div class="shorts-empty">PLAYAM Shorts could not load. Please refresh and try again.</div>';setPlayamVideoStatus(e?.message||"Unable to load videos.",true)}
