@@ -16,6 +16,9 @@ input,select,textarea{width:100%;padding:14px;border:1px solid #41415d;border-ra
 textarea{min-height:120px}
 .hidden{display:none!important}
 #authScreen{max-width:440px;margin:12vh auto 30px;padding:28px;background:var(--panel);border:1px solid #34304f;border-radius:22px;text-align:center}
+.auth-link{display:block;margin:12px auto 4px;padding:8px 12px;background:transparent;color:#cdaaff;font-size:12px;text-decoration:underline;border:0}
+#passwordRecoveryRequestPanel h3,#passwordRecoveryUpdatePanel h3{margin:10px 0 6px;font-size:20px}
+#authMessage{min-height:20px;margin-top:14px;font-size:13px;line-height:1.5;color:#e2d5ff}
 .logo{font-size:34px;font-weight:900;letter-spacing:2px;background:linear-gradient(90deg,#b17aff,#ff55c8);color:transparent;background-clip:text}
 .tagline,.muted,.small{color:var(--muted);font-size:13px}
 .primary{background:linear-gradient(100deg,var(--purple),var(--pink));color:white}
@@ -329,12 +332,30 @@ textarea{line-height:1.5;resize:vertical}
  <div class="logo">PLAYAM 🎮</div>
  <p class="tagline">Laugh. Confess. Play. Keep the secrets. 👀❤️</p>
  <h2>Welcome to PLAYAM</h2>
- <input id="email" type="email" placeholder="Email address">
- <input id="password" type="password" placeholder="Password">
- <button class="primary" style="width:100%;margin-top:8px" onclick="signUp()">CREATE NEW ACCOUNT</button>
- <button class="secondary" style="width:100%;margin-top:8px" onclick="signIn()">LOG IN TO EXISTING ACCOUNT</button>
- <p class="small">Only email and password are required.</p>
- <div id="authMessage"></div>
+ <div id="authLoginPanel">
+  <input id="email" type="email" placeholder="Email address" autocomplete="email">
+  <input id="password" type="password" placeholder="Password" autocomplete="current-password">
+  <button class="primary" style="width:100%;margin-top:8px" onclick="signUp()">CREATE NEW ACCOUNT</button>
+  <button class="secondary" style="width:100%;margin-top:8px" onclick="signIn()">LOG IN TO EXISTING ACCOUNT</button>
+  <button class="auth-link" type="button" onclick="showForgotPassword()">FORGOT PASSWORD?</button>
+  <p class="small">Only email and password are required.</p>
+ </div>
+ <div id="passwordRecoveryRequestPanel" class="hidden">
+  <h3>Reset your password</h3>
+  <p class="small">Enter your account email and we’ll send a secure reset link if an account matches.</p>
+  <input id="passwordRecoveryEmail" type="email" placeholder="Email address" autocomplete="email">
+  <button id="sendPasswordRecoveryButton" class="primary" style="width:100%;margin-top:8px" onclick="sendPasswordRecoveryEmail()">SEND RESET LINK</button>
+  <button class="back" style="width:100%;margin-top:8px" onclick="returnToLogin()">BACK TO LOGIN</button>
+ </div>
+ <div id="passwordRecoveryUpdatePanel" class="hidden">
+  <h3>Choose a new password</h3>
+  <p class="small">Use at least 8 characters, then confirm your new password.</p>
+  <input id="recoveryNewPassword" type="password" placeholder="New password" autocomplete="new-password">
+  <input id="recoveryConfirmPassword" type="password" placeholder="Confirm new password" autocomplete="new-password">
+  <button id="saveRecoveredPasswordButton" class="primary" style="width:100%;margin-top:8px" onclick="saveRecoveredPassword()">UPDATE PASSWORD</button>
+  <button class="back" style="width:100%;margin-top:8px" onclick="exitPasswordRecovery()">BACK TO LOGIN</button>
+ </div>
+ <div id="authMessage" role="status" aria-live="polite"></div>
 </div>
 
 <div id="app" class="hidden">
@@ -660,6 +681,85 @@ function syncFeedTab(){
  const target=current.id==="feedGames"?"feedGames":current.id==="feedVideos"?"feedVideos":current.id==="feedMessages"?"feedMessages":current.id==="feedProfile"?"feedProfile":"feedHome";
  const map={feedHome:"feedHome",feedGames:"feedGames",feedVideos:"feedVideos",feedMessages:"feedMessages",feedProfile:"feedProfile"};
  document.querySelectorAll(".mobile-tab").forEach(b=>b.classList.toggle("active",b.getAttribute("onclick")?.includes("'"+map[target]+"'")));
+}
+
+/* PASSWORD RECOVERY — Supabase Auth */
+let passwordRecoveryActive=false;
+let passwordRecoveryRequestBusy=false;
+function showAuthPanel(panelId){
+ ["authLoginPanel","passwordRecoveryRequestPanel","passwordRecoveryUpdatePanel"].forEach(id=>{
+  document.getElementById(id)?.classList.toggle("hidden",id!==panelId);
+ });
+ const message=document.getElementById("authMessage");
+ if(message)message.textContent="";
+}
+function showForgotPassword(){
+ const loginEmail=document.getElementById("email")?.value.trim()||"";
+ const recoveryEmail=document.getElementById("passwordRecoveryEmail");
+ if(recoveryEmail)recoveryEmail.value=loginEmail;
+ showAuthPanel("passwordRecoveryRequestPanel");
+}
+function returnToLogin(){
+ passwordRecoveryActive=false;
+ showAuthPanel("authLoginPanel");
+}
+async function sendPasswordRecoveryEmail(){
+ if(passwordRecoveryRequestBusy)return;
+ const email=document.getElementById("passwordRecoveryEmail")?.value.trim()||"";
+ const button=document.getElementById("sendPasswordRecoveryButton");
+ if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+  showMessage("Please enter a valid email address.");return;
+ }
+ passwordRecoveryRequestBusy=true;
+ if(button){button.disabled=true;button.textContent="SENDING…"}
+ showMessage("Sending your password reset email…");
+ try{
+  const redirectTo=window.location.origin+window.location.pathname;
+  const {error}=await supabaseClient.auth.resetPasswordForEmail(email,{redirectTo});
+  if(error)throw error;
+  showMessage("If an account exists for that email, a password reset link has been sent. Please check your inbox and spam folder.");
+ }catch(error){
+  showMessage(error?.message||"We could not send the reset email. Please try again later.");
+ }finally{
+  passwordRecoveryRequestBusy=false;
+  if(button){button.disabled=false;button.textContent="SEND RESET LINK"}
+ }
+}
+function openPasswordRecoveryUpdate(){
+ passwordRecoveryActive=true;
+ document.getElementById("app")?.classList.add("hidden");
+ document.getElementById("authScreen")?.classList.remove("hidden");
+ showAuthPanel("passwordRecoveryUpdatePanel");
+ showMessage("Your reset link is verified. Choose a new password below.");
+}
+async function saveRecoveredPassword(){
+ const password=document.getElementById("recoveryNewPassword")?.value||"";
+ const confirm=document.getElementById("recoveryConfirmPassword")?.value||"";
+ const button=document.getElementById("saveRecoveredPasswordButton");
+ if(password.length<8){showMessage("Your new password must contain at least 8 characters.");return}
+ if(password!==confirm){showMessage("The passwords do not match.");return}
+ if(button){button.disabled=true;button.textContent="UPDATING…"}
+ showMessage("Updating your password securely…");
+ try{
+  const {error}=await supabaseClient.auth.updateUser({password});
+  if(error)throw error;
+  passwordRecoveryActive=false;
+  document.getElementById("recoveryNewPassword").value="";
+  document.getElementById("recoveryConfirmPassword").value="";
+  await supabaseClient.auth.signOut();
+  showAuthPanel("authLoginPanel");
+  showMessage("Your password has been updated. Please log in with your new password.");
+ }catch(error){
+  showMessage(error?.message||"We could not update your password. Request a fresh reset link and try again.");
+ }finally{
+  if(button){button.disabled=false;button.textContent="UPDATE PASSWORD"}
+ }
+}
+async function exitPasswordRecovery(){
+ passwordRecoveryActive=false;
+ await supabaseClient.auth.signOut();
+ showAuthPanel("authLoginPanel");
+ showMessage("You have left password recovery. Log in or request a new reset link.");
 }
 
 /* AUTH */
@@ -1025,12 +1125,14 @@ function returnHomeFromResults(){stopGameRefresh();clearRoomSession();resetGameS
 async function checkLogin(){
  const {data:{session},error}=await supabaseClient.auth.getSession();
  if(error){document.getElementById("authMessage").innerText=error.message;return}
+ if(passwordRecoveryActive)return;
  if(session){document.getElementById("authScreen").classList.add("hidden");document.getElementById("app").classList.remove("hidden");if(!(await restoreRoomSession()))showHome();initialisePlayamCoinWallet()}
- else{document.getElementById("app").classList.add("hidden");document.getElementById("authScreen").classList.remove("hidden")}
+ else{document.getElementById("app").classList.add("hidden");document.getElementById("authScreen").classList.remove("hidden");showAuthPanel("authLoginPanel")}
 }
 supabaseClient.auth.onAuthStateChange((event,session)=>{
- if(event==="SIGNED_OUT"){playamCoinWalletInitialized=false;resetGameState();resetSoloGame();document.getElementById("app").classList.add("hidden");document.getElementById("authScreen").classList.remove("hidden")}
- if(event==="SIGNED_IN"&&session){document.getElementById("authScreen").classList.add("hidden");document.getElementById("app").classList.remove("hidden");showHome();initialisePlayamCoinWallet()}
+ if(event==="PASSWORD_RECOVERY"){openPasswordRecoveryUpdate();return}
+ if(event==="SIGNED_OUT"){playamCoinWalletInitialized=false;resetGameState();resetSoloGame();document.getElementById("app").classList.add("hidden");document.getElementById("authScreen").classList.remove("hidden");if(!passwordRecoveryActive)showAuthPanel("authLoginPanel")}
+ if(event==="SIGNED_IN"&&session&&!passwordRecoveryActive){document.getElementById("authScreen").classList.add("hidden");document.getElementById("app").classList.remove("hidden");showHome();initialisePlayamCoinWallet()}
 });
 checkLogin();
 </script>
