@@ -28,7 +28,7 @@ h1{font-size:clamp(24px,5vw,34px);margin:14px 0 5px}.muted{color:var(--muted)}.c
 <div class="card"><div class="row"><h2 style="margin:0">Your wallet</h2><span class="pill">NGN</span></div>
 <div class="grid" style="margin-top:14px"><div class="metric"><strong id="available">—</strong><span>Available earnings</span></div><div class="metric"><strong id="pending">—</strong><span>Pending earnings</span></div><div class="metric"><strong id="reserved">—</strong><span>Reserved withdrawals</span></div><div class="metric"><strong id="withdrawn">—</strong><span>Total withdrawn</span></div></div>
 <p class="muted small" id="walletUpdated">Balances are read directly from your staging wallet.</p></div>
-<div class="card"><h2 style="margin-top:0">Withdrawal safety check</h2><div class="notice"><strong>Withdrawals are not available in this test page yet.</strong><p style="margin:7px 0 0">PLAYAM is completing the fee estimate, creator consent, net transfer, and Paystack verification steps. No money will be reserved or transferred from this page.</p></div>
+<div class="card"><h2 style="margin-top:0">Withdrawal safety check</h2><div class="notice"><strong>Staging withdrawal requests can be quoted and explicitly confirmed.</strong><p style="margin:7px 0 0">A confirmed eligible quote creates a pending staging request and reserves the gross amount in the staging wallet. Actual Paystack payouts remain disabled until net-transfer processing, provider-fee reconciliation and all approval checks are completed.</p></div>
 <p class="muted small">The actual provider fee must be disclosed before confirmation. Any fee difference or reversal must be reconciled transparently. Stamp-duty payer policy is still pending, so affected payouts must remain blocked.</p>
 <h3>Illustrative fee preview</h3>
 <p class="muted small">This is a planning estimate based on the published Paystack NGN transfer fee bands, not a live Paystack quote. The final provider fee must be verified before a withdrawal can be confirmed.</p>
@@ -61,7 +61,7 @@ h1{font-size:clamp(24px,5vw,34px);margin:14px 0 5px}.muted{color:var(--muted)}.c
 </div>
 <div class="card"><div class="row"><h2 style="margin:0">Withdrawal history</h2><span class="pill">Latest 20</span></div><div id="history" class="muted">Loading history…</div></div>
 <p id="dashboardMessage" class="error" role="status"></p><button class="secondary" style="width:100%" onclick="signOut()">LOG OUT</button></section>
-<p class="muted small">This is a staging-only read view. It does not create withdrawal requests, modify wallet balances, or initiate Paystack transfers.</p></main>
+<p class="muted small">This is a staging-only test page. It can create a fee quote and, after explicit consent, reserve staging wallet funds. It cannot initiate Paystack transfers.</p></main>
 <script>
 const SUPABASE_URL="https://pwnjrdedeoxbmtfywhkk.supabase.co";
 const SUPABASE_KEY="sb_publishable_6zZlj2moK_zv9lAA_0xdzA_nBDueD50";
