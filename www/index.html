@@ -337,7 +337,7 @@ textarea{line-height:1.5;resize:vertical}
   <button class="mobile-tab active" type="button" onclick="goHomeSection('feedHome')"><span>⌂</span>Home</button>
   <button class="mobile-tab" type="button" onclick="goHomeSection('feedGames')"><span>🎮</span>Games</button>
   <button class="mobile-tab" type="button" onclick="goHomeSection('feedVideos')"><span>▶</span>Videos</button>
-  <button class="mobile-tab" type="button" onclick="goHomeSection('feedLive')"><span>🔴</span>LIVE</button>
+  <button class="mobile-tab" type="button" onclick="goHomeSection('feedMessages')"><span>💬</span>Messages</button>
   <button class="mobile-tab" type="button" onclick="goHomeSection('feedProfile')"><span>👤</span>Profile</button>
  </nav>
 
@@ -363,7 +363,7 @@ textarea{line-height:1.5;resize:vertical}
    </section>
 
    <section class="feed-page feed-games-page" id="feedGames">
-    <div class="feed-page-head"><div><div class="feed-kicker">PLAY TOGETHER</div><h2>Explore Games</h2></div><span class="feed-page-count">01 / 05</span></div>
+    <div class="feed-page-head"><div><div class="feed-kicker">PLAY TOGETHER</div><h2>Explore Games</h2></div><span class="feed-page-count">01 / 06</span></div>
     <div class="feed-game-grid">
      <article class="feed-game-card featured"><span class="feed-game-icon">⚖️</span><div><h3>Friendship Court</h3><p>Questions, votes and friendly competition.</p></div><button class="primary" onclick="showSoloSetup()">PLAY SOLO</button><button class="secondary" onclick="showCreateRoomForGame('friendship-court')">CREATE ROOM</button></article>
      <article class="feed-game-card"><span class="feed-game-icon">🤔</span><div><h3>Would You Rather?</h3><p>Choose between two tough options.</p></div><button class="primary" onclick="showCreateRoomForGame('would-you-rather')">PLAY</button></article>
@@ -371,24 +371,34 @@ textarea{line-height:1.5;resize:vertical}
      <article class="feed-game-card"><span class="feed-game-icon">🧠</span><div><h3>Mind Battle</h3><p>Put your thinking to the test.</p></div><button class="primary" onclick="showCreateRoomForGame('mind-battle')">PLAY</button></article>
      <article class="feed-game-card"><span class="feed-game-icon">🤫</span><div><h3>Secret Confessions</h3><p>Share your response in a room.</p></div><button class="primary" onclick="showCreateRoomForGame('secret-confessions')">PLAY</button></article>
     </div>
+     <article class="feed-game-card"><span class="feed-game-icon">🎱</span><div><h3>Snooker</h3><p>Precision cue-sport challenge.</p></div><button class="secondary" type="button" disabled>COMING SOON</button></article>
+     <article class="feed-game-card"><span class="feed-game-icon">🎱</span><div><h3>Pool</h3><p>Classic pocket-billiards game.</p></div><button class="secondary" type="button" disabled>COMING SOON</button></article>
+     <article class="feed-game-card"><span class="feed-game-icon">⚽</span><div><h3>Football</h3><p>Compete in football challenges.</p></div><button class="secondary" type="button" disabled>COMING SOON</button></article>
+     <article class="feed-game-card"><span class="feed-game-icon">♟️</span><div><h3>Checkers</h3><p>Classic strategy board game.</p></div><button class="secondary" type="button" disabled>COMING SOON</button></article>
+     <article class="feed-game-card"><span class="feed-game-icon">🟤</span><div><h3>Ayo</h3><p>Traditional strategy and counting game.</p></div><button class="secondary" type="button" disabled>COMING SOON</button></article>
+     <article class="feed-game-card"><span class="feed-game-icon">🎲</span><div><h3>Ludo</h3><p>Race your tokens to the finish.</p></div><button class="secondary" type="button" disabled>COMING SOON</button></article>
+     <article class="feed-game-card"><span class="feed-game-icon">🎯</span><div><h3>CODs</h3><p>PLAYAM's distinct combat game experience.</p></div><button class="secondary" type="button" disabled>COMING SOON</button></article>
+     <article class="feed-game-card"><span class="feed-game-icon">⚔️</span><div><h3>Team Deathmatch</h3><p>Team-based combat mode.</p></div><button class="secondary" type="button" disabled>COMING SOON</button></article>
+     <article class="feed-game-card"><span class="feed-game-icon">🏆</span><div><h3>Battle Royale</h3><p>Last team or player standing.</p></div><button class="secondary" type="button" disabled>COMING SOON</button></article>
+     <article class="feed-game-card"><span class="feed-game-icon">🛡️</span><div><h3>Tactical 5v5</h3><p>Coordinated five-versus-five combat.</p></div><button class="secondary" type="button" disabled>COMING SOON</button></article>
+     <article class="feed-game-card"><span class="feed-game-icon">🎒</span><div><h3>Survival Extraction</h3><p>Survive, collect and extract.</p></div><button class="secondary" type="button" disabled>COMING SOON</button></article>
+     <article class="feed-game-card"><span class="feed-game-icon">🧟</span><div><h3>Zombie Survival</h3><p>Survive waves of the undead.</p></div><button class="secondary" type="button" disabled>COMING SOON</button></article>
+     <article class="feed-game-card"><span class="feed-game-icon">🏐</span><div><h3>Cotton Ball Challenge</h3><p>Fast, fun challenge rounds.</p></div><button class="secondary" type="button" disabled>COMING SOON</button></article>
+     <article class="feed-game-card"><span class="feed-game-icon">🎤</span><div><h3>LIVE Questions and Answers</h3><p>Play interactive Q&A with others.</p></div><button class="secondary" type="button" disabled>COMING SOON</button></article>
+     <article class="feed-game-card"><span class="feed-game-icon">📊</span><div><h3>Scoreboard</h3><p>Follow scores and player rankings.</p></div><button class="secondary" type="button" disabled>COMING SOON</button></article>
+     <article class="feed-game-card"><span class="feed-game-icon">🌟</span><div><h3>Legend</h3><p>A PLAYAM social game experience.</p></div><button class="secondary" type="button" disabled>COMING SOON</button></article>
     <div class="feed-inline-actions"><button class="secondary" onclick="showCreateRoom()">＋ CREATE ROOM</button><button class="secondary" onclick="showJoinRoom()">JOIN WITH CODE</button></div>
    </section>
 
    <section class="feed-page feed-video-page" id="feedVideos">
-    <div class="feed-page-head"><div><div class="feed-kicker">SCROLL • WATCH • DISCOVER</div><h2>PLAYAM Shorts</h2></div><span class="feed-page-count">02 / 05</span></div>
+    <div class="feed-page-head"><div><div class="feed-kicker">SCROLL • WATCH • DISCOVER</div><h2>PLAYAM Shorts</h2></div><span class="feed-page-count">02 / 06</span></div>
     <div class="video-stage"><div class="video-stage-glow"></div><div class="video-play-mark">▶</div><div class="video-stage-label">YOUR VERTICAL VIDEO FEED</div><div class="video-stage-copy"><h3>Discover the PLAYAM community</h3><p>Short videos will appear here in a swipe-up viewing experience.</p></div><div class="video-stage-actions"><span>♡</span><span>◯</span><span>↗</span></div></div>
     <p class="feed-feature-note">Video upload, playback and creator discovery are not connected in this staging build yet.</p>
    </section>
 
-   <section class="feed-page feed-live-page" id="feedLive">
-    <div class="feed-page-head"><div><div class="feed-kicker">LIVE COMMUNITY</div><h2>LIVE on PLAYAM</h2></div><span class="live-pill">● LIVE</span></div>
-    <div class="feed-live-visual"><div class="live-orbit">🔴</div><h3>Watch. Connect. Go LIVE.</h3><p>Find creators and join live community sessions.</p></div>
-    <div class="feed-feature-panel"><span>🎙️</span><div><b>Creator LIVE</b><small>LIVE streaming discovery and broadcast tools are not connected in this staging build yet.</small></div></div>
-    <button class="secondary feed-wide-button" onclick="showSettings()">ACCOUNT SETTINGS</button>
-   </section>
 
    <section class="feed-page feed-community-page" id="feedMessages">
-    <div class="feed-page-head"><div><div class="feed-kicker">STAY CONNECTED</div><h2>Messages</h2></div><span>💬</span></div>
+    <div class="feed-page-head"><div><div class="feed-kicker">STAY CONNECTED</div><h2>Messages &amp; Chat</h2></div><span>💬</span></div>
     <div class="feed-community-visual"><span>💬</span><h3>Your PLAYAM conversations</h3><p>Private messages and player-to-player chat will live here.</p></div>
     <p class="feed-feature-note">Messaging is a planned platform feature; no chat inbox is connected to this screen yet.</p>
     <button class="secondary feed-wide-button" onclick="showFindPlayer()">FIND PLAYERS</button>
@@ -619,8 +629,8 @@ function syncFeedTab(){
  const main=document.querySelector(".main"),center=main.getBoundingClientRect().top+main.clientHeight*.48;
  let current=pages[0];
  for(const page of pages){const r=page.getBoundingClientRect();if(r.top<=center&&r.bottom>=center){current=page;break}}
- const target=current.id==="feedGames"?"feedGames":current.id==="feedVideos"?"feedVideos":current.id==="feedLive"?"feedLive":current.id==="feedProfile"?"feedProfile":"feedHome";
- const map={feedHome:"feedHome",feedGames:"feedGames",feedVideos:"feedVideos",feedLive:"feedLive",feedProfile:"feedProfile"};
+ const target=current.id==="feedGames"?"feedGames":current.id==="feedVideos"?"feedVideos":current.id==="feedMessages"?"feedMessages":current.id==="feedProfile"?"feedProfile":"feedHome";
+ const map={feedHome:"feedHome",feedGames:"feedGames",feedVideos:"feedVideos",feedMessages:"feedMessages",feedProfile:"feedProfile"};
  document.querySelectorAll(".mobile-tab").forEach(b=>b.classList.toggle("active",b.getAttribute("onclick")?.includes("'"+map[target]+"'")));
 }
 
