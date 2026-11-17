@@ -55,13 +55,26 @@ async function loadQueue(){
   '<br>First approval: '+esc(r.first_approved_by||"None")+
   '<br>Second approval: '+esc(r.second_approved_by||"None")+'</p>'+
   (r.stamp_duty_payer==="pending_policy"&&Number(r.stamp_duty_minor)>0?'<p class="warning">Approval blocked: stamp-duty payer policy is unresolved.</p>':'')+
-  (canApprove?'<button data-approve="'+id+'">Approve / record my approval</button>':'')+
+  '<button class="secondary" data-readiness="'+id+'">Check payout readiness (no transfer)</button><div class="small" data-readiness-result="'+id+'"></div>'+(canApprove?'<button data-approve="'+id+'">Approve / record my approval</button>':'')+
   (canReject?'<label>Reason for rejection (required)</label><textarea maxlength="500" data-reason="'+id+'" placeholder="Explain the review decision"></textarea><button class="secondary" data-reject="'+id+'">Reject and release reservation</button>':'')+
   '</article>';
  }).join("")||'<p class="muted">No pending or processing withdrawal requests.</p>';
 }
 $("queue").addEventListener("click",async ev=>{
+ const readiness=ev.target.closest("[data-readiness]");
  const approve=ev.target.closest("[data-approve]"),reject=ev.target.closest("[data-reject]");
+ try{
+  if(readiness){
+   readiness.disabled=true;
+   const id=readiness.dataset.readiness;
+   const {data,error}=await db.rpc("playam_admin_check_creator_withdrawal_readiness_v1",{p_request_id:id});
+   if(error)throw error;
+   const out=$("queue").querySelector('[data-readiness-result="'+id+'"]');
+   out.textContent=(data.ready_for_payout_preparation?"Preflight passed — ":"Preflight blocked — ")+(data.blockers||[]).join("; ")+" | Payout enabled: no.";
+   readiness.disabled=false;
+  }
+ }catch(e){status("queueStatus","Readiness check failed: "+e.message);if(readiness)readiness.disabled=false}
+
  try{
   if(approve){const id=approve.dataset.approve;if(!confirm("Record your administrator approval for this staging withdrawal? Large requests need a different administrator for second approval."))return;approve.disabled=true;const {data,error}=await db.rpc("playam_approve_creator_withdrawal_v1",{p_request_id:id});if(error)throw error;status("queueStatus","Approval result: "+data+". Refreshing…");await loadQueue()}
   if(reject){const id=reject.dataset.reject;const reason=$("queue").querySelector('textarea[data-reason="'+id+'"]').value.trim();if(reason.length<3)throw new Error("Enter a clear rejection reason.");if(!confirm("Reject this request and release its reserved creator funds?"))return;reject.disabled=true;const {error}=await db.rpc("playam_reject_creator_withdrawal_v1",{p_request_id:id,p_reason:reason});if(error)throw error;status("queueStatus","Request rejected and reservation release recorded.");await loadQueue()}
