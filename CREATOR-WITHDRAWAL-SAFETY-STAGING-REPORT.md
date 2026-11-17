@@ -237,3 +237,38 @@ The RPC returns a structured blocker list and always reports `payout_enabled=fal
 Added a read-only preflight action to the staging admin page. Source checks confirm MFA, queue, approve/reject, preflight RPC wiring, staging project ID and no Paystack payout call.
 
 No withdrawal request or fee event was created. No administrator session was used. Browser runtime and actual MFA review remain untested. The transfer-preparation RPC remains blocked; no payout was initiated.
+
+
+## Batch 30 — Stale payout recovery queue and duplicate-transfer safeguards
+
+### Stale request queue
+
+Added `playam_admin_list_stale_creator_withdrawals_v1(integer)`:
+- Requires authenticated finance administrator with aal2 and active role.
+- Lists only requests still in `processing` older than a caller-specified 1 minute to 7 day threshold (admin page uses 10 minutes).
+- Shows existing provider reference, request age, gross/net/fee and approval history.
+- Read-only; it does not retry, mark failed, release funds or initiate another transfer.
+
+### Admin page
+
+Added a stale transfer reconciliation panel:
+- Lists processing requests older than 10 minutes.
+- Displays the exact existing Paystack reference and a copy-reference action.
+- Explicitly instructs administrators to verify that same reference with Paystack and never create a new reference when provider outcome is uncertain.
+- Unknown outcomes remain reserved and require manual review.
+
+### Verification
+
+- Confirmed the RPC is SECURITY DEFINER with execute grants: anon=false, authenticated=true, service_role=false.
+- Source checks confirm the page calls the stale queue, keeps MFA checks, includes readiness preflight and does not call the payout Edge Function.
+- Existing payout Edge Function uses the saved deterministic transfer reference and deliberately does not automatically retry after network timeout or unreadable response.
+- Existing failure webhook verifies transfer status with Paystack before releasing the gross reservation; duplicate failure notifications are a no-op after the first failure.
+- No staging withdrawal records were available for real queue testing. No Paystack transfer, retry, failure release or reversal was executed.
+
+### Remaining recovery gaps
+
+- A provider transfer reversal is currently recorded for manual review only; it does not automatically recreate a creator liability or claw back a previously withdrawn wallet amount. This is intentional until a fully audited reversal ledger workflow is designed and tested.
+- A successful provider transfer whose webhook is delayed remains in processing/reserved until the signed webhook or manual reconciliation resolves it.
+- The current payout-preparation RPC remains deliberately blocked. The preflight and stale queue are administrative diagnostics, not permission to pay.
+- No browser session, live Paystack sandbox transfer or end-to-end duplicate webhook test was performed.
+- No production changes.
