@@ -29,7 +29,17 @@ h1{font-size:clamp(24px,5vw,34px);margin:14px 0 5px}.muted{color:var(--muted)}.c
 <div class="grid" style="margin-top:14px"><div class="metric"><strong id="available">—</strong><span>Available earnings</span></div><div class="metric"><strong id="pending">—</strong><span>Pending earnings</span></div><div class="metric"><strong id="reserved">—</strong><span>Reserved withdrawals</span></div><div class="metric"><strong id="withdrawn">—</strong><span>Total withdrawn</span></div></div>
 <p class="muted small" id="walletUpdated">Balances are read directly from your staging wallet.</p></div>
 <div class="card"><h2 style="margin-top:0">Withdrawal safety check</h2><div class="notice"><strong>Withdrawals are not available in this test page yet.</strong><p style="margin:7px 0 0">PLAYAM is completing the fee estimate, creator consent, net transfer, and Paystack verification steps. No money will be reserved or transferred from this page.</p></div>
-<p class="muted small">The actual provider fee must be disclosed before confirmation. Any fee difference or reversal must be reconciled transparently. Stamp-duty payer policy is still pending, so affected payouts must remain blocked.</p></div>
+<p class="muted small">The actual provider fee must be disclosed before confirmation. Any fee difference or reversal must be reconciled transparently. Stamp-duty payer policy is still pending, so affected payouts must remain blocked.</p>
+<h3>Illustrative fee preview</h3>
+<p class="muted small">This is a planning estimate based on the published Paystack NGN transfer fee bands, not a live Paystack quote. The final provider fee must be verified before a withdrawal can be confirmed.</p>
+<label for="grossPreview">Requested withdrawal (NGN)</label><input id="grossPreview" type="number" inputmode="decimal" min="50" step="0.01" placeholder="e.g. 15000" oninput="previewFee()">
+<div class="grid" style="margin-top:10px">
+<div class="metric"><strong id="feePreview">—</strong><span>Estimated transfer fee</span></div>
+<div class="metric"><strong id="netPreview">—</strong><span>Estimated amount sent to you</span></div>
+</div>
+<p id="stampPreview" class="notice" style="margin-top:12px">Enter an amount to see the estimate. Stamp-duty payer policy remains unresolved.</p>
+<p class="muted small">The estimate applies the transfer fee to the net transfer amount because the fee tier is based on the amount sent. Actual charges can differ. If the verified fee is lower, the difference must be returned to your available balance; if higher, PLAYAM must not silently deduct the extra. No withdrawal request, wallet reservation, or payment is created here.</p>
+</div>
 <div class="card"><div class="row"><h2 style="margin:0">Withdrawal history</h2><span class="pill">Latest 20</span></div><div id="history" class="muted">Loading history…</div></div>
 <p id="dashboardMessage" class="error" role="status"></p><button class="secondary" style="width:100%" onclick="signOut()">LOG OUT</button></section>
 <p class="muted small">This is a staging-only read view. It does not create withdrawal requests, modify wallet balances, or initiate Paystack transfers.</p></main>
@@ -40,6 +50,24 @@ if(SUPABASE_URL!=="https://pwnjrdedeoxbmtfywhkk.supabase.co"||!SUPABASE_KEY.star
 const db=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);let currentUser=null;
 const money=n=>new Intl.NumberFormat("en-NG",{style:"currency",currency:"NGN",maximumFractionDigits:2}).format((Number(n)||0)/100);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function previewFee(){
+ const raw=Number(document.getElementById("grossPreview").value);
+ const feeEl=document.getElementById("feePreview"),netEl=document.getElementById("netPreview"),stampEl=document.getElementById("stampPreview");
+ if(!Number.isFinite(raw)||raw<50){feeEl.textContent="—";netEl.textContent="—";stampEl.textContent="Enter at least ₦50.00. Stamp-duty payer policy remains unresolved.";return}
+ const gross=Math.round(raw*100);
+ let fee=0,net=0;
+ // Fee bands are selected using the net transfer amount, in kobo.
+ for(const candidate of [1000,2500,5000]){
+   const candidateNet=gross-candidate;
+   const band=candidateNet<=500000?1000:(candidateNet<=5000000?2500:5000);
+   if(candidate===band){fee=candidate;net=candidateNet;break}
+ }
+ if(!net){feeEl.textContent="Unavailable";netEl.textContent="—";stampEl.textContent="This amount is outside the supported estimate range.";return}
+ feeEl.textContent=money(fee);netEl.textContent=money(net);
+ stampEl.textContent=net>=1000000
+ ? "A ₦50 stamp-duty charge may apply to transfers of ₦10,000 or more. Payer policy is pending, so a real withdrawal at this level must remain blocked."
+ : "The published ₦50 stamp-duty threshold is not reached by this estimated net transfer. Payer policy remains pending for cases where it applies.";
+}
 function showDashboard(on){document.getElementById("login").classList.toggle("hidden",on);document.getElementById("dashboard").classList.toggle("hidden",!on)}
 async function signIn(){const email=document.getElementById("email").value.trim(),password=document.getElementById("password").value,msg=document.getElementById("loginMessage");msg.textContent="";
 if(!email||!password){msg.textContent="Enter your email and password.";return}const btn=document.getElementById("signIn");btn.disabled=true;btn.textContent="SIGNING IN…";
