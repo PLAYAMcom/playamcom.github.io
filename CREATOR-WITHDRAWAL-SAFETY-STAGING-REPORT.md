@@ -81,3 +81,37 @@ Created `playam_creator_withdrawal_fee_quotes` with:
 - The fee quote uses the current configured published NGN fee bands as an estimate, not a live provider quote. Actual provider fee must still be verified from Paystack.
 - Stamp-duty payer remains unresolved; any quote where stamp duty applies cannot be confirmed.
 - The existing request confirmation path has not yet been connected to the creator page. No payout has been enabled.
+
+
+## Batch 26 — Creator staging page connected to fee quote and confirmation
+
+Updated `creator-withdrawal-staging.html` on the feature branch.
+
+### Page integration
+
+- Loads only the signed-in creator's verified, active, eligible Paystack NGN destinations through the new authenticated destination-list RPC. It displays only provider, currency and a shortened destination identifier; no bank account number or recipient code is exposed.
+- Sends the gross amount and selected destination to the authenticated fee quote RPC.
+- Displays the returned gross amount, estimated creator fee, net transfer, separate stamp-duty amount, fee policy version and quote expiry.
+- Requires the creator to tick an explicit consent checkbox before enabling confirmation.
+- Calls the confirmation RPC only after consent.
+- Explains that confirmation reserves the gross amount in the staging wallet and creates a pending request, but does not send a payout.
+- If stamp duty applies while payer policy remains pending, the confirmation control stays disabled and the database independently rejects confirmation.
+- Refreshes the wallet and withdrawal history after successful confirmation.
+
+### Database hardening and fee tier correction
+
+- Corrected the fee-tier calculation so it selects the fee using the net transfer amount, including exact tier boundaries.
+- Added `playam_list_creator_withdrawal_destinations_v1`, SECURITY DEFINER with empty search_path, authenticated-only. It returns only creator-owned verified eligible Paystack NGN destination metadata.
+- Fee quote and confirmation RPCs remain authenticated-only; anonymous and service-role execution are false.
+- Re-checked page JavaScript syntax in isolation; syntax is valid.
+- Re-fetched committed page and verified it references staging only, calls the three expected RPCs, requires consent, and states no Paystack payout is sent.
+
+### Test limits
+
+- No signed-in browser session or real creator account was available in this execution to test end-to-end quote creation or confirmation.
+- No quote or withdrawal request was created by the checks.
+- No wallet reservation was executed in this batch.
+- No Paystack transfer, webhook, or real payout was initiated.
+- The transfer-preparation function remains deliberately blocked.
+- Stamp-duty payer remains pending, so affected quotes cannot be confirmed.
+- Do not enable creator withdrawals or cash rewards based on static/syntax checks alone.
