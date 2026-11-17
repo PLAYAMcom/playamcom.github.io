@@ -580,3 +580,26 @@ Updated `creator-withdrawal-admin-staging.html` on `codex/playam-creator-withdra
 - No new database RPC, table, migration or wallet operation was added. No creator balance changed and no reversal was resolved.
 - Recovery policy remains unapproved; there is no safe automated recovery/write-off action.
 - Production, live Paystack, cash rewards and Friendship Court remain untouched.
+
+
+## Batch 41 — Creator wallet balance-changing function security review
+
+Reviewed the staging trigger function `playam_apply_creator_earnings_transaction_v1()` and table privileges.
+
+### Verified protections
+- The wallet ledger table has RLS enabled. INSERT is denied to anon and authenticated; INSERT is granted to service_role only. UPDATE is denied to anon, authenticated and service_role.
+- The wallet table has RLS enabled and direct INSERT/UPDATE denied to anon, authenticated and service_role.
+- The trigger function is SECURITY DEFINER with an empty search_path.
+- It rejects zero amounts and rejects negative amounts for all transaction types except `admin_adjustment`.
+- Withdrawal reserve/release/paid events require a linked withdrawal request, exact creator and gross amount match, valid lifecycle state, and sufficient available/reserved balance.
+- Legacy `withdrawal` and `withdrawal_reversal` transaction types are explicitly rejected.
+- `admin_adjustment` cannot reduce available balance below zero.
+
+### Remaining risk / decision
+- The trusted service_role can insert ledger rows, and the trigger permits `admin_adjustment` to change available balance. No creator-facing role can do this directly, but this is a high-impact backend capability.
+- Repository code search did not locate an application-level admin-adjustment writer. This does not prove there are no external/service-side callers.
+- Do not use `admin_adjustment` for reversal recovery. A dedicated dual-control recovery/write-off workflow is still required, with immutable reason/evidence, independent approvers, creator notice/dispute window, idempotency, and no deductions from pending earnings or negative balances.
+- No permission changes were made because broad revocation could break trusted earning and withdrawal settlement flows.
+
+### Outcome
+Read-only security review only. No wallet rows or balances were changed. No migrations or Edge Function deployments were made. Production and Friendship Court remain untouched; payouts and cash rewards remain disabled.
