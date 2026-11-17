@@ -75,6 +75,8 @@ Created `playam_creator_withdrawal_fee_quotes` with:
 - Service-role payout preparation remains blocked; no Paystack transfer can be initiated through the existing payout function yet.
 - Confirmed quote table RLS is enabled and currently has zero records.
 - No creator wallet or withdrawal request was created by this work.
+- Seven synthetic fee-boundary checks passed, including both sides of the ₦5,000 and ₦50,000 transfer-fee tier boundaries and the ₦10,000 stamp-duty threshold.
+- Re-checked RPC privileges and function configuration: both new RPCs are SECURITY DEFINER with empty search_path; anon=false, authenticated=true, service_role=false. The old request route remains authenticated-only but rejects requests; transfer preparation remains service-role-only but rejects payout preparation.
 - No authenticated browser invocation, live quote, confirmation, expiry, duplicate replay or concurrent-wallet integration test has been run.
 - The fee quote uses the current configured published NGN fee bands as an estimate, not a live provider quote. Actual provider fee must still be verified from Paystack.
 - Stamp-duty payer remains unresolved; any quote where stamp duty applies cannot be confirmed.
