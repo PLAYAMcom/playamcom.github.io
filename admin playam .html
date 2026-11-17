@@ -27,7 +27,7 @@ button{background:#a83de0;color:white;font-weight:700;cursor:pointer;border:0;ma
 button.secondary{background:#352344}
 button.danger{background:#a83255}
 #app{display:none}
-.status{margin-top:12px;color:#ffb9cf;white-space:pre-wrap}
+.status{margin-top:12px;color:#ffb9cf;white-space:pre-wrap}.hidden{display:none!important}
 .section{margin-top:24px}
 pre{white-space:pre-wrap;overflow-wrap:anywhere;color:#d9c8e8}
 .report{background:#100b19;border:1px solid #49345b;border-radius:12px;padding:15px;margin:12px 0}
@@ -51,6 +51,15 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;color:#d9c8e8}
 <input id="password" type="password" autocomplete="current-password" placeholder="Password">
 <button id="signIn">Sign in</button>
 <div id="loginStatus" class="status" role="status"></div>
+</section>
+
+<section id="mfa" class="panel hidden">
+<h2>Verify administrator MFA</h2>
+<p class="muted">Your administrator account must complete authenticator verification before any dashboard data or controls are available.</p>
+<label for="mfaCode">Six-digit authenticator code</label>
+<input id="mfaCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000">
+<button id="verifyMfa">Verify MFA</button>
+<div id="mfaStatus" class="status" role="status"></div>
 </section>
 
 <section id="app">
@@ -278,18 +287,62 @@ $('reports').addEventListener('click',async event=>{
  await reviewReport(button.dataset.report,button.dataset.action);
 });
 
-async function showSession(){
- const {data:{session}}=await client.auth.getSession();
+let pendingMfaFactor=null;
+let pendingMfaChallenge=null;
+let sessionCheckInProgress=false;
 
- if(session){
+async function showSession(){
+ if(sessionCheckInProgress)return;
+ sessionCheckInProgress=true;
+ try{
+  const {data:{session}}=await client.auth.getSession();
+  if(!session){
+   $('login').style.display='block';
+   $('mfa').classList.add('hidden');
+   $('app').style.display='none';
+   return;
+  }
+
+  const {data:assurance,error:assuranceError}=await client.auth.mfa.getAuthenticatorAssuranceLevel();
+  if(assuranceError)throw assuranceError;
+
+  if(assurance.currentLevel!=='aal2'){
+   const {data:factors,error:factorError}=await client.auth.mfa.listFactors();
+   if(factorError)throw factorError;
+   const factor=(factors.totp||[]).find(item=>item.status==='verified');
+   $('login').style.display='none';
+   $('app').style.display='none';
+   $('mfa').classList.remove('hidden');
+
+   if(!factor){
+    $('mfaStatus').textContent='No verified authenticator is enrolled for this account. Dashboard access is blocked. Contact the system administrator to arrange secure MFA enrollment.';
+    $('verifyMfa').disabled=true;
+    return;
+   }
+   $('verifyMfa').disabled=false;
+   if(!pendingMfaFactor||!pendingMfaChallenge){
+    const {data:challenge,error:challengeError}=await client.auth.mfa.challenge({factorId:factor.id});
+    if(challengeError)throw challengeError;
+    pendingMfaFactor=factor.id;
+    pendingMfaChallenge=challenge.id;
+   }
+   $('mfaStatus').textContent='Enter the current code from your authenticator app.';
+   return;
+  }
+
   $('login').style.display='none';
+  $('mfa').classList.add('hidden');
   $('app').style.display='block';
-  $('welcome').textContent='Signed in: '+(session.user.email||'administrator');
+  $('welcome').textContent='MFA verified · '+(session.user.email||'administrator');
   await loadOverview();
   await loadReports();
- }else{
-  $('login').style.display='block';
+ }catch(error){
+  $('login').style.display='none';
   $('app').style.display='none';
+  $('mfa').classList.remove('hidden');
+  $('mfaStatus').textContent='Secure administrator verification could not be completed: '+(error.message||'Unknown error');
+ }finally{
+  sessionCheckInProgress=false;
  }
 }
 
@@ -303,6 +356,36 @@ $('signIn').onclick=async()=>{
  if(!error)await showSession();
 };
 
+$('verifyMfa').onclick=async()=>{
+ const code=$('mfaCode').value.trim();
+ if(!pendingMfaFactor||!pendingMfaChallenge){
+  $('mfaStatus').textContent='No active MFA challenge. Please sign in again.';
+  return;
+ }
+ if(!/^\\d{6}$/.test(code)){
+  $('mfaStatus').textContent='Enter the six-digit authenticator code.';
+  return;
+ }
+ $('mfaStatus').textContent='Verifying authenticator…';
+ const {error}=await client.auth.mfa.verify({
+  factorId:pendingMfaFactor,
+  challengeId:pendingMfaChallenge,
+  code
+ });
+ if(error){
+  $('mfaStatus').textContent=error.message;
+  return;
+ }
+ pendingMfaChallenge=null;
+ $('mfaCode').value='';
+ const {error:refreshError}=await client.auth.refreshSession();
+ if(refreshError){
+  $('mfaStatus').textContent=refreshError.message;
+  return;
+ }
+ await showSession();
+};
+
 $('refresh').onclick=async()=>{
  await loadOverview();
  await loadReports();
@@ -313,6 +396,8 @@ $('reportFilter').onchange=loadReports;
 
 $('logout').onclick=async()=>{
  await client.auth.signOut();
+ pendingMfaFactor=null;
+ pendingMfaChallenge=null;
  $('loginStatus').textContent='Signed out.';
  await showSession();
 };
