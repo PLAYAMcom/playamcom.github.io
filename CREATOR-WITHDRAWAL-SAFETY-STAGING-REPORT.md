@@ -433,3 +433,39 @@ Supabase security advisor still reports 38 RLS-enabled tables without policies a
 ### Outcome and remaining blocks
 
 No creator wallet or financial rows were changed; no Paystack API call or transfer was made. Payout preparation remains disabled. Stamp-duty payer policy, provider-fee mismatch handling review, authenticated creator/admin browser tests, signed webhook tests, and sandbox transfer/reconciliation drills remain outstanding. Production and Friendship Court were not changed.
+
+
+## Batch 36 — Fee mismatch and provider fee-reversal accounting (staging database only)
+
+Applied migration `reconcile_creator_fee_overquote_and_reversals` to staging project `pwnjrdedeoxbmtfywhkk` only.
+
+### What changed
+
+- Added private service-role-only table `playam_creator_withdrawal_fee_cost_events` to separately record the portion of a verified Paystack fee above the creator's accepted quote as a PLAYAM platform expense, and later provider reversals of that absorbed overage. It is linked to the immutable fee event and withdrawal request, with unique event and idempotency keys.
+- Added a database trigger that creates the overquote expense record when a verified provider fee exceeds the creator quote, and offsets that expense first when Paystack later reverses fees.
+- Corrected creator fee reversal accounting. A provider fee reversal now offsets PLAYAM's previously absorbed overquote first. Only the portion that reduces the creator's effective fee below the amount they agreed to pay is returned to the creator's available earnings. This prevents refunding the creator for a fee amount they never bore.
+- Kept the creator fee refund through the existing idempotent ledger transaction and retained the service-role-only fee recorder.
+
+### Synthetic arithmetic checks
+
+Four scenarios were checked without inserting wallet or financial records:
+
+- Provider fee above quote: reversal first offsets PLAYAM's absorbed overage; creator receives only the excess after the fee falls below their quote.
+- Subsequent partial reversal: only the incremental creator share is refunded.
+- Provider fee below quote: the original quote difference is refunded, and later provider reversals only refund any additional creator-paid portion.
+- Multiple reversals: incremental refunds do not duplicate prior refunds.
+
+The arithmetic checks returned the expected incremental refund amounts for the four constructed scenarios. These are logic checks, not transactional end-to-end tests.
+
+### Access checks
+
+- New cost table has RLS enabled.
+- `anon` and `authenticated` have no SELECT access.
+- `service_role` has SELECT/INSERT access.
+- Fee recorder execute: `anon=false`, `authenticated=false`, `service_role=true`.
+
+### Remaining limitations
+
+- The new cost subledger is not yet included in the finance dashboard's consolidated operating-expense summary; it is separately recorded and must be reconciled into that summary before PLAYAM treats dashboard net operating results as complete.
+- No actual fee event, creator wallet refund, Paystack sandbox transfer, signed webhook, or browser MFA test was executed. No wallet/financial data rows were created by these checks.
+- Payout preparation remains disabled. Stamp-duty payer policy remains pending. Production and Friendship Court remain unchanged.
