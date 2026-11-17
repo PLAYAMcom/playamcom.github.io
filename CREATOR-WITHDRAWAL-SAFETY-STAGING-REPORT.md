@@ -218,3 +218,22 @@ Added `creator-withdrawal-admin-staging.html`:
 - Transfer preparation remains blocked.
 - No production changes, real transfers or cash reward activation.
 - Stamp-duty payer policy remains unresolved.
+
+
+## Batch 29 — Read-only payout readiness preflight
+
+Added `playam_admin_check_creator_withdrawal_readiness_v1(uuid)`, an authenticated finance-admin-only SECURITY DEFINER RPC requiring aal2 and an active finance role. It checks:
+- Request is approved.
+- First approval exists and is not the creator or the currently reviewing admin.
+- Large withdrawal has a second approval by a different administrator.
+- NGN and Paystack provider.
+- Payout destination belongs to creator, is active, verified, and past the security cooldown.
+- Gross amount, quoted creator fee and net transfer reconcile.
+- Stamp-duty payer is resolved if stamp duty applies.
+- Creator reserved wallet balance covers the gross withdrawal liability.
+
+The RPC returns a structured blocker list and always reports `payout_enabled=false` and `transfer_initiated=false`. It performs no mutation and initiates no payout.
+
+Added a read-only preflight action to the staging admin page. Source checks confirm MFA, queue, approve/reject, preflight RPC wiring, staging project ID and no Paystack payout call.
+
+No withdrawal request or fee event was created. No administrator session was used. Browser runtime and actual MFA review remain untested. The transfer-preparation RPC remains blocked; no payout was initiated.
