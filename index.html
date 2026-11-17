@@ -426,7 +426,7 @@ async function signIn(){
 }
 async function sendPhoneOtp(){
  const phone=document.getElementById("phone").value.trim();
- if(!/^\\+[1-9]\\d{7,14}$/.test(phone)){showMessage("Enter a valid international phone number, including + and country code.");return}
+ if(!/^\+[1-9]\d{7,14}$/.test(phone)){showMessage("Enter a valid international phone number, including + and country code.");return}
  showMessage("Requesting a verification code...");
  const {error}=await supabaseClient.auth.signInWithOtp({phone});
  if(error){showMessage("Phone login is not ready yet: "+error.message);return}
@@ -434,7 +434,7 @@ async function sendPhoneOtp(){
 }
 async function verifyPhoneOtp(){
  const phone=document.getElementById("phone").value.trim(),token=document.getElementById("phoneOtp").value.trim();
- if(!phone||!/^\\d{6}$/.test(token)){showMessage("Enter your phone number and the 6-digit code.");return}
+ if(!phone||!/^\d{6}$/.test(token)){showMessage("Enter your phone number and the 6-digit code.");return}
  showMessage("Verifying your code...");
  const {data,error}=await supabaseClient.auth.verifyOtp({phone,token,type:"sms"});
  if(error){showMessage(error.message);return}
