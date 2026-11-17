@@ -52,7 +52,18 @@ async function loadReversals(){
  if(error){status("reversalStatus","Could not load reversal queue: "+error.message);return}
  const rows=Array.isArray(data)?data:[];
  status("reversalStatus",rows.length+" outstanding reversal record(s). No wallet debit or recovery action is performed here.");
- $("reversalQueue").innerHTML=rows.map(r=>'<article class="record"><strong>'+money(r.reversed_transfer_minor)+'</strong><span class="pill">'+esc(r.recovery_status)+'</span><p>Creator: <code>'+esc(r.creator_auth_user_id)+'</code></p><p>Withdrawal: <code>'+esc(r.withdrawal_request_id)+'</code></p><p>Paystack reference: <code>'+esc(r.provider_reference)+'</code></p><p>Provider fee reported: '+(r.provider_fee_minor===null?"Not supplied":money(r.provider_fee_minor))+' · Recorded: '+esc(new Date(r.created_at).toLocaleString())+'</p><p class="warning">Recovery liability only. Verify provider statements and obtain authorised finance/legal policy before any creator balance adjustment.</p></article>').join("")||'<p class="muted">No outstanding reversal records.</p>';
+ $("reversalQueue").innerHTML=rows.map(r=>{
+  const meta=r.metadata&&typeof r.metadata==="object"?r.metadata:{};
+  return '<article class="record"><div class="row"><strong>'+money(r.reversed_transfer_minor)+'</strong><span class="pill">'+esc(r.recovery_status)+'</span></div>'+
+  '<p>Provider: Paystack · Currency: '+esc(r.currency||"Unknown")+'</p>'+
+  '<p>Creator: <code>'+esc(r.creator_auth_user_id)+'</code></p>'+
+  '<p>Withdrawal: <code>'+esc(r.withdrawal_request_id)+'</code></p>'+
+  '<p>Provider reference: <code>'+esc(r.provider_reference)+'</code></p>'+
+  '<p>Provider fee reported: '+(r.provider_fee_minor===null?"Not supplied":money(r.provider_fee_minor))+' · Recorded: '+esc(new Date(r.created_at).toLocaleString())+'</p>'+
+  '<details><summary>Recorded reversal evidence metadata</summary><pre style="white-space:pre-wrap;overflow-wrap:anywhere">'+esc(JSON.stringify(meta,null,2))+'</pre></details>'+
+  '<div class="small"><strong>Required manual review before any future decision</strong><ul><li>Verify the reversal against the Paystack dashboard/API and bank settlement statement.</li><li>Establish whether the original recipient received or retained the funds.</li><li>Identify the reversal reason and attach independently retained evidence.</li><li>Check the creator agreement and obtain legal/finance policy approval.</li><li>Notify the creator and allow a documented dispute period.</li><li>Require two independent finance approvers for any recovery or write-off.</li></ul></div>'+
+  '<p class="warning">Read-only record. This page does not change status, debit a wallet, freeze an account, offset future earnings or write off the liability.</p></article>';
+ }).join("")||'<p class="muted">No outstanding reversal records.</p>';
 }
 async function loadStale(){
  status("staleStatus","Checking for processing requests older than 10 minutes…");$("staleQueue").innerHTML="";
