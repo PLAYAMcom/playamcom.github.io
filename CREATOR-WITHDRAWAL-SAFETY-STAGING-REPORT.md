@@ -307,3 +307,43 @@ Added a stale transfer reconciliation panel:
 - No actual signed-in MFA admin session or browser runtime test was performed.
 - Creator recovery, write-off, future-earnings offset and accounting treatment remain deliberately unimplemented pending an explicit fair recovery policy and legal/accounting review.
 - All changes are staging project/feature-branch only; production untouched.
+
+
+## Batch 32 — Reversal recovery ledger audit (read-only)
+
+Audited the staging reversal table, transaction constraints, wallet trigger and administrator reversal queue before designing any recovery mutation.
+
+### Confirmed database facts
+
+- The private playam_creator_withdrawal_reversals table stores provider/reference, linked paid withdrawal, creator, exact reversed net amount, optional provider fee, idempotency key, status and review metadata.
+- The table enforces unique provider/reference and unique idempotency key. Allowed statuses are recovery_required, under_review, recovered and written_off.
+- The reversal recorder accepts only a previously paid NGN Paystack withdrawal with the exact original net transfer amount. It records a liability and does not debit the creator wallet.
+- The MFA finance-admin queue returns only recovery_required and under_review items.
+- The creator wallet trigger permits admin_adjustment entries to change available balance, including negative adjustments if the resulting available balance remains nonnegative. A future recovery debit must never be implemented as an ordinary admin adjustment without additional strict guards and explicit policy.
+- The existing withdrawal_reversal transaction type is deliberately rejected by the wallet trigger as a legacy event; it must not be assumed to be a safe recovery ledger path.
+- Current staging reversal count is zero.
+
+### Decision: no automatic recovery debit or write-off
+
+No recovery mutation was applied in this batch. The current schema has only one reviewer field on reversal records, which is not enough by itself to prove independent two-person write-off approval. The creator-recovery policy also has not been approved.
+
+Before implementing any wallet recovery, PLAYAM needs an explicit policy covering:
+1. Whether the reversal was caused by provider/bank error, recipient bank rejection, fraud, or another cause.
+2. Whether the creator actually received and retained the original transfer.
+3. Whether recovery is legally and contractually permitted.
+4. Whether recovery can be limited to future available earnings, with no negative wallet balance and no access to pending earnings.
+5. A notice and dispute window for the creator.
+6. Independent two-person approval for any write-off or recovery adjustment.
+7. A complete evidence trail and idempotent accounting entries.
+
+### Verification limits
+
+- Read-only SQL inspection only; no database schema or records changed in this batch.
+- No creator wallet balance changed.
+- No real or test Paystack transfer or reversal occurred.
+- No browser/MFA admin session was exercised.
+- No production project or Friendship Court code was touched.
+
+### Next safe milestone
+
+Add an auditable recovery decision workflow only after the recovery policy is approved. Until then, reversal records remain outstanding finance-review liabilities; do not debit creators, offset future earnings, freeze accounts, or write off balances automatically.
