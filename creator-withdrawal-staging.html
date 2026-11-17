@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#090914">
+<title>PLAYAM Creator Earnings — Staging</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{color-scheme:dark;--bg:#090914;--panel:#17172b;--line:#393954;--muted:#b0b0c8;--accent:#b477ff;--pink:#f05ac7}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#fff;font:16px/1.5 Arial,sans-serif;min-height:100vh;min-height:100dvh}
+button,input{font:inherit}button{border:0;border-radius:12px;min-height:48px;padding:12px 16px;font-weight:700;cursor:pointer}
+button:disabled{opacity:.5;cursor:not-allowed}.primary{background:linear-gradient(100deg,#8e55e8,var(--pink));color:white}.secondary{background:#292943;color:white;border:1px solid #505071}
+input{width:100%;padding:14px;border-radius:12px;border:1px solid var(--line);background:#101020;color:#fff;margin:7px 0}
+.banner{position:sticky;top:0;z-index:5;text-align:center;padding:10px;background:#633b13;color:#ffe0a3;font-weight:800;font-size:13px;letter-spacing:.03em}
+.wrap{max-width:920px;margin:auto;padding:20px 16px calc(30px + env(safe-area-inset-bottom))}
+.brand{font-size:26px;font-weight:900;letter-spacing:1px;background:linear-gradient(90deg,var(--accent),var(--pink));color:transparent;background-clip:text}
+h1{font-size:clamp(24px,5vw,34px);margin:14px 0 5px}.muted{color:var(--muted)}.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:20px;margin:16px 0}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.metric{background:#101020;border:1px solid #33334e;border-radius:14px;padding:15px;min-width:0}
+.metric strong{display:block;font-size:clamp(20px,4vw,28px);overflow-wrap:anywhere}.metric span{font-size:13px;color:var(--muted)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.pill{display:inline-block;border-radius:30px;padding:5px 10px;background:#33294b;color:#e0caff;font-size:12px;font-weight:700}
+.notice{border:1px solid #795d31;background:#2a2115;color:#ffdfa6;border-radius:14px;padding:15px}
+.error{color:#ff9bb4;min-height:22px}.small{font-size:13px}.history{border-top:1px solid var(--line);padding:13px 0}.history:first-child{border-top:0}
+#login{max-width:440px;margin:10vh auto}.hidden{display:none!important}
+@media(max-width:560px){.grid{grid-template-columns:1fr}.card{padding:16px}.wrap{padding-left:12px;padding-right:12px}}
+</style>
+</head>
+<body>
+<div class="banner">PLAYAM STAGING ONLY — TEST ACCOUNTS ONLY — NO REAL PAYOUTS</div>
+<main class="wrap">
+  <div class="brand">PLAYAM 🎮</div>
+  <section id="login" class="card">
+    <h1>Creator earnings</h1>
+    <p class="muted">Sign in with your PLAYAM staging test account.</p>
+    <label for="email">Email</label><input id="email" type="email" autocomplete="username" placeholder="Email address">
+    <label for="password">Password</label><input id="password" type="password" autocomplete="current-password" placeholder="Password">
+    <button id="signIn" class="primary" style="width:100%" onclick="signIn()">LOG IN</button>
+    <p id="loginMessage" class="error" role="status"></p>
+  </section>
+
+  <section id="dashboard" class="hidden">
+    <div class="row">
+      <div><h1>Creator earnings</h1><div class="muted small" id="accountLabel">Signed in</div></div>
+      <button class="secondary" onclick="refreshDashboard()">REFRESH</button>
+    </div>
+    <div class="card">
+      <div class="row"><h2 style="margin:0">Your wallet</h2><span class="pill">NGN</span></div>
+      <div class="grid" style="margin-top:14px">
+        <div class="metric"><strong id="available">—</strong><span>Available earnings</span></div>
+        <div class="metric"><strong id="pending">—</strong><span>Pending earnings</span></div>
+        <div class="metric"><strong id="reserved">—</strong><span>Reserved withdrawals</span></div>
+        <div class="metric"><strong id="withdrawn">—</strong><span>Total withdrawn</span></div>
+      </div>
+      <p class="muted small" id="walletUpdated">Balances are read directly from your staging wallet.</p>
+    </div>
+    <div class="card">
+      <h2 style="margin-top:0">Withdrawal safety check</h2>
+      <div class="notice">
+        <strong>Withdrawals are not available in this test page yet.</strong>
+        <p style="margin:7px 0 0">PLAYAM is completing the fee estimate, creator consent, net transfer, and Paystack verification steps. No money will be reserved or transferred from this page.</p>
+      </div>
+      <p class="muted small">The actual provider fee must be disclosed before confirmation. Any fee difference or reversal must be reconciled transparently. Stamp-duty payer policy is still pending, so affected payouts must remain blocked.</p>
+    </div>
+    <div class="card">
+      <div class="row"><h2 style="margin:0">Withdrawal history</h2><span class="pill">Latest 20</span></div>
+      <div id="history" class="muted">Loading history…</div>
+    </div>
+    <p id="dashboardMessage" class="error" role="status"></p>
+    <button class="secondary" style="width:100%" onclick="signOut()">LOG OUT</button>
+  </section>
+  <p class="muted small">This is a staging-only read view. It does not create withdrawal requests, modify wallet balances, or initiate Paystack transfers.</p>
+</main>
+<script>
+const SUPABASE_URL="https://pwnjrdedeoxbmtfywhkk.supabase.co";
+const SUPABASE_KEY="sb_publishable_6zZlj2moK_zv9lAA_0xdzA_nBDueD50";
+if(SUPABASE_URL!=="https://pwnjrdedeoxbmtfywhkk.supabase.co"||!SUPABASE_KEY.startsWith("sb_publishable_"))throw new Error("PLAYAM staging safety check failed.");
+const db=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+let currentUser=null;
+const money=n=>new Intl.NumberFormat("en-NG",{style:"currency",currency:"NGN",maximumFractionDigits:2}).format((Number(n)||0)/100);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function showDashboard(on){document.getElementById("login").classList.toggle("hidden",on);document.getElementById("dashboard").classList.toggle("hidden",!on)}
+async function signIn(){
+ const email=document.getElementById("email").value.trim(),password=document.getElementById("password").value;
+ const msg=document.getElementById("loginMessage");msg.textContent="";
+ if(!email||!password){msg.textContent="Enter your email and password.";return}
+ const btn=document.getElementById("signIn");btn.disabled=true;btn.textContent="SIGNING IN…";
+ const {data,error}=await db.auth.signInWithPassword({email,password});
+ btn.disabled=false;btn.textContent="LOG IN";
+ if(error){msg.textContent=error.message;return}
+ currentUser=data.user;showDashboard(true);await refreshDashboard();
+}
+async function refreshDashboard(){
+ if(!currentUser)return;
+ const msg=document.getElementById("dashboardMessage");msg.textContent="Refreshing…";
+ const [walletResult,historyResult]=await Promise.all([
+  db.from("playam_creator_earnings_wallets").select("available_balance_minor,pending_balance_minor,reserved_withdrawal_balance_minor,withdrawn_balance_minor,currency,updated_at").eq("auth_user_id",currentUser.id).maybeSingle(),
+  db.from("playam_creator_withdrawal_requests").select("id,amount_minor,currency,status,requested_at,processed_at,creator_fee_quoted_minor,creator_fee_actual_minor,net_transfer_minor,fee_reconciliation_status").eq("auth_user_id",currentUser.id).order("requested_at",{ascending:false}).limit(20)
+ ]);
+ if(walletResult.error){msg.textContent="Wallet could not be loaded: "+walletResult.error.message}
+ else{
+  const w=walletResult.data||{};
+  document.getElementById("available").textContent=money(w.available_balance_minor);
+  document.getElementById("pending").textContent=money(w.pending_balance_minor);
+  document.getElementById("reserved").textContent=money(w.reserved_withdrawal_balance_minor);
+  document.getElementById("withdrawn").textContent=money(w.withdrawn_balance_minor);
+  document.getElementById("walletUpdated").textContent=w.updated_at?"Last wallet update: "+new Date(w.updated_at).toLocaleString():"No wallet record exists yet. Balances shown as zero.";
+ }
+ const box=document.getElementById("history");
+ if(historyResult.error){box.textContent="Withdrawal history could not be loaded: "+historyResult.error.message}
+ else if(!historyResult.data?.length){box.innerHTML='<p class="muted">No withdrawal requests found for this account.</p>'}
+ else{box.innerHTML=historyResult.data.map(x=>'<div class="history"><div class="row"><strong>'+money(x.amount_minor)+'</strong><span class="pill">'+esc(x.status)+'</span></div><div class="muted small">Requested '+new Date(x.requested_at).toLocaleString()+'</div><div class="muted small">Fee reconciliation: '+esc(x.fee_reconciliation_status||"not started")+(x.creator_fee_actual_minor!==null?' · Actual provider fee '+money(x.creator_fee_actual_minor):"")+'</div></div>').join("")}
+ if(!walletResult.error&&!historyResult.error)msg.textContent="";
+}
+async function signOut(){await db.auth.signOut();currentUser=null;showDashboard(false)}
+async function restoreSession(){
+ const {data,error}=await db.auth.getSession();
+ if(error){document.getElementById("loginMessage").textContent=error.message;return}
+ if(data.session){currentUser=data.session.user;showDashboard(true);await refreshDashboard()}
+}
+db.auth.onAuthStateChange((event,session)=>{if(event==="SIGNED_OUT"){currentUser=null;showDashboard(false)}});
+restoreSession();
+</script>
+</body>
+</html>
