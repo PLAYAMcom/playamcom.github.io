@@ -414,6 +414,26 @@ textarea{line-height:1.5;resize:vertical}
 .playam-intensity-label{display:flex;justify-content:space-between;color:#e8def7;font-size:12px;font-weight:700}.playam-quick-editor input[type=range]{accent-color:#b67aff;margin:5px 0 12px}
 .playam-editor-adjustments{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.playam-editor-adjustments label{font-size:10px;color:#c9bedb}.playam-editor-adjustments input{padding:0;margin:8px 0}
 .playam-editor-status{min-height:18px;color:#d3b6ff;font-size:11px;line-height:1.4}.playam-editor-publish,.playam-editor-cancel{width:100%;margin:5px 0;padding:12px}.playam-editor-note{color:#a99cbd;font-size:10px;line-height:1.5}
+/* PLAYAM creator camera and template prompt polish */
+.playam-create-sheet{width:min(100%,560px);padding:24px 18px 22px}
+.playam-create-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.playam-create-actions .playam-create-upload{margin:10px 0;padding:13px 8px}
+.playam-template-section{margin:13px 0 15px}
+.playam-template-heading{display:flex;align-items:center;justify-content:space-between;margin:4px 0 10px;color:#fff;font-size:13px}
+.playam-template-heading span{color:#b8a6d2;font-size:10px;font-weight:700}
+.playam-template-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.playam-template-card{display:flex;min-width:0;flex-direction:column;align-items:flex-start;gap:5px;padding:9px;border:1px solid #51416f;border-radius:15px;background:#171528;color:#fff;text-align:left}
+.playam-template-card:focus-visible,.playam-template-card:active{outline:2px solid #b7f34a;outline-offset:2px}
+.playam-template-art{display:grid;place-items:center;width:100%;height:65px;border-radius:10px;font-size:29px}
+.playam-template-art.gaming{background:linear-gradient(135deg,#183b43,#345c4b)}
+.playam-template-art.intro{background:linear-gradient(135deg,#3d285d,#8057a6)}
+.playam-template-art.victory{background:linear-gradient(135deg,#6b4c20,#b17b32)}
+.playam-template-art.setup{background:linear-gradient(135deg,#1c345b,#526b9d)}
+.playam-template-card strong{font-size:12px}.playam-template-card small{font-size:10px;color:#b9aecb}
+.playam-template-prompt{min-height:34px;margin:9px 1px 0;padding:9px 10px;border-radius:10px;background:#ffffff0c;color:#d7cce6;font-size:11px;line-height:1.4}
+.playam-ar-panel{margin-top:12px}
+.playam-ar-stage{max-height:48dvh}
+@media(max-width:420px){.playam-create-overlay{padding:8px}.playam-create-sheet{max-height:92dvh;padding:22px 13px 16px}.playam-template-art{height:56px}}
 /* PLAYAM Create menu and Studio preview — staging */
 .playam-create-overlay{position:fixed;inset:0;z-index:1500;display:flex;align-items:flex-end;justify-content:center;padding:16px;background:#05040bdc;backdrop-filter:blur(8px)}
 .playam-create-sheet{position:relative;width:min(100%,520px);max-height:88dvh;overflow:auto;padding:25px 20px 22px;border:1px solid #554174;border-radius:24px 24px 18px 18px;background:linear-gradient(155deg,#211735,#10101e 70%);box-shadow:0 -14px 48px #0009}
@@ -916,12 +936,24 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
   <div id="playamCreatePanel" class="playam-create-overlay hidden" aria-hidden="true">
    <section class="playam-create-sheet" role="dialog" aria-modal="true" aria-labelledby="playamCreateTitle">
     <button class="playam-create-close" type="button" onclick="closePlayamCreate()" aria-label="Close">×</button>
-    <div class="feed-kicker">CREATE & EDIT</div>
-    <h2 id="playamCreateTitle">Create on PLAYAM</h2>
-    <p>Share a video today, or get ready for a new way to edit.</p>
-    <button class="primary playam-create-upload" type="button" onclick="openPlayamUpload()">＋ Upload a video</button>
-
-    <button class="secondary playam-create-upload" type="button" onclick="openPlayamARCamera()">✦ Try live AR filters</button>
+    <div class="feed-kicker">PLAYAM CREATOR</div>
+    <h2 id="playamCreateTitle">Create something</h2>
+    <p>Record a moment, try a face effect or start from a creator prompt.</p>
+    <div class="playam-create-actions">
+     <button class="primary playam-create-upload" type="button" onclick="openPlayamARCamera()">📷 Open camera</button>
+     <button class="secondary playam-create-upload" type="button" onclick="openPlayamUpload()">↑ Upload from phone</button>
+    </div>
+    <section class="playam-template-section" aria-label="Creator templates">
+     <div class="playam-template-heading"><strong>Start with a template</strong><span>PLAYAM prompts</span></div>
+     <div class="playam-template-grid">
+      <button class="playam-template-card" type="button" onclick="selectPlayamTemplate('Gaming clutch','Show the setup, the best moment and your reaction.')"><span class="playam-template-art gaming">🎮</span><strong>Gaming clutch</strong><small>Highlight prompt</small></button>
+      <button class="playam-template-card" type="button" onclick="selectPlayamTemplate('Player intro','Introduce yourself, your game and your player name.')"><span class="playam-template-art intro">👋</span><strong>Player intro</strong><small>Meet the player</small></button>
+      <button class="playam-template-card" type="button" onclick="selectPlayamTemplate('Victory moment','Capture the win, celebrate and tag your teammates.')"><span class="playam-template-art victory">🏆</span><strong>Victory moment</strong><small>Celebration prompt</small></button>
+      <button class="playam-template-card" type="button" onclick="selectPlayamTemplate('My setup','Show your gaming space, gear and favourite game.')"><span class="playam-template-art setup">🎧</span><strong>My setup</strong><small>Setup tour prompt</small></button>
+     </div>
+     <p id="playamTemplatePrompt" class="playam-template-prompt" aria-live="polite">Choose a prompt to get a simple recording idea.</p>
+    </section>
+    <button class="secondary playam-create-upload" type="button" onclick="openPlayamARCamera()">✦ Open camera with live face effects</button>
     <section id="playamARPanel" class="playam-ar-panel hidden" aria-label="Live face filters">
      <div class="playam-studio-top"><h3 style="margin:0">Live face filters</h3><button class="secondary" type="button" onclick="closePlayamARCamera()">Close</button></div>
      <p class="playam-ar-note">Real-time face tracking. Effects follow your face as you move. Allow camera access to begin.</p>
@@ -1126,6 +1158,12 @@ async function togglePlayamARRecording(){
  }catch(e){status.textContent=e.message||"Recording could not start on this device.";}
 }
 
+function selectPlayamTemplate(name,prompt){
+ const out=document.getElementById("playamTemplatePrompt");
+ if(out)out.textContent=name+": "+prompt+" These are guided recording prompts; automatic multi-clip template editing is not live yet.";
+ const panel=document.getElementById("playamCreatePanel");
+ if(panel)panel.dataset.selectedTemplate=name;
+}
 function triggerPlayamCreate(){const panel=document.getElementById("playamCreatePanel");if(panel){panel.classList.remove("hidden");panel.setAttribute("aria-hidden","false")}else{const input=document.getElementById("playamVideoFile");if(input)input.click();else showMessage("Video upload is not available on this screen yet.");}}
 function closePlayamCreate(){const panel=document.getElementById("playamCreatePanel");if(panel){panel.classList.add("hidden");panel.setAttribute("aria-hidden","true")}}
 function openPlayamUpload(){closePlayamCreate();const input=document.getElementById("playamVideoFile");if(input)input.click();else showMessage("Video upload is not available on this screen yet.");}
