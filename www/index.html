@@ -446,7 +446,7 @@ textarea{line-height:1.5;resize:vertical}
 
    <section class="feed-page feed-video-page" id="feedVideos">
      <div class="feed-page-head"><div><div class="feed-kicker">SCROLL • WATCH • DISCOVER</div><h2>PLAYAM Shorts</h2></div><span class="feed-page-count">02 / 06</span></div>
-     <div class="shorts-toolbar"><input id="playamVideoCaption" type="text" maxlength="220" placeholder="Add a caption (optional)" aria-label="Video caption"><button class="primary shorts-upload-button" type="button" onclick="document.getElementById('playamVideoFile').click()">＋ UPLOAD VIDEO</button><input id="playamVideoFile" type="file" accept="video/mp4,video/webm,video/quicktime" hidden onchange="uploadPlayamVideo(event)"></div>
+     <div class="shorts-toolbar"><input id="playamVideoCaption" type="text" maxlength="220" placeholder="Write a caption…" aria-label="Video caption"><button class="primary shorts-upload-button" type="button" onclick="document.getElementById('playamVideoFile').click()">＋ Upload</button><button class="secondary shorts-record-button" type="button" onclick="document.getElementById('playamRecordFile').click()">● Record</button><input id="playamVideoFile" type="file" accept="video/mp4,video/webm,video/quicktime" hidden onchange="uploadPlayamVideo(event)"><input id="playamRecordFile" type="file" accept="video/*" capture="environment" hidden onchange="uploadPlayamVideo(event)"></div>
      <p id="playamVideoStatus" class="shorts-status" role="status" aria-live="polite">Choose an MP4, WebM or MOV video. Maximum size: 100 MB.</p>
      <div id="playamShortsList" class="shorts-list" aria-live="polite"><div class="shorts-empty">Loading PLAYAM Shorts…</div></div>
      <p class="feed-feature-note">Staging preview: signed-in players can upload videos and watch published clips. Please report any playback issue.</p>
@@ -468,7 +468,7 @@ textarea{line-height:1.5;resize:vertical}
 
    <section class="feed-page feed-profile-page" id="feedProfile">
     <div class="feed-page-head"><div><div class="feed-kicker">YOUR PLAYAM SPACE</div><h2>Profile & Wallet</h2></div><span>👤</span></div>
-    <div class="feed-profile-card"><div class="feed-avatar">👤</div><h3>Your player profile</h3><p>Manage your PLAYAM account and preferences.</p><button class="primary" onclick="showSettings()">ACCOUNT SETTINGS</button></div>
+    <div class="creator-profile" id="playamCreatorProfile"><div class="creator-profile-top"><div class="creator-avatar" id="creatorAvatar">P</div><div class="creator-stats"><div><b id="creatorVideoCount">0</b><span>Videos</span></div><div><b>0</b><span>Followers</span></div><div><b>0</b><span>Following</span></div></div></div><h2 id="creatorDisplayName">PLAYAM Player</h2><p id="creatorHandle">@player</p><p id="creatorBio">Your videos. Your games. Your PLAYAM story.</p><div class="creator-profile-buttons"><button class="secondary" onclick="showSettings()">Edit profile</button><button class="secondary" onclick="showSettings()">Settings</button></div><div class="creator-video-heading">▦ &nbsp; Videos</div><div id="creatorVideoGrid" class="creator-video-grid"><p class="creator-empty">Your published videos will appear here.</p></div></div>
     <button class="secondary feed-wide-button" onclick="signOut()">LOG OUT</button>
     <div class="feed-bottom-hint"><span>SWIPE DOWN TO GO BACK</span><span class="feed-chevron">⌃</span></div>
    </section>
@@ -729,6 +729,35 @@ function showJoinRoom(){showScreen("joinScreen")}
 function showCreateRoomWithHard(){document.getElementById("game").value="friendship-court";document.getElementById("level").value="hard";showCreateRoom()}
 
 
+async function loadPlayamCreatorProfile(){
+ const result=await supabaseClient.auth.getUser();
+ const user=result.data?.user;
+ if(!user)return;
+ const meta=user.user_metadata||{};
+ const name=String(meta.full_name||meta.name||(user.email||"PLAYAM Player").split("@")[0]);
+ const handle=(user.email||"player").split("@")[0].replace(/[^a-z0-9_.]/gi,"").toLowerCase();
+ const avatar=document.getElementById("creatorAvatar");
+ const avatarUrl=meta.avatar_url||meta.picture||"";
+ if(avatar){
+  avatar.textContent=name.slice(0,1).toUpperCase();
+  if(avatarUrl){avatar.textContent="";const img=document.createElement("img");img.src=avatarUrl;img.alt="Profile photo";avatar.append(img);}
+ }
+ document.getElementById("creatorDisplayName").textContent=name;
+ document.getElementById("creatorHandle").textContent="@"+handle;
+ const response=await supabaseClient.from("playam_videos").select("id,storage_path,caption").eq("owner_id",user.id).eq("status","published").order("created_at",{ascending:false}).limit(60);
+ if(response.error)throw response.error;
+ document.getElementById("creatorVideoCount").textContent=response.data.length;
+ const grid=document.getElementById("creatorVideoGrid");
+ grid.replaceChildren();
+ if(!response.data.length){const empty=document.createElement("p");empty.className="creator-empty";empty.textContent="No videos yet. Tap Upload or Record to share your first video.";grid.append(empty);return;}
+ for(const item of response.data){
+  const tile=document.createElement("button");tile.type="button";tile.className="creator-video-tile";
+  tile.addEventListener("click",()=>goHomeSection("feedVideos"));
+  const signed=await supabaseClient.storage.from("playam-videos-staging").createSignedUrl(item.storage_path,3600);
+  if(signed.data?.signedUrl){const video=document.createElement("video");video.src=signed.data.signedUrl;video.muted=true;video.playsInline=true;video.preload="metadata";tile.append(video);}
+  const caption=document.createElement("span");caption.textContent=item.caption||"PLAYAM video";tile.append(caption);grid.append(tile);
+ }
+}
 function goHomeSection(id){
  const target=document.getElementById(id);
  if(!target)return;
@@ -736,6 +765,7 @@ function goHomeSection(id){
  requestAnimationFrame(()=>target.scrollIntoView({behavior:"smooth",block:"start"}));
  document.querySelectorAll(".mobile-tab").forEach(b=>b.classList.toggle("active",b.getAttribute("onclick")?.includes("'"+id+"'")));
  if(id==="feedVideos")loadPlayamVideos();
+ if(id==="feedProfile")loadPlayamCreatorProfile().catch(e=>console.warn("Creator profile load failed",e));
 }
 
 /* PLAYAM SHORTS — STAGING MVP */
@@ -1368,4 +1398,31 @@ checkLogin();
  #homeScreen.playam-vertical-feed .feed-video-page .shorts-comments{position:absolute;z-index:10;left:10px;right:10px;bottom:10px;max-height:48%;overflow:auto;padding:14px;border:1px solid #ffffff44;border-radius:18px;background:#11101af2;text-shadow:none}
  #homeScreen.playam-vertical-feed .feed-video-page .shorts-comments input{background:#252238}
  #homeScreen.playam-vertical-feed .feed-video-page .feed-feature-note{display:none}
+}
+
+
+/* PLAYAM creator profile */
+.creator-profile{width:100%;padding:4px 0 20px}
+.creator-profile-top{display:flex;align-items:center;gap:22px;margin:12px 0 16px}
+.creator-avatar{width:88px;height:88px;flex:0 0 88px;display:grid;place-items:center;overflow:hidden;border-radius:50%;background:#392958;color:#fff;font-size:34px;font-weight:900}
+.creator-avatar img{width:100%;height:100%;object-fit:cover}
+.creator-stats{display:flex;flex:1;justify-content:space-around;gap:8px;text-align:center}
+.creator-stats div{display:flex;flex-direction:column;gap:3px}
+.creator-stats b{font-size:18px;color:#fff}
+.creator-stats span{font-size:10px;color:#bdb4d2}
+.creator-profile h2{font-size:20px;margin:4px 0}
+.creator-profile>p{font-size:12px;color:#bdb4d2;margin:4px 0}
+.creator-profile-buttons{display:flex;gap:9px;margin:14px 0 20px}
+.creator-profile-buttons button{flex:1}
+.creator-video-heading{padding:12px 0;border-top:1px solid #51416f;text-align:center;font-size:13px;font-weight:800}
+.creator-video-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:3px}
+.creator-video-tile{position:relative;aspect-ratio:3/4;min-width:0;overflow:hidden;border:0;border-radius:3px;background:#171528;padding:0}
+.creator-video-tile video{width:100%;height:100%;object-fit:cover}
+.creator-video-tile span{position:absolute;left:4px;right:4px;bottom:5px;color:#fff;text-align:left;font-size:9px;text-shadow:0 1px 4px #000;overflow:hidden}
+.creator-empty{grid-column:1/-1;text-align:center;padding:30px 12px;color:#bdb4d2;font-size:12px}
+@media(max-width:760px){
+ #homeScreen .feed-profile-page{justify-content:flex-start;overflow-y:auto;padding-top:20px}
+ #homeScreen .shorts-toolbar{grid-template-columns:minmax(0,1fr) auto auto;gap:6px}
+ #homeScreen .shorts-toolbar input:not([type=file]){grid-column:1/-1}
+ #homeScreen .shorts-upload-button,#homeScreen .shorts-record-button{min-height:38px;padding:7px 11px;font-size:10px}
 }
