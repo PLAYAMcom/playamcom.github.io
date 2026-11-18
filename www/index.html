@@ -586,6 +586,32 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .playam-camera-gallery,.playam-camera-create{min-width:72px;border:0;background:transparent;color:#fff;font-weight:800;font-size:13px}.playam-camera-gallery{font-size:24px}.playam-camera-gallery small,.playam-camera-create small{display:block;font-size:10px;font-weight:600}
 .playam-camera-shutter{width:76px;height:76px;border:6px solid #fff;border-radius:50%;background:#ff315b;color:#fff;font-size:34px;box-shadow:0 0 0 3px #0008}
 #playamCreatePanel.camera-mode .playam-music-picker{display:none}
+
+/* Expanded TikTok-inspired camera controls and sliding effect tray */
+#playamCreatePanel.camera-mode .playam-camera-tools{position:static}
+.playam-camera-modes{position:absolute;z-index:5;bottom:calc(112px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);display:flex;gap:16px}
+.playam-camera-modes button{border:0;background:transparent;color:#ffffffb5;font-weight:800;padding:8px}.playam-camera-modes button.active{color:#fff;border-bottom:2px solid #fff}
+.playam-camera-side-tools{position:absolute;z-index:6;right:10px;top:calc(76px + env(safe-area-inset-top));display:flex;flex-direction:column;gap:10px;align-items:center}
+.playam-camera-side-tools button{width:48px;min-height:48px;border:0;border-radius:13px;background:#17151dbb;color:white;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
+.playam-camera-side-tools b{font-size:21px;line-height:22px}.playam-camera-side-tools small{font-size:9px;font-weight:700}
+.playam-camera-bottom-tools{position:absolute;z-index:8;bottom:calc(25px + env(safe-area-inset-bottom));left:16px;right:16px;display:flex;justify-content:space-between;pointer-events:none}
+.playam-camera-bottom-tools button{pointer-events:auto;border:1px solid #ffffff55;border-radius:22px;background:#17151dcc;color:#fff;padding:9px 14px;font-weight:800}
+#playamCreatePanel.camera-mode .playam-camera-bottom{bottom:calc(18px + env(safe-area-inset-bottom));left:50%;right:auto;transform:translateX(-50%);z-index:9}
+.playam-effects-tray{position:absolute;z-index:20;left:0;right:0;bottom:0;height:min(52vh,440px);padding:10px 14px calc(16px + env(safe-area-inset-bottom));border-radius:22px 22px 0 0;background:#15131df5;color:white;box-shadow:0 -12px 40px #0008;display:flex;flex-direction:column;gap:10px}
+.playam-effects-tray.hidden{display:none!important}
+.playam-tray-grabber{width:38px;height:4px;border-radius:4px;background:#ffffff66;margin:0 auto 2px}
+.playam-tray-heading{display:flex;justify-content:space-between;align-items:center;font-size:16px}.playam-tray-heading button{border:0;background:transparent;color:white;font-size:25px}
+.playam-tray-categories{display:flex;gap:16px;overflow-x:auto;border-bottom:1px solid #ffffff22;padding-bottom:9px}
+.playam-tray-categories button{border:0;background:transparent;color:#bdb8c9;white-space:nowrap;padding:5px 0;font-size:12px;font-weight:800}
+.playam-tray-categories button.active{color:white;border-bottom:2px solid #ff315b}
+.playam-tray-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;overflow-y:auto;padding:3px 0 8px}
+.playam-tray-grid button{border:0;background:transparent;color:white;font-size:11px;display:flex;flex-direction:column;align-items:center;gap:5px}
+.tray-thumb{width:66px;height:66px;border-radius:16px;border:2px solid #ffffff30;background:linear-gradient(135deg,#40305b,#15131d);display:grid;place-items:center;font-style:normal;font-size:24px}
+.tray-thumb.glow{background:radial-gradient(circle,#ffd2e7,#ad6ee6 65%,#30213e)}.tray-thumb.cinema{background:linear-gradient(135deg,#d8a86b,#18202e)}.tray-thumb.vintage{background:linear-gradient(135deg,#c88b53,#6e4935)}.tray-thumb.mono{background:linear-gradient(135deg,#ddd,#333)}.tray-thumb.warm{background:linear-gradient(135deg,#ffcf76,#a64b31)}.tray-thumb.glasses{background:linear-gradient(135deg,#5b98b9,#26344a)}.tray-thumb.crown{background:linear-gradient(135deg,#f8d56d,#8a5425)}.tray-thumb.ears{background:linear-gradient(135deg,#f3b5d1,#75436b)}
+.playam-filter-strength{display:flex;align-items:center;gap:10px;font-size:11px}.playam-filter-strength input{flex:1;accent-color:#ff315b}.playam-tool-options{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;padding:20px 0}.playam-tool-options button{border:1px solid #ffffff44;border-radius:20px;background:#292435;color:white;padding:12px 18px;font-weight:800}
+.playam-camera-bottom-tools{bottom:calc(118px + env(safe-area-inset-bottom))}
+#playamCreatePanel.camera-mode .playam-ar-effects{display:none!important}
+@media(max-height:700px){.playam-camera-side-tools{gap:5px;top:calc(68px + env(safe-area-inset-top))}.playam-camera-side-tools button{min-height:42px}.playam-effects-tray{height:55vh}}
 </style>
 <style>
 .playam-daily-showdown{margin:18px 0 22px;padding:20px;border-radius:22px;border:1px solid #7950ad;background:radial-gradient(circle at 90% 0%,#54327b 0,#211a37 48%,#121222 100%);box-shadow:0 14px 35px #0005;color:#fff}
@@ -985,7 +1011,34 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
      <div class="playam-camera-top"><button type="button" class="playam-camera-close" onclick="closePlayamCreate()" aria-label="Close camera">×</button><button type="button" class="playam-add-sound" onclick="document.getElementById('playamMusicFile').click()">♫ Add music</button><span class="playam-camera-label">PLAYAM CAMERA</span></div>
      <p class="playam-ar-note">Real-time face tracking. Effects follow your face as you move. Allow camera access to begin.</p>
      <div class="playam-ar-stage"><video id="playamARVideo" playsinline muted></video><canvas id="playamARCanvas"></canvas><div id="playamCameraTextPreview" class="playam-camera-text-preview"></div></div><input id="playamCameraText" class="playam-camera-text hidden" maxlength="90" placeholder="Type text to add to your video…" oninput="playamTextOverlay=this.value;document.getElementById('playamCameraTextPreview').textContent=this.value">
-     <div class="playam-camera-tools"><div class="playam-camera-modes"><button type="button" data-create-mode="video" class="active" onclick="setPlayamCreateMode('video',this)">Video</button><button type="button" data-create-mode="photo" onclick="setPlayamCreateMode('photo',this)">Photo</button><button type="button" data-create-mode="text" onclick="setPlayamCreateMode('text',this)">Text</button></div><div class="playam-camera-filter-label">FILTERS</div><div class="playam-camera-filters"><button class="active" data-camera-filter="natural" onclick="setPlayamCameraFilter('natural',this)">Natural</button><button data-camera-filter="glow" onclick="setPlayamCameraFilter('glow',this)">Glow</button><button data-camera-filter="cinema" onclick="setPlayamCameraFilter('cinema',this)">Cinema</button><button data-camera-filter="vintage" onclick="setPlayamCameraFilter('vintage',this)">Vintage</button><button data-camera-filter="mono" onclick="setPlayamCameraFilter('mono',this)">Mono</button><button data-camera-filter="warm" onclick="setPlayamCameraFilter('warm',this)">Warm</button></div></div><div class="playam-ar-effects">
+     <div class="playam-camera-modes"><button type="button" data-create-mode="video" class="active" onclick="setPlayamCreateMode('video',this)">Video</button><button type="button" data-create-mode="photo" onclick="setPlayamCreateMode('photo',this)">Photo</button><button type="button" data-create-mode="text" onclick="setPlayamCreateMode('text',this)">Text</button></div>
+     <div class="playam-camera-side-tools" aria-label="Camera tools">
+      <button onclick="flipPlayamCamera()"><b>↻</b><small>Flip</small></button>
+      <button onclick="openPlayamTool('speed')"><b>1×</b><small>Speed</small></button>
+      <button onclick="setPlayamAREffect('blush',document.querySelector('[data-ar=blush]'))"><b>✧</b><small>Beauty</small></button>
+      <button onclick="openPlayamTool('filters')"><b>◐</b><small>Filters</small></button>
+      <button onclick="openPlayamTool('timer')"><b>◷</b><small>Timer</small></button>
+      <button onclick="togglePlayamFlash()"><b>ϟ</b><small>Flash</small></button>
+     </div>
+     <div id="playamEffectsTray" class="playam-effects-tray hidden">
+      <div class="playam-tray-grabber"></div><div class="playam-tray-heading"><strong id="playamTrayTitle">Effects</strong><button onclick="closePlayamEffectsTray()" aria-label="Close effects">×</button></div>
+      <div class="playam-tray-categories"><button class="active" onclick="setPlayamTrayCategory('Trending',this)">Trending</button><button onclick="setPlayamTrayCategory('New',this)">New</button><button onclick="setPlayamTrayCategory('Face',this)">Face</button><button onclick="setPlayamTrayCategory('Color',this)">Color</button><button onclick="setPlayamTrayCategory('Gaming',this)">Gaming</button><button onclick="setPlayamTrayCategory('Background',this)">Background</button></div>
+      <div id="playamTrayGrid" class="playam-tray-grid">
+       <button onclick="choosePlayamTrayEffect('none','Natural')"><i class="tray-thumb natural"></i><span>Natural</span></button>
+       <button onclick="choosePlayamTrayEffect('glow','Glow')"><i class="tray-thumb glow"></i><span>Glow</span></button>
+       <button onclick="choosePlayamTrayEffect('cinema','Cinema')"><i class="tray-thumb cinema"></i><span>Cinema</span></button>
+       <button onclick="choosePlayamTrayEffect('vintage','Vintage')"><i class="tray-thumb vintage"></i><span>Vintage</span></button>
+       <button onclick="choosePlayamTrayEffect('mono','Mono')"><i class="tray-thumb mono"></i><span>Mono</span></button>
+       <button onclick="choosePlayamTrayEffect('warm','Warm')"><i class="tray-thumb warm"></i><span>Warm</span></button>
+       <button onclick="choosePlayamTrayEffect('face-glasses','Glasses')"><i class="tray-thumb glasses">◉</i><span>Glasses</span></button>
+       <button onclick="choosePlayamTrayEffect('crown','Crown')"><i class="tray-thumb crown">♛</i><span>Crown</span></button>
+       <button onclick="choosePlayamTrayEffect('ears','Bunny')"><i class="tray-thumb ears">♧</i><span>Bunny</span></button>
+      </div>
+      <div class="playam-filter-strength"><span>Strength</span><input type="range" min="0" max="100" value="100" oninput="setPlayamFilterStrength(this.value)"><b id="playamFilterStrengthValue">100%</b></div>
+      <div id="playamToolOptions" class="playam-tool-options hidden"></div>
+     </div>
+     <div class="playam-camera-bottom-tools"><button onclick="openPlayamEffectsTray()">✦ Effects</button><button onclick="openPlayamUpload()">▧ Upload</button></div>
+     <div class="playam-ar-effects hidden">
       <button type="button" class="active" data-ar="none" onclick="setPlayamAREffect('none',this)">Natural</button>
       <button type="button" data-ar="glasses" onclick="setPlayamAREffect('glasses',this)">Glasses</button>
       <button type="button" data-ar="crown" onclick="setPlayamAREffect('crown',this)">Crown</button>
@@ -1140,9 +1193,20 @@ function closePlayamARCamera(){
  document.getElementById("playamARPanel").classList.add("hidden");
 }
 function setPlayamAREffect(effect,button){playamAREffect=effect;document.querySelectorAll("[data-ar]").forEach(b=>b.classList.toggle("active",b===button));}
-function setPlayamCameraFilter(filter,button){playamCameraFilter=({natural:"none",glow:"brightness(1.12) saturate(1.2)",cinema:"contrast(1.18) saturate(.82)",vintage:"sepia(.35) contrast(1.08)",mono:"grayscale(1)",warm:"sepia(.18) saturate(1.25)"})[filter]||"none";document.querySelectorAll("[data-camera-filter]").forEach(b=>b.classList.toggle("active",b===button));}
+function setPlayamCameraFilter(filter,button){playamSelectedFilter=filter;playamCameraFilter=({natural:"none",glow:"brightness(1.12) saturate(1.2)",cinema:"contrast(1.18) saturate(.82)",vintage:"sepia(.35) contrast(1.08)",mono:"grayscale(1)",warm:"sepia(.18) saturate(1.25)"})[filter]||"none";document.querySelectorAll("[data-camera-filter]").forEach(b=>b.classList.toggle("active",b===button));}
+let playamSelectedFilter="natural",playamFilterStrength=100,playamFacingMode="user",playamFlashOn=false,playamSpeed="1×",playamTimerSeconds=0;
+function openPlayamEffectsTray(){const t=document.getElementById("playamEffectsTray");if(t){t.classList.remove("hidden");document.getElementById("playamTrayTitle").textContent="Effects";document.getElementById("playamToolOptions").classList.add("hidden");}}
+function closePlayamEffectsTray(){document.getElementById("playamEffectsTray")?.classList.add("hidden");}
+function openPlayamTool(tool){openPlayamEffectsTray();const title=document.getElementById("playamTrayTitle"),opts=document.getElementById("playamToolOptions"),grid=document.getElementById("playamTrayGrid"),cats=document.querySelector(".playam-tray-categories");title.textContent=tool==="filters"?"Filters":tool==="speed"?"Recording speed":"Timer";cats.classList.toggle("hidden",tool!=="filters");grid.classList.toggle("hidden",tool!=="filters");opts.classList.toggle("hidden",tool==="filters");if(tool==="speed")opts.innerHTML=['0.3×','0.5×','1×','2×','3×'].map(v=>'<button onclick="setPlayamSpeed(\''+v+'\')">'+v+'</button>').join('');if(tool==="timer")opts.innerHTML=['Off','3 sec','10 sec'].map(v=>'<button onclick="setPlayamTimer(\''+v+'\')">'+v+'</button>').join('');}
+function setPlayamSpeed(v){playamSpeed=v;document.querySelector(".playam-camera-side-tools button:nth-child(2) b").textContent=v;closePlayamEffectsTray();}
+function setPlayamTimer(v){playamTimerSeconds=v==="3 sec"?3:v==="10 sec"?10:0;closePlayamEffectsTray();document.getElementById("playamARStatus").textContent=playamTimerSeconds?"Timer set to "+playamTimerSeconds+" seconds.":"Timer off.";}
+function setPlayamTrayCategory(category,button){document.querySelectorAll(".playam-tray-categories button").forEach(b=>b.classList.toggle("active",b===button));document.getElementById("playamTrayTitle").textContent=category+" effects";}
+function choosePlayamTrayEffect(effect,label){if(effect==="face-glasses"||effect==="crown"||effect==="ears"){const key=effect==="face-glasses"?"glasses":effect;setPlayamAREffect(key,document.querySelector('[data-ar="'+key+'"]'));}else{setPlayamCameraFilter(effect,null);}document.getElementById("playamARStatus").textContent=label+" effect selected.";closePlayamEffectsTray();}
+function setPlayamFilterStrength(v){playamFilterStrength=Number(v);document.getElementById("playamFilterStrengthValue").textContent=v+"%";const base=({natural:"none",glow:"brightness(1.12) saturate(1.2)",cinema:"contrast(1.18) saturate(.82)",vintage:"sepia(.35) contrast(1.08)",mono:"grayscale(1)",warm:"sepia(.18) saturate(1.25)"})[playamSelectedFilter]||"none";const amount=playamFilterStrength/100;playamCameraFilter=base==="none"?"none":base.replace(/([0-9.]+)/g,n=>String(1+(Number(n)-1)*amount));}
+async function flipPlayamCamera(){if(!navigator.mediaDevices?.getUserMedia)return;const old=playamARStream;try{playamFacingMode=playamFacingMode==="user"?"environment":"user";const next=await navigator.mediaDevices.getUserMedia({video:{facingMode:playamFacingMode,width:{ideal:720},height:{ideal:960}},audio:true});if(old)old.getTracks().forEach(t=>t.stop());playamARStream=next;const v=document.getElementById("playamARVideo");v.srcObject=next;await v.play();}catch(e){document.getElementById("playamARStatus").textContent="Could not switch camera: "+e.message;}}
+async function togglePlayamFlash(){const track=playamARStream?.getVideoTracks()[0],caps=track?.getCapabilities?.();if(!track||!caps?.torch){document.getElementById("playamARStatus").textContent="Flash is not supported by this camera.";return;}playamFlashOn=!playamFlashOn;try{await track.applyConstraints({advanced:[{torch:playamFlashOn}]});}catch(e){playamARStatus.textContent="Flash unavailable on this device.";}}
 function setPlayamCreateMode(mode,button){playamCreateMode=mode;document.querySelectorAll("[data-create-mode]").forEach(b=>b.classList.toggle("active",b===button));const field=document.getElementById("playamCameraText");if(field)field.classList.toggle("hidden",mode!=="text");const record=document.getElementById("playamARRecordBtn");if(record)record.textContent=mode==="photo"?"◉ Take photo":"●"; }
-function playamCameraAction(){if(playamCreateMode==="photo"){const c=document.getElementById("playamARCanvas");if(!c||!c.width){document.getElementById("playamARStatus").textContent="Wait for the camera preview, then take your photo.";return;}c.toBlob(blob=>{if(blob){window.playamPhotoFile=new File([blob],"playam-photo.png",{type:"image/png"});document.getElementById("playamARStatus").textContent="Photo captured. Photo-post publishing is not connected yet.";}},"image/png");return;}togglePlayamARRecording();}
+async function playamCameraAction(){if(playamCreateMode==="photo"){const c=document.getElementById("playamARCanvas");if(!c||!c.width){document.getElementById("playamARStatus").textContent="Wait for the camera preview, then take your photo.";return;}c.toBlob(blob=>{if(blob){window.playamPhotoFile=new File([blob],"playam-photo.png",{type:"image/png"});document.getElementById("playamARStatus").textContent="Photo captured. Photo-post publishing is not connected yet.";}},"image/png");return;}if(playamTimerSeconds){const n=playamTimerSeconds;playamTimerSeconds=0;for(let i=n;i>0;i--){document.getElementById("playamARStatus").textContent="Recording starts in "+i+"…";await new Promise(r=>setTimeout(r,1000));}}togglePlayamARRecording();}
 function drawPlayamARFrame(){
  const video=document.getElementById("playamARVideo"),canvas=document.getElementById("playamARCanvas");if(!video||!canvas||!playamARLandmarker||video.readyState<2){playamARFrame=requestAnimationFrame(drawPlayamARFrame);return;}
  const w=video.videoWidth,h=video.videoHeight;if(!w||!h){playamARFrame=requestAnimationFrame(drawPlayamARFrame);return;}
