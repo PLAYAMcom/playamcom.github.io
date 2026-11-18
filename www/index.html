@@ -1039,7 +1039,7 @@ async function buildPlayamRecordingAudio(){
  if(music?.src){if(!playamMusicElementSource)playamMusicElementSource=context.createMediaElementSource(music);playamMusicGain=context.createGain();playamMusicGain.gain.value=Number(document.getElementById("playamMusicVolume")?.value||35)/100;playamMusicElementSource.connect(playamMusicGain);playamMusicGain.connect(destination);playamMusicGain.connect(context.destination);music.currentTime=0;await context.resume();await music.play();}
  playamAudioContext=context;return destination.stream;
 }
-function togglePlayamARRecording(){
+async function togglePlayamARRecording(){
  const btn=document.getElementById("playamARRecordBtn"),canvas=document.getElementById("playamARCanvas"),status=document.getElementById("playamARStatus");
  if(playamARRecorder?.state==="recording"){playamARRecorder.stop();btn.textContent="● Start recording";return;}
  try{
