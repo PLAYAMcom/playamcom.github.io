@@ -84,6 +84,28 @@ label{display:block;margin-top:13px;font-weight:bold}
  .small-grid{grid-template-columns:1fr 1fr}
 }
 
+.sticker-store-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap}
+.sticker-store-tag{font-size:10px;letter-spacing:1px;color:#e7c9ff;background:#35234c;border:1px solid #68468c;padding:8px 10px;border-radius:30px}
+.sticker-store-note{background:linear-gradient(120deg,#241d3b,#17172b);border:1px solid #4a3b68;border-radius:15px;padding:15px;margin:16px 0}
+.sticker-store-note p{color:var(--muted);font-size:13px;line-height:1.5;margin:7px 0 0}
+.sticker-filter-row{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0}
+.sticker-filter{background:#24243d;color:#c9c9df;border:1px solid #41415d;padding:10px 14px}
+.sticker-filter.active{background:#56327c;border-color:#a16be0;color:#fff}
+.sticker-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.sticker-item{background:linear-gradient(145deg,#211d39,#151528);border:1px solid #403653;border-radius:16px;padding:14px;min-width:0}
+.sticker-art{height:112px;border-radius:13px;background:radial-gradient(circle at 50% 35%,#49335f,#17172a 72%);display:flex;align-items:center;justify-content:center;font-size:54px;margin-bottom:12px}
+.sticker-item h4{margin:0 0 5px}
+.sticker-item p{font-size:12px;line-height:1.4;color:var(--muted);min-height:32px;margin:0 0 10px}
+.sticker-item .sticker-price{font-weight:800;margin-bottom:9px}
+.sticker-item button{width:100%;padding:10px;font-size:12px}
+.sticker-free-label{color:#86e5ae;font-size:11px;font-weight:bold}
+.sticker-premium-label{color:#e1b7ff;font-size:11px;font-weight:bold}
+.sticker-pack-card{display:grid;grid-template-columns:1fr auto;gap:8px 14px;align-items:center;background:linear-gradient(110deg,#38234e,#1a1b35);border:1px solid #76519a;border-radius:17px;padding:17px;margin:20px 0}
+.sticker-pack-card h3{margin:6px 0}
+.sticker-pack-price{font-size:23px;font-weight:900;color:#e4c2ff}
+.sticker-pack-card button{grid-column:1/-1}
+.sticker-checkout-note{margin-top:16px}
+@media(max-width:560px){.sticker-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.sticker-art{height:90px;font-size:44px}.sticker-pack-card{grid-template-columns:1fr}.sticker-pack-price{font-size:21px}}
 .wallet-hero{background:linear-gradient(120deg,#332052,#171b3b 70%,#42204a);border:1px solid #63417f;border-radius:20px;padding:22px;margin:18px 0}
 .wallet-balance{font-size:34px;font-weight:900;margin:8px 0;color:#fff}
 .wallet-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:15px 0}
@@ -142,6 +164,7 @@ label{display:block;margin-top:13px;font-weight:bold}
   <button class="navbtn" onclick="showCreateRoom()">➕ Create Room</button>
   <button class="navbtn" onclick="showJoinRoom()">🔗 Join Room</button>
   <button class="navbtn" id="navWallet" onclick="showWallet()">🪙 Wallet</button>
+  <button class="navbtn" id="navStickerStore" onclick="showStickerStore()">🎭 Sticker Store</button>
   <button class="navbtn" onclick="showSettings()">🔐 Security</button>
   <div class="sidebar-bottom">
    <div class="side-label">ACCOUNT</div>
@@ -225,6 +248,45 @@ label{display:block;margin-top:13px;font-weight:bold}
    <div id="walletTransactions"><div class="wallet-empty">Loading transaction history…</div></div>
    <button class="secondary" style="width:100%;margin-top:12px" onclick="loadWallet()">↻ REFRESH WALLET</button>
    <button class="back" style="width:100%;margin-top:8px" onclick="showHome()">← BACK TO HOME</button>
+  </section>
+
+  <section id="stickerStoreScreen" class="screen-card hidden">
+   <div class="sticker-store-head">
+    <div>
+     <div class="small">PLAYAM MARKETPLACE · SNOOKER</div>
+     <h2>🎭 Snooker Sticker Store</h2>
+     <p class="muted">Keep the free reactions you love, or choose only the premium stickers you want.</p>
+    </div>
+    <span class="sticker-store-tag">INDIVIDUAL CHOICES</span>
+   </div>
+   <div class="sticker-store-note">
+    <strong>How it works</strong>
+    <p>Every player gets four starter stickers for free. Premium stickers are optional and can be selected one by one. Buying a full collection is not required.</p>
+   </div>
+   <div class="sticker-filter-row" role="group" aria-label="Filter stickers">
+    <button class="sticker-filter active" data-filter="all" onclick="filterStickers('all')">All stickers</button>
+    <button class="sticker-filter" data-filter="free" onclick="filterStickers('free')">Free</button>
+    <button class="sticker-filter" data-filter="premium" onclick="filterStickers('premium')">Premium</button>
+   </div>
+   <h3 class="section-title">Free starter stickers</h3>
+   <div id="freeStickerGrid" class="sticker-grid"></div>
+   <h3 class="section-title">Choose individual premium stickers</h3>
+   <p class="muted">Buy only the designs you like. The naira prices below are proposed display prices and are not yet connected to checkout.</p>
+   <div id="premiumStickerGrid" class="sticker-grid"></div>
+   <div class="sticker-pack-card">
+    <div>
+     <span class="small">OPTIONAL BUNDLE</span>
+     <h3>Diamond Snooker Collection</h3>
+     <p class="muted">All four premium stickers together at a proposed bundle price of ₦2,500.</p>
+    </div>
+    <div class="sticker-pack-price">₦2,500</div>
+    <button class="secondary" disabled title="Purchases are not enabled in staging">BUNDLE CHECKOUT COMING LATER</button>
+   </div>
+   <div class="small-card sticker-checkout-note">
+    <strong>Staging preview — purchases are switched off</strong>
+    <p class="muted">The sticker catalogue is a visual preview only. No Gems will be deducted and no payment can be made. PLAYAM will enable purchases only after the separate Gems wallet, ownership records and secure checkout are ready.</p>
+   </div>
+   <button class="back" style="width:100%;margin-top:12px" onclick="showHome()">← BACK TO HOME</button>
   </section>
 
   <section id="findPlayerScreen" class="screen-card hidden">
@@ -397,7 +459,7 @@ let selectedVotePlayerId="",lobbyRefreshTimer=null,lobbyLoading=false;
 let gameRefreshTimer=null,gameTimerInterval=null,currentRoundEndsAt=null,answerSubmitted=false;
 let soloQuestions=[],soloAnswers=[],soloQuestionIndex=0,soloDifficulty="starter",soloLoading=false;
 
-const screenIds=["homeScreen","findPlayerScreen","settingsScreen","soloSetupScreen","soloGameScreen","soloResultsScreen","createScreen","joinScreen","lobbyScreen","gameScreen","resultsScreen"];
+const screenIds=["homeScreen","walletScreen","stickerStoreScreen","findPlayerScreen","settingsScreen","soloSetupScreen","soloGameScreen","soloResultsScreen","createScreen","joinScreen","lobbyScreen","gameScreen","resultsScreen"];
 
 function showMessage(t){document.getElementById("message").innerText=t||""}
 function hideScreens(){screenIds.forEach(id=>document.getElementById(id).classList.add("hidden"))}
@@ -405,6 +467,46 @@ function setNav(id){document.querySelectorAll(".navbtn").forEach(b=>b.classList.
 function showScreen(id,nav=""){hideScreens();document.getElementById(id).classList.remove("hidden");setNav(nav);showMessage("")}
 function showHome(){stopLobbyRefresh();stopGameRefresh();showScreen("homeScreen","navHome")}
 function showFindPlayer(){stopLobbyRefresh();stopGameRefresh();showScreen("findPlayerScreen")}
+function showStickerStore(){stopLobbyRefresh();stopGameRefresh();showScreen("stickerStoreScreen","navStickerStore");renderStickerStore("all")}
+const snookerStickers=[
+ {id:"nice-shot",name:"Nice Shot!",description:"Celebrate a brilliant pot.",emoji:"🎯",type:"free",price:0},
+ {id:"well-played",name:"Well Played",description:"Show good sportsmanship.",emoji:"👏",type:"free",price:0},
+ {id:"good-game",name:"Good Game",description:"Finish a match with respect.",emoji:"🤝",type:"free",price:0},
+ {id:"thanks",name:"Thank You",description:"A quick thank-you to your opponent.",emoji:"💜",type:"free",price:0},
+ {id:"angry-ball",name:"Angry Ball",description:"For those unbelievable missed shots.",emoji:"😤",type:"premium",price:500},
+ {id:"too-cool",name:"Too Cool",description:"A confident reaction after a great shot.",emoji:"😎",type:"premium",price:500},
+ {id:"shocked",name:"Shocked!",description:"When the table surprises everyone.",emoji:"😲",type:"premium",price:500},
+ {id:"champion",name:"Champion",description:"Celebrate a match-winning moment.",emoji:"🏆",type:"premium",price:1000}
+];
+function renderStickerStore(filter="all"){
+ const freeBox=document.getElementById("freeStickerGrid"),premiumBox=document.getElementById("premiumStickerGrid");
+ if(!freeBox||!premiumBox)return;
+ freeBox.innerHTML="";premiumBox.innerHTML="";
+ const visible=snookerStickers.filter(sticker=>filter==="all"||sticker.type===filter);
+ const freeVisible=visible.filter(sticker=>sticker.type==="free");
+ const premiumVisible=visible.filter(sticker=>sticker.type==="premium");
+ const createCard=sticker=>{
+  const card=document.createElement("article");card.className="sticker-item";
+  const art=document.createElement("div");art.className="sticker-art";art.setAttribute("aria-hidden","true");art.textContent=sticker.emoji;
+  const label=document.createElement("div");label.className=sticker.type==="free"?"sticker-free-label":"sticker-premium-label";label.textContent=sticker.type==="free"?"FREE STARTER":"PREMIUM · INDIVIDUAL";
+  const title=document.createElement("h4");title.textContent=sticker.name;
+  const desc=document.createElement("p");desc.textContent=sticker.description;
+  const price=document.createElement("div");price.className="sticker-price";price.textContent=sticker.type==="free"?"Included for every player":"₦"+sticker.price.toLocaleString("en-NG")+" proposed";
+  const button=document.createElement("button");
+  if(sticker.type==="free"){button.className="secondary";button.disabled=true;button.textContent="IN FREE COLLECTION"}
+  else{button.className="secondary";button.disabled=true;button.textContent="PURCHASE COMING LATER";button.title="Staging purchases are disabled until PLAYAM Gems checkout is ready."}
+  card.append(art,label,title,desc,price,button);return card;
+ };
+ freeVisible.forEach(sticker=>freeBox.appendChild(createCard(sticker)));
+ premiumVisible.forEach(sticker=>premiumBox.appendChild(createCard(sticker)));
+ document.querySelectorAll(".sticker-filter").forEach(button=>button.classList.toggle("active",button.dataset.filter===filter));
+ const freeHeading=freeBox.previousElementSibling, premiumHeading=premiumBox.previousElementSibling;
+ if(freeHeading)freeHeading.classList.toggle("hidden",filter==="premium");
+ if(premiumHeading)premiumHeading.classList.toggle("hidden",filter==="free");
+ freeBox.classList.toggle("hidden",filter==="premium");
+ premiumBox.classList.toggle("hidden",filter==="free");
+}
+function filterStickers(filter){renderStickerStore(filter)}
 async function showSettings(){showScreen("settingsScreen");await loadSecurityNotifications()}
 
 async function loadSecurityNotifications(){
