@@ -658,6 +658,13 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .playam-auth-divider:before,.playam-auth-divider:after{content:"";height:1px;background:#51475c;flex:1}
 .playam-auth-legal{margin-top:16px;line-height:1.5}
 @media(max-width:480px){#authScreen{margin:calc(2vh + env(safe-area-inset-top)) 14px 20px;padding:22px 16px}}
+</style><style id="playam-auth-click-fix">
+#authScreen{position:relative!important;z-index:2147483000!important;pointer-events:auto!important;overflow:visible}
+#authScreen .playam-auth-panel,#authScreen form,#authScreen .playam-password-field{position:relative;z-index:1;pointer-events:auto}
+#authScreen #signInButton{display:block!important;position:relative;z-index:5;width:100%;min-height:54px;margin:14px 0 8px;pointer-events:auto!important;touch-action:manipulation;cursor:pointer}
+#authScreen #email,#authScreen #password{position:relative;z-index:2;min-height:50px;pointer-events:auto}
+#authScreen #authMessage{min-height:22px;margin-top:10px;color:#ffd6a1;font-size:13px}
+.playam-auth-field-label{display:block;text-align:left;color:#d6cce4;font-size:12px;font-weight:700;margin:12px 0 2px}
 </style></head>
 <body>
 <div class="staging-banner" role="status">PLAYAM STAGING ONLY — TEST ACCOUNTS ONLY — NOT PRODUCTION</div>
@@ -670,11 +677,10 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
   <div class="playam-auth-tabs"><button id="authLoginTab" class="active" type="button" onclick="setPlayamAuthMode('login')">Log in</button><button id="authSignupTab" type="button" onclick="setPlayamAuthMode('signup')">Sign up</button></div>
   <p id="authIntro" class="playam-auth-intro">Welcome back. Log in to continue.</p>
   <div class="playam-auth-methods"><button id="authEmailMethod" class="active" type="button" onclick="setPlayamAuthMethod('email')">✉ Email</button><button id="authPhoneMethod" type="button" onclick="setPlayamAuthMethod('phone')">☎ Phone</button></div>
-  <form id="playamEmailAuthForm" onsubmit="event.preventDefault();playamAuthMode==='signup'?signUp():signIn()">
-   <input id="email" type="email" placeholder="Email address" autocomplete="email" required>
-   <div class="playam-password-field"><input id="password" type="password" placeholder="Password" autocomplete="current-password" aria-label="Password" required><button id="togglePasswordButton" class="playam-password-toggle" type="button" onclick="togglePlayamPassword()" aria-label="Show password" aria-pressed="false"><span id="passwordEyeIcon" aria-hidden="true">◉</span><span id="passwordEyeLabel">SHOW</span></button></div>
-   <button id="signInButton" type="submit" class="primary playam-auth-primary">LOG IN</button>
-   <button id="signUpButton" type="button" class="secondary playam-auth-primary" onclick="setPlayamAuthMode('signup')">CREATE ACCOUNT</button>
+  <form id="playamEmailAuthForm" novalidate onsubmit="event.preventDefault();handlePlayamAuthSubmit();return false">
+   <label class="playam-auth-field-label" for="email">Email address</label><input id="email" type="email" placeholder="you@example.com" autocomplete="email" inputmode="email" required>
+   <label class="playam-auth-field-label" for="password">Password</label><div class="playam-password-field"><input id="password" type="password" placeholder="Enter your password" autocomplete="current-password" aria-label="Password" required><button id="togglePasswordButton" class="playam-password-toggle" type="button" onclick="togglePlayamPassword()" aria-label="Show password" aria-pressed="false"><span id="passwordEyeIcon" aria-hidden="true">◉</span><span id="passwordEyeLabel">SHOW</span></button></div>
+   <button id="signInButton" type="button" class="primary playam-auth-primary" onclick="handlePlayamAuthSubmit()">LOG IN</button>
    <button class="auth-link" type="button" onclick="showForgotPassword()">FORGOT PASSWORD?</button>
   </form>
   <div id="playamPhoneAuthForm" class="hidden"><label class="playam-auth-field-label" for="phoneNumber">Phone number with country code</label><input id="phoneNumber" type="tel" inputmode="tel" autocomplete="tel" placeholder="+2348012345678"><button id="sendPhoneCodeButton" type="button" class="primary playam-auth-primary" onclick="sendPlayamPhoneCode()">SEND CODE</button><div id="playamPhoneVerifyPanel" class="hidden"><input id="phoneOtpCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6-digit SMS code"><button id="verifyPhoneCodeButton" type="button" class="primary playam-auth-primary" onclick="verifyPlayamPhoneCode()">VERIFY & LOG IN</button></div></div>
@@ -1658,11 +1664,14 @@ async function exitPasswordRecovery(){
 
 /* PLAYAM auth options */
 let playamAuthMode="login",playamAuthMethod="email",playamPhonePending="";
-function setPlayamAuthMode(mode){playamAuthMode=mode==="signup"?"signup":"login";document.getElementById("authLoginTab")?.classList.toggle("active",playamAuthMode==="login");document.getElementById("authSignupTab")?.classList.toggle("active",playamAuthMode==="signup");const b=document.getElementById("signInButton"),u=document.getElementById("signUpButton"),p=document.getElementById("password"),i=document.getElementById("authIntro");if(b)b.textContent=playamAuthMode==="signup"?"CREATE ACCOUNT":"LOG IN";if(u)u.classList.toggle("hidden",playamAuthMode==="signup");if(p)p.autocomplete=playamAuthMode==="signup"?"new-password":"current-password";if(i)i.textContent=playamAuthMode==="signup"?"Create your PLAYAM account.":"Welcome back. Log in to continue.";}
+function setPlayamAuthMode(mode){playamAuthMode=mode==="signup"?"signup":"login";document.getElementById("authLoginTab")?.classList.toggle("active",playamAuthMode==="login");document.getElementById("authSignupTab")?.classList.toggle("active",playamAuthMode==="signup");const b=document.getElementById("signInButton"),p=document.getElementById("password"),i=document.getElementById("authIntro"),forgot=document.querySelector("#playamEmailAuthForm .auth-link");if(b)b.textContent=playamAuthMode==="signup"?"CREATE ACCOUNT":"LOG IN";if(p)p.autocomplete=playamAuthMode==="signup"?"new-password":"current-password";if(forgot)forgot.classList.toggle("hidden",playamAuthMode==="signup");if(i)i.textContent=playamAuthMode==="signup"?"Create your PLAYAM account.":"Welcome back. Log in to continue.";}
 function setPlayamAuthMethod(method){playamAuthMethod=method==="phone"?"phone":"email";document.getElementById("authEmailMethod")?.classList.toggle("active",playamAuthMethod==="email");document.getElementById("authPhoneMethod")?.classList.toggle("active",playamAuthMethod==="phone");document.getElementById("playamEmailAuthForm")?.classList.toggle("hidden",playamAuthMethod!=="email");document.getElementById("playamPhoneAuthForm")?.classList.toggle("hidden",playamAuthMethod!=="phone");}
 async function sendPlayamPhoneCode(){const c=getPlayamAuthClient();if(!c)return;const phone=document.getElementById("phoneNumber")?.value.trim()||"";if(!/^\+[1-9]\d{7,14}$/.test(phone)){showMessage("Enter your full phone number with country code, e.g. +2348012345678.");return;}try{const {error}=await c.auth.signInWithOtp({phone,options:{shouldCreateUser:playamAuthMode==="signup"}});if(error)throw error;playamPhonePending=phone;document.getElementById("playamPhoneVerifyPanel")?.classList.remove("hidden");showMessage("SMS code sent. Check your phone.");}catch(e){showMessage(e.message||"Phone sign-in is unavailable. SMS authentication may need to be enabled.");}}
 async function verifyPlayamPhoneCode(){const c=getPlayamAuthClient();if(!c)return;const token=document.getElementById("phoneOtpCode")?.value.trim()||"";if(!/^\d{6}$/.test(token)){showMessage("Enter the six-digit SMS code.");return;}try{const {data,error}=await c.auth.verifyOtp({phone:playamPhonePending,token,type:"sms"});if(error)throw error;if(data.session)showHome();else showMessage("Verification completed without an active session.");}catch(e){showMessage(e.message||"The code could not be verified.");}}
 async function signInWithPlayamProvider(provider){const c=getPlayamAuthClient();if(!c)return;try{const {error}=await c.auth.signInWithOAuth({provider,options:{redirectTo:location.origin+location.pathname}});if(error)throw error;}catch(e){showMessage(e.message||provider+" sign-in is not configured. Enable it in Supabase Auth providers.");}}
+
+function handlePlayamAuthSubmit(){if(playamAuthBusy)return;return playamAuthMode==="signup"?signUp():signIn();}
+function finishPlayamAuth(){document.getElementById("authScreen")?.classList.add("hidden");document.getElementById("app")?.classList.remove("hidden");showHome();initialisePlayamCoinWallet();}
 
 /* AUTH — keep the existing email/password sign-in and registration */
 let playamAuthBusy=false;
@@ -1678,14 +1687,14 @@ async function signUp(){
  const client=getPlayamAuthClient();if(!client)return;
  const email=document.getElementById("email").value.trim(),password=document.getElementById("password").value;
  if(!email||!password){showMessage("Please enter your email and password.");return}
- const button=document.getElementById("signUpButton");playamAuthBusy=true;if(button){button.disabled=true;button.textContent="CREATING ACCOUNT…"}
+ const button=document.getElementById("signInButton");playamAuthBusy=true;if(button){button.disabled=true;button.textContent="CREATING ACCOUNT…"}
  showMessage("Creating your account...");
  try{
   const {data,error}=await client.auth.signUp({email,password});
   if(error)throw error;
-  if(data.session)showHome();else showMessage("Account created. Please check your email if confirmation is required.");
+  if(data.session)finishPlayamAuth();else showMessage("Account created. Please check your email to confirm it, then log in.");
  }catch(error){showMessage(error?.message||"Account creation failed. Please try again.");}
- finally{playamAuthBusy=false;if(button){button.disabled=false;button.textContent="CREATE NEW ACCOUNT"}}
+ finally{playamAuthBusy=false;if(button){button.disabled=false;button.textContent=playamAuthMode==="signup"?"CREATE ACCOUNT":"LOG IN"}}
 }
 async function signIn(){
  if(playamAuthBusy)return;
@@ -1697,9 +1706,9 @@ async function signIn(){
  try{
   const {data,error}=await client.auth.signInWithPassword({email,password});
   if(error)throw error;
-  if(data.session)showHome();else showMessage("Login succeeded, but no active session was returned.");
+  if(data.session)finishPlayamAuth();else {const {data:sessionData,error:sessionError}=await client.auth.getSession();if(sessionError)throw sessionError;if(sessionData.session)finishPlayamAuth();else showMessage("Login was accepted but no session was saved. Please try again.");}
  }catch(error){showMessage(error?.message||"Login failed. Please check your details and try again.");}
- finally{playamAuthBusy=false;if(button){button.disabled=false;button.textContent="LOG IN TO EXISTING ACCOUNT"}}
+ finally{playamAuthBusy=false;if(button){button.disabled=false;button.textContent=playamAuthMode==="signup"?"CREATE ACCOUNT":"LOG IN"}}
 }
 
 function togglePlayamPassword(){
