@@ -267,12 +267,16 @@ label{display:block;margin-top:13px;font-weight:bold}
     <button class="sticker-filter active" data-filter="all" onclick="filterStickers('all')">All stickers</button>
     <button class="sticker-filter" data-filter="free" onclick="filterStickers('free')">Free</button>
     <button class="sticker-filter" data-filter="premium" onclick="filterStickers('premium')">Premium</button>
+    <button class="sticker-filter" data-filter="owned" onclick="filterStickers('owned')">My Stickers</button>
    </div>
    <h3 class="section-title">Free starter stickers</h3>
    <div id="freeStickerGrid" class="sticker-grid"></div>
    <h3 class="section-title">Choose individual premium stickers</h3>
    <p class="muted">Buy only the designs you like. The naira prices below are proposed display prices and are not yet connected to checkout.</p>
    <div id="premiumStickerGrid" class="sticker-grid"></div>
+   <h3 id="myStickersHeading" class="section-title hidden">My Snooker Stickers</h3>
+   <p id="myStickersIntro" class="muted hidden">Your owned stickers stay in your collection and can be reused without paying again.</p>
+   <div id="myStickerGrid" class="sticker-grid hidden"></div>
    <div class="sticker-pack-card">
     <div>
      <span class="small">OPTIONAL BUNDLE</span>
@@ -478,11 +482,12 @@ const snookerStickers=[
  {id:"shocked",name:"Shocked!",description:"When the table surprises everyone.",emoji:"😲",type:"premium",price:500},
  {id:"champion",name:"Champion",description:"Celebrate a match-winning moment.",emoji:"🏆",type:"premium",price:1000}
 ];
+const ownedSnookerStickerIds=new Set(snookerStickers.filter(sticker=>sticker.type==="free").map(sticker=>sticker.id));
 function renderStickerStore(filter="all"){
- const freeBox=document.getElementById("freeStickerGrid"),premiumBox=document.getElementById("premiumStickerGrid");
- if(!freeBox||!premiumBox)return;
- freeBox.innerHTML="";premiumBox.innerHTML="";
- const visible=snookerStickers.filter(sticker=>filter==="all"||sticker.type===filter);
+ const freeBox=document.getElementById("freeStickerGrid"),premiumBox=document.getElementById("premiumStickerGrid"),myBox=document.getElementById("myStickerGrid");
+ if(!freeBox||!premiumBox||!myBox)return;
+ freeBox.innerHTML="";premiumBox.innerHTML="";myBox.innerHTML="";
+ const visible=snookerStickers.filter(sticker=>filter==="all"||sticker.type===filter||(filter==="owned"&&ownedSnookerStickerIds.has(sticker.id)));
  const freeVisible=visible.filter(sticker=>sticker.type==="free");
  const premiumVisible=visible.filter(sticker=>sticker.type==="premium");
  const createCard=sticker=>{
@@ -493,18 +498,25 @@ function renderStickerStore(filter="all"){
   const desc=document.createElement("p");desc.textContent=sticker.description;
   const price=document.createElement("div");price.className="sticker-price";price.textContent=sticker.type==="free"?"Included for every player":"₦"+sticker.price.toLocaleString("en-NG")+" proposed";
   const button=document.createElement("button");
-  if(sticker.type==="free"){button.className="secondary";button.disabled=true;button.textContent="IN FREE COLLECTION"}
+  if(ownedSnookerStickerIds.has(sticker.id)){button.className="secondary";button.disabled=true;button.textContent="OWNED · READY TO USE"}
   else{button.className="secondary";button.disabled=true;button.textContent="PURCHASE COMING LATER";button.title="Staging purchases are disabled until PLAYAM Gems checkout is ready."}
   card.append(art,label,title,desc,price,button);return card;
  };
  freeVisible.forEach(sticker=>freeBox.appendChild(createCard(sticker)));
  premiumVisible.forEach(sticker=>premiumBox.appendChild(createCard(sticker)));
+ const ownedVisible=visible.filter(sticker=>ownedSnookerStickerIds.has(sticker.id));
+ ownedVisible.forEach(sticker=>myBox.appendChild(createCard(sticker)));
  document.querySelectorAll(".sticker-filter").forEach(button=>button.classList.toggle("active",button.dataset.filter===filter));
  const freeHeading=freeBox.previousElementSibling, premiumHeading=premiumBox.previousElementSibling;
- if(freeHeading)freeHeading.classList.toggle("hidden",filter==="premium");
- if(premiumHeading)premiumHeading.classList.toggle("hidden",filter==="free");
- freeBox.classList.toggle("hidden",filter==="premium");
- premiumBox.classList.toggle("hidden",filter==="free");
+ const myHeading=document.getElementById("myStickersHeading"),myIntro=document.getElementById("myStickersIntro");
+ const showFree=filter==="all"||filter==="free",showPremium=filter==="all"||filter==="premium",showOwned=filter==="owned";
+ if(freeHeading)freeHeading.classList.toggle("hidden",!showFree);
+ if(premiumHeading)premiumHeading.classList.toggle("hidden",!showPremium);
+ myHeading.classList.toggle("hidden",!showOwned);myIntro.classList.toggle("hidden",!showOwned);
+ freeBox.classList.toggle("hidden",!showFree);premiumBox.classList.toggle("hidden",!showPremium);myBox.classList.toggle("hidden",!showOwned);
+ const pack=document.querySelector(".sticker-pack-card"),notice=document.querySelector(".sticker-checkout-note");
+ if(pack)pack.classList.toggle("hidden",filter==="free"||filter==="owned");
+ if(notice)notice.classList.toggle("hidden",filter==="owned");
 }
 function filterStickers(filter){renderStickerStore(filter)}
 async function showSettings(){showScreen("settingsScreen");await loadSecurityNotifications()}
