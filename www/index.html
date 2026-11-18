@@ -438,6 +438,23 @@ textarea{line-height:1.5;resize:vertical}
 
 .snooker-scoreboard{display:grid;grid-template-columns:1fr 1.4fr 1fr;gap:8px;align-items:center;margin:14px 0}.snooker-scoreboard>div{padding:10px;border:1px solid #51416f;border-radius:13px;background:#211d39;text-align:center}.snooker-scoreboard small{display:block;font-size:10px;color:#c7b8e8;font-weight:800}.snooker-scoreboard strong{display:block;font-size:25px;margin-top:4px}.snooker-turn{font-size:11px;font-weight:900;color:#ffd28b}.snooker-table-wrap{width:100%;overflow:hidden;border:5px solid #9b6534;border-radius:13px;background:#155c3c;box-shadow:inset 0 0 0 3px #d8a35b}.snooker-table-wrap canvas{display:block;width:100%;height:auto;touch-action:none}.snooker-controls{margin:14px 0;padding:12px;border-radius:14px;background:#171528}.snooker-controls label{display:flex;justify-content:space-between;font-size:12px;font-weight:800}.snooker-controls input{margin:10px 0}.snooker-buttons{display:grid;grid-template-columns:1fr 1fr;gap:9px}.snooker-buttons button{width:100%}@media(max-width:430px){.snooker-scoreboard{grid-template-columns:1fr 1.2fr 1fr}.snooker-scoreboard strong{font-size:21px}.snooker-turn{font-size:9px}.snooker-buttons{grid-template-columns:1fr}}
 .checkers-board-wrap{width:min(100%,520px);margin:12px auto;border:5px solid #8e633b;border-radius:10px;overflow:hidden;background:#d8b889}.checkers-board-wrap canvas{display:block;width:100%;height:auto;touch-action:manipulation}
+
+/* Stronger, clearer mobile navigation */
+@media(max-width:760px){
+ .mobile-tabbar.playam-tiktok-tabbar{min-height:70px;padding:5px 7px calc(7px + env(safe-area-inset-bottom));background:#090914f5;border-top:1px solid #72539b;box-shadow:0 -8px 28px #0009}
+ .mobile-tabbar .mobile-tab{font-size:11px;font-weight:950;letter-spacing:.015em;color:#d6cbea;text-shadow:0 1px 1px #000;gap:4px}
+ .mobile-tabbar .mobile-tab span{font-size:23px;font-weight:950;line-height:1;text-shadow:0 1px 2px #000}
+ .mobile-tabbar .mobile-tab.active{color:#fff;background:linear-gradient(180deg,#a24fff38,#ed4cbd20);text-shadow:0 0 10px #d18cff}
+ .mobile-tabbar .mobile-tab.create-tab span{font-size:31px;font-weight:950}
+}
+.playam-ar-panel{margin-top:14px;padding:14px;border:1px solid #7955a6;border-radius:18px;background:#100f20}
+.playam-ar-stage{position:relative;width:100%;aspect-ratio:3/4;max-height:58dvh;overflow:hidden;border-radius:15px;background:#05050b}
+.playam-ar-stage video,.playam-ar-stage canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+.playam-ar-effects{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0}
+.playam-ar-effects button{padding:10px 5px;background:#29213d;border:1px solid #554174;color:white;font-size:12px}
+.playam-ar-effects button.active{border-color:#ed8bff;background:#603a80}
+.playam-ar-note{font-size:12px;line-height:1.5;color:#c9bddc}
+
 </style>
 </head>
 <body>
@@ -784,6 +801,23 @@ textarea{line-height:1.5;resize:vertical}
     <h2 id="playamCreateTitle">Create on PLAYAM</h2>
     <p>Share a video today, or get ready for a new way to edit.</p>
     <button class="primary playam-create-upload" type="button" onclick="openPlayamUpload()">＋ Upload a video</button>
+
+    <button class="secondary playam-create-upload" type="button" onclick="openPlayamARCamera()">✦ Try live AR filters</button>
+    <section id="playamARPanel" class="playam-ar-panel hidden" aria-label="Live face filters">
+     <div class="playam-studio-top"><h3 style="margin:0">Live face filters</h3><button class="secondary" type="button" onclick="closePlayamARCamera()">Close</button></div>
+     <p class="playam-ar-note">Real-time face tracking. Effects follow your face as you move. Allow camera access to begin.</p>
+     <div class="playam-ar-stage"><video id="playamARVideo" playsinline muted></video><canvas id="playamARCanvas"></canvas></div>
+     <div class="playam-ar-effects">
+      <button type="button" class="active" data-ar="none" onclick="setPlayamAREffect('none',this)">Natural</button>
+      <button type="button" data-ar="glasses" onclick="setPlayamAREffect('glasses',this)">Glasses</button>
+      <button type="button" data-ar="crown" onclick="setPlayamAREffect('crown',this)">Crown</button>
+      <button type="button" data-ar="ears" onclick="setPlayamAREffect('ears',this)">Bunny ears</button>
+      <button type="button" data-ar="blush" onclick="setPlayamAREffect('blush',this)">Blush</button>
+      <button type="button" data-ar="lip" onclick="setPlayamAREffect('lip',this)">Lip tint</button>
+     </div>
+     <div class="feed-inline-actions"><button class="primary" id="playamARRecordBtn" type="button" onclick="togglePlayamARRecording()">● Start recording</button></div>
+     <p id="playamARStatus" class="playam-ar-note" role="status">Starting camera and face tracking…</p>
+    </section>
     <article class="playam-studio-coming">
      <div class="playam-studio-top"><span class="playam-studio-icon">✦</span><span class="playam-coming-label">COMING SOON</span></div>
      <h3>Advanced Video Editor</h3>
@@ -885,6 +919,65 @@ function hideScreens(){screenIds.forEach(id=>document.getElementById(id).classLi
 function setNav(id){document.querySelectorAll(".navbtn").forEach(b=>b.classList.remove("active"));if(id)document.getElementById(id)?.classList.add("active")}
 function showScreen(id,nav=""){hideScreens();document.getElementById(id).classList.remove("hidden");setNav(nav);showMessage("")}
 function showHome(){stopLobbyRefresh();stopGameRefresh();showScreen("homeScreen","navHome");void loadPlayamGameAd();const main=document.querySelector(".main");if(main)main.onscroll=syncFeedTab;requestAnimationFrame(()=>{if(main){const videos=document.getElementById("feedVideos");main.scrollTop=videos?videos.offsetTop:0;}syncFeedTab();loadPlayamVideos()})}
+
+/* Live AR face effects powered by MediaPipe Face Landmarker */
+let playamARStream=null,playamARLandmarker=null,playamARFrame=0,playamAREffect="none",playamARRecorder=null,playamARChunks=[];
+async function openPlayamARCamera(){
+ const panel=document.getElementById("playamARPanel");panel.classList.remove("hidden");
+ const status=document.getElementById("playamARStatus");
+ try{
+  if(!navigator.mediaDevices?.getUserMedia)throw new Error("Live camera is not supported in this browser.");
+  if(!playamARStream)playamARStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"user",width:{ideal:720},height:{ideal:960}},audio:true});
+  const video=document.getElementById("playamARVideo");video.srcObject=playamARStream;await video.play();
+  status.textContent="Camera ready. Loading face tracking…";
+  if(!playamARLandmarker){
+   const vision=await import("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/+esm");
+   const files=await vision.FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm");
+   playamARLandmarker=await vision.FaceLandmarker.createFromOptions(files,{baseOptions:{modelAssetPath:"https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",delegate:"GPU"},runningMode:"VIDEO",numFaces:1});
+  }
+  status.textContent="Face tracking is live. Move your face to try the effects.";
+  drawPlayamARFrame();
+ }catch(e){status.textContent="Could not start live AR: "+(e?.message||"camera or face-tracking setup failed")+". Check camera permission and internet connection.";}
+}
+function closePlayamARCamera(){
+ if(playamARRecorder?.state==="recording")playamARRecorder.stop();
+ cancelAnimationFrame(playamARFrame);if(playamARStream)playamARStream.getTracks().forEach(t=>t.stop());playamARStream=null;
+ const v=document.getElementById("playamARVideo");if(v)v.srcObject=null;
+ document.getElementById("playamARPanel").classList.add("hidden");
+}
+function setPlayamAREffect(effect,button){playamAREffect=effect;document.querySelectorAll("[data-ar]").forEach(b=>b.classList.toggle("active",b===button));}
+function drawPlayamARFrame(){
+ const video=document.getElementById("playamARVideo"),canvas=document.getElementById("playamARCanvas");if(!video||!canvas||!playamARLandmarker||video.readyState<2){playamARFrame=requestAnimationFrame(drawPlayamARFrame);return;}
+ const w=video.videoWidth,h=video.videoHeight;if(!w||!h){playamARFrame=requestAnimationFrame(drawPlayamARFrame);return;}
+ if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}
+ const ctx=canvas.getContext("2d");ctx.clearRect(0,0,w,h);
+ try{
+  const result=playamARLandmarker.detectForVideo(video,performance.now());const face=result.faceLandmarks?.[0];
+  if(face){const p=i=>({x:face[i].x*w,y:face[i].y*h}),mid=(a,b)=>({x:(a.x+b.x)/2,y:(a.y+b.y)/2}),left=p(33),right=p(263),nose=p(1),forehead=p(10),chin=p(152),mouthL=p(61),mouthR=p(291),lipTop=p(13),lipBottom=p(14),eyeL=p(133),eyeR=p(362),dist=Math.hypot(right.x-left.x,right.y-left.y);
+   ctx.save();ctx.lineCap="round";ctx.lineJoin="round";
+   if(playamAREffect==="glasses"){ctx.strokeStyle="#15121f";ctx.lineWidth=Math.max(5,dist*.035);ctx.fillStyle="#8ddcff55";[left,right].forEach((e,i)=>{const c=i?eyeR:eyeL;ctx.beginPath();ctx.ellipse(c.x,c.y,dist*.17,dist*.105,0,0,Math.PI*2);ctx.fill();ctx.stroke();});ctx.beginPath();ctx.moveTo(eyeL.x+dist*.17,eyeL.y);ctx.lineTo(eyeR.x-dist*.17,eyeR.y);ctx.stroke();}
+   if(playamAREffect==="crown"||playamAREffect==="ears"){const y=forehead.y-dist*.28;ctx.lineWidth=Math.max(5,dist*.025);ctx.strokeStyle=playamAREffect==="crown"?"#ffd76a":"#ff9fcb";ctx.fillStyle=playamAREffect==="crown"?"#ffd76a":"#ff9fcb";ctx.beginPath();if(playamAREffect==="crown"){ctx.moveTo(forehead.x-dist*.3,y+dist*.14);ctx.lineTo(forehead.x-dist*.23,y-dist*.13);ctx.lineTo(forehead.x,y+dist*.02);ctx.lineTo(forehead.x+dist*.22,y-dist*.15);ctx.lineTo(forehead.x+dist*.3,y+dist*.14);ctx.closePath();ctx.fill();}else{ctx.ellipse(forehead.x-dist*.13,y-dist*.05,dist*.07,dist*.23,-.2,0,Math.PI*2);ctx.ellipse(forehead.x+dist*.13,y-dist*.05,dist*.07,dist*.23,.2,0,Math.PI*2);ctx.fill();}}
+   if(playamAREffect==="blush"){ctx.fillStyle="#ff6f9b66";[p(50),p(280)].forEach(c=>{ctx.beginPath();ctx.ellipse(c.x,c.y,dist*.105,dist*.065,0,0,Math.PI*2);ctx.fill();});}
+   if(playamAREffect==="lip"){ctx.fillStyle="#e83275aa";ctx.beginPath();ctx.moveTo(mouthL.x,mouthL.y);ctx.quadraticCurveTo(lipTop.x,lipTop.y-dist*.025,mouthR.x,mouthR.y);ctx.quadraticCurveTo(lipBottom.x,lipBottom.y+dist*.035,mouthL.x,mouthL.y);ctx.fill();}
+   ctx.restore();
+  }
+ }catch(e){document.getElementById("playamARStatus").textContent="Face tracking paused. Please restart the camera.";}
+ playamARFrame=requestAnimationFrame(drawPlayamARFrame);
+}
+function togglePlayamARRecording(){
+ const btn=document.getElementById("playamARRecordBtn"),canvas=document.getElementById("playamARCanvas"),status=document.getElementById("playamARStatus");
+ if(playamARRecorder?.state==="recording"){playamARRecorder.stop();btn.textContent="● Start recording";return;}
+ try{
+  const out=canvas.captureStream(30);playamARStream.getAudioTracks().forEach(t=>out.addTrack(t));
+  const mime=["video/webm;codecs=vp9,opus","video/webm;codecs=vp8,opus","video/webm"].find(t=>MediaRecorder.isTypeSupported(t));
+  if(!mime)throw new Error("This browser does not support recording this live AR effect.");
+  playamARChunks=[];playamARRecorder=new MediaRecorder(out,{mimeType:mime});
+  playamARRecorder.ondataavailable=e=>{if(e.data.size)playamARChunks.push(e.data);};
+  playamARRecorder.onstop=()=>{const blob=new Blob(playamARChunks,{type:mime}),file=new File([blob],"playam-live-filter.webm",{type:"video/webm"});window.playamEditedVideoFile=file;closePlayamARCamera();closePlayamCreate();const input=document.getElementById("playamVideoFile");if(input){const dt=new DataTransfer();dt.items.add(file);input.files=dt.files;previewPlayamEditor({target:input});}status.textContent="Recording ready to review and upload.";};
+  playamARRecorder.start();btn.textContent="■ Stop recording";status.textContent="Recording with live face effect and microphone audio.";
+ }catch(e){status.textContent=e.message||"Recording could not start on this device.";}
+}
+
 function triggerPlayamCreate(){const panel=document.getElementById("playamCreatePanel");if(panel){panel.classList.remove("hidden");panel.setAttribute("aria-hidden","false")}else{const input=document.getElementById("playamVideoFile");if(input)input.click();else showMessage("Video upload is not available on this screen yet.");}}
 function closePlayamCreate(){const panel=document.getElementById("playamCreatePanel");if(panel){panel.classList.add("hidden");panel.setAttribute("aria-hidden","true")}}
 function openPlayamUpload(){closePlayamCreate();const input=document.getElementById("playamVideoFile");if(input)input.click();else showMessage("Video upload is not available on this screen yet.");}
