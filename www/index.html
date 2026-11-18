@@ -437,6 +437,7 @@ textarea{line-height:1.5;resize:vertical}
 }
 
 .snooker-scoreboard{display:grid;grid-template-columns:1fr 1.4fr 1fr;gap:8px;align-items:center;margin:14px 0}.snooker-scoreboard>div{padding:10px;border:1px solid #51416f;border-radius:13px;background:#211d39;text-align:center}.snooker-scoreboard small{display:block;font-size:10px;color:#c7b8e8;font-weight:800}.snooker-scoreboard strong{display:block;font-size:25px;margin-top:4px}.snooker-turn{font-size:11px;font-weight:900;color:#ffd28b}.snooker-table-wrap{width:100%;overflow:hidden;border:5px solid #9b6534;border-radius:13px;background:#155c3c;box-shadow:inset 0 0 0 3px #d8a35b}.snooker-table-wrap canvas{display:block;width:100%;height:auto;touch-action:none}.snooker-controls{margin:14px 0;padding:12px;border-radius:14px;background:#171528}.snooker-controls label{display:flex;justify-content:space-between;font-size:12px;font-weight:800}.snooker-controls input{margin:10px 0}.snooker-buttons{display:grid;grid-template-columns:1fr 1fr;gap:9px}.snooker-buttons button{width:100%}@media(max-width:430px){.snooker-scoreboard{grid-template-columns:1fr 1.2fr 1fr}.snooker-scoreboard strong{font-size:21px}.snooker-turn{font-size:9px}.snooker-buttons{grid-template-columns:1fr}}
+.checkers-board-wrap{width:min(100%,520px);margin:12px auto;border:5px solid #8e633b;border-radius:10px;overflow:hidden;background:#d8b889}.checkers-board-wrap canvas{display:block;width:100%;height:auto;touch-action:manipulation}
 </style>
 </head>
 <body>
@@ -526,9 +527,9 @@ textarea{line-height:1.5;resize:vertical}
      <article class="feed-game-card"><span class="feed-game-icon">🤫</span><div><h3>Secret Confessions</h3><p>Share your response in a room.</p></div><button class="primary" onclick="showCreateRoomForGame('secret-confessions')">PLAY</button></article>
     </div>
      <article class="feed-game-card"><span class="feed-game-icon">🎱</span><div><h3>Snooker</h3><p>Play a local two-player cue-sport challenge.</p></div><button class="primary" type="button" onclick="startSnooker()">PLAY SNOOKER</button></article>
-     <article class="feed-game-card"><span class="feed-game-icon">🎱</span><div><h3>Pool</h3><p>Classic pocket-billiards game.</p></div><button class="secondary" type="button" disabled>COMING SOON</button></article>
+     <article class="feed-game-card"><span class="feed-game-icon">🎱</span><div><h3>Pool</h3><p>Local two-player 8-ball pool.</p></div><button class="primary" type="button" onclick="startPool()">PLAY POOL</button></article>
      <article class="feed-game-card"><span class="feed-game-icon">⚽</span><div><h3>Football</h3><p>Compete in football challenges.</p></div><button class="secondary" type="button" disabled>COMING SOON</button></article>
-     <article class="feed-game-card"><span class="feed-game-icon">♟️</span><div><h3>Checkers</h3><p>Classic strategy board game.</p></div><button class="secondary" type="button" disabled>COMING SOON</button></article>
+     <article class="feed-game-card"><span class="feed-game-icon">♟️</span><div><h3>Checkers</h3><p>Local two-player draughts.</p></div><button class="primary" type="button" onclick="startCheckers()">PLAY CHECKERS</button></article>
      <article class="feed-game-card"><span class="feed-game-icon">🟤</span><div><h3>Ayo</h3><p>Traditional strategy and counting game.</p></div><button class="secondary" type="button" disabled>COMING SOON</button></article>
      <article class="feed-game-card"><span class="feed-game-icon">🎲</span><div><h3>Ludo</h3><p>Race your tokens to the finish.</p></div><button class="secondary" type="button" disabled>COMING SOON</button></article>
      <article class="feed-game-card"><span class="feed-game-icon">🎯</span><div><h3>CODs</h3><p>PLAYAM's distinct combat game experience.</p></div><button class="secondary" type="button" disabled>COMING SOON</button></article>
@@ -621,6 +622,22 @@ textarea{line-height:1.5;resize:vertical}
    <div class="snooker-buttons"><button class="primary" type="button" onclick="resetSnooker()">NEW FRAME</button><button class="back" type="button" onclick="showHome()">BACK TO PLAYAM</button></div>
   </section>
 
+  <section id="poolScreen" class="screen-card hidden">
+   <div class="game-status">🎱 PLAYAM 8-BALL POOL</div>
+   <p class="muted">Local two-player pool · Drag from the white cue ball to aim, then release.</p>
+   <div class="snooker-scoreboard"><div><small>PLAYER 1</small><strong id="poolScore1">0</strong></div><div class="snooker-turn" id="poolTurn">PLAYER 1'S TURN</div><div><small>PLAYER 2</small><strong id="poolScore2">0</strong></div></div>
+   <div class="snooker-table-wrap"><canvas id="poolCanvas" width="900" height="480" aria-label="Pool table. Drag from the cue ball and release to shoot."></canvas></div>
+   <div class="snooker-controls"><label for="poolPower">SHOT POWER <strong id="poolPowerValue">55%</strong></label><input id="poolPower" type="range" min="10" max="100" value="55"><p id="poolMessage" class="small" aria-live="polite">Player 1 breaks. Pocket your group, then the 8-ball.</p></div>
+   <div class="snooker-buttons"><button class="primary" type="button" onclick="resetPool()">NEW GAME</button><button class="back" type="button" onclick="showHome()">BACK TO PLAYAM</button></div>
+  </section>
+  <section id="checkersScreen" class="screen-card hidden">
+   <div class="game-status">♟️ PLAYAM CHECKERS</div>
+   <p class="muted">Local two-player checkers · Select one of your pieces, then select a highlighted square.</p>
+   <div class="snooker-scoreboard"><div><small>RED PIECES</small><strong id="checkersRed">12</strong></div><div class="snooker-turn" id="checkersTurn">RED'S TURN</div><div><small>BLACK PIECES</small><strong id="checkersBlack">12</strong></div></div>
+   <div class="checkers-board-wrap"><canvas id="checkersCanvas" width="640" height="640" aria-label="Interactive checkers board"></canvas></div>
+   <p id="checkersMessage" class="small" aria-live="polite">Red moves first.</p>
+   <div class="snooker-buttons"><button class="primary" type="button" onclick="resetCheckers()">NEW GAME</button><button class="back" type="button" onclick="showHome()">BACK TO PLAYAM</button></div>
+  </section>
   <section id="settingsScreen" class="screen-card hidden">
    <h2>⚙️ Settings</h2>
    <p class="muted">Manage your PLAYAM account and purchased coins.</p>
@@ -1659,6 +1676,52 @@ function snookerLoop(){
  if(snookerCueBall.potted){snookerCueBall.potted=false;snookerCueBall.x=205;snookerCueBall.y=240;snookerCueBall.vx=0;snookerCueBall.vy=0}
  updateSnookerScore();if(!snookerBalls.some(b=>b.type==="red"&&!b.potted)){setSnookerMessage("All reds are cleared. Start a new frame to play again.");return}
  if(!snookerShotPotted)setSnookerMessage("No ball potted. Player "+snookerPlayer+" to play.");
+}
+
+
+/* PLAYAM Pool: simplified local 8-ball */
+let poolBalls=[],poolTurn=1,poolScores=[0,0],poolAim=null,poolMoving=false,poolShot=false,poolPocketed=false,poolCue=null,poolLastShot=0,poolGroups=[null,null],poolWinner=0;
+const POOL_POCKETS=[[22,22],[450,18],[878,22],[22,458],[450,462],[878,458]];
+function startPool(){showScreen("poolScreen");resetPool()}
+function resetPool(){
+ poolBalls=[];poolTurn=1;poolScores=[0,0];poolAim=null;poolMoving=false;poolShot=false;poolPocketed=false;poolGroups=[null,null];poolWinner=0;
+ poolCue={x:210,y:240,vx:0,vy:0,r:10,color:"#fff",type:"cue",num:0};poolBalls.push(poolCue);
+ const rack=[];let n=1;for(let row=0;row<5;row++)for(let col=0;col<=row;col++){const x=590+row*18,y=240+(col-row/2)*20;let num=n++;rack.push({x,y,vx:0,vy:0,r:10,num,type:num===8?"eight":num<=7?"solid":"stripe",color:num===8?"#171717":num===1?"#e9cf27":num===2?"#2369ca":num===3?"#d93434":num===4?"#6e3a9d":num===5?"#ed8c22":num===6?"#27964a":num===7?"#8d2020":num===9?"#e9cf27":num===10?"#2369ca":num===11?"#d93434":num===12?"#6e3a9d":num===13?"#ed8c22":num===14?"#27964a":"#8d2020"})}poolBalls.push(...rack);updatePoolScore();setPoolMessage("Player 1 breaks. Pocket a ball to claim solids or stripes.");drawPool();
+}
+function setPoolMessage(t){const e=document.getElementById("poolMessage");if(e)e.textContent=t}
+function updatePoolScore(){document.getElementById("poolScore1").textContent=poolScores[0];document.getElementById("poolScore2").textContent=poolScores[1];document.getElementById("poolTurn").textContent=poolWinner?"PLAYER "+poolWinner+" WINS":"PLAYER "+poolTurn+"'S TURN"}
+function poolPoint(e){const c=document.getElementById("poolCanvas"),r=c.getBoundingClientRect();return{x:(e.clientX-r.left)*900/r.width,y:(e.clientY-r.top)*480/r.height}}
+function initPoolInput(){const c=document.getElementById("poolCanvas");if(c.dataset.bound)return;c.dataset.bound="1";
+ c.addEventListener("pointerdown",e=>{if(poolShot||poolWinner)return;const p=poolPoint(e);if(Math.hypot(p.x-poolCue.x,p.y-poolCue.y)<48){poolAim=p;c.setPointerCapture(e.pointerId);drawPool()}});
+ c.addEventListener("pointermove",e=>{if(poolAim){poolAim=poolPoint(e);drawPool()}});
+ c.addEventListener("pointerup",e=>{if(!poolAim)return;const p=poolPoint(e),dx=poolCue.x-p.x,dy=poolCue.y-p.y,len=Math.hypot(dx,dy);poolAim=null;if(len<8){drawPool();return}const power=Number(document.getElementById("poolPower").value)/100,speed=Math.min(18,len*.085)*(.35+power*.9);poolCue.vx=dx/len*speed;poolCue.vy=dy/len*speed;poolShot=true;poolPocketed=false;poolLastShot=Date.now();setPoolMessage("Shot in motion…");if(!poolMoving){poolMoving=true;requestAnimationFrame(poolLoop)}});
+ document.getElementById("poolPower").addEventListener("input",e=>document.getElementById("poolPowerValue").textContent=e.target.value+"%");
+}
+function drawPool(){const c=document.getElementById("poolCanvas");if(!c)return;initPoolInput();const g=c.getContext("2d");g.clearRect(0,0,900,480);g.fillStyle="#17623f";g.fillRect(0,0,900,480);g.strokeStyle="#d7a45e";g.lineWidth=5;g.strokeRect(12,12,876,456);
+ for(const [x,y] of POOL_POCKETS){g.beginPath();g.fillStyle="#080909";g.arc(x,y,18,0,Math.PI*2);g.fill()}
+ for(const b of poolBalls){if(b.potted)continue;g.beginPath();g.fillStyle=b.color;g.arc(b.x,b.y,b.r,0,Math.PI*2);g.fill();if(b.type==="stripe"){g.beginPath();g.fillStyle="#fff";g.ellipse(b.x,b.y,b.r*.92,b.r*.4,0,0,Math.PI*2);g.fill()}g.beginPath();g.fillStyle="#fff";g.arc(b.x-b.r*.3,b.y-b.r*.35,2.5,0,Math.PI*2);g.fill()}
+ if(poolAim){const dx=poolCue.x-poolAim.x,dy=poolCue.y-poolAim.y,len=Math.hypot(dx,dy)||1;g.setLineDash([9,7]);g.strokeStyle="#fff";g.lineWidth=2;g.beginPath();g.moveTo(poolCue.x,poolCue.y);g.lineTo(poolCue.x+dx/len*170,poolCue.y+dy/len*170);g.stroke();g.setLineDash([])}
+}
+function poolLoop(){const live=poolBalls.filter(b=>!b.potted);let moving=false;
+ for(const b of live){b.x+=b.vx;b.y+=b.vy;b.vx*=.986;b.vy*=.986;if(Math.hypot(b.vx,b.vy)>.12)moving=true;else b.vx=b.vy=0;
+ if(b.x<b.r+14){b.x=b.r+14;b.vx=Math.abs(b.vx)*.82}if(b.x>886-b.r){b.x=886-b.r;b.vx=-Math.abs(b.vx)*.82}if(b.y<b.r+14){b.y=b.r+14;b.vy=Math.abs(b.vy)*.82}if(b.y>466-b.r){b.y=466-b.r;b.vy=-Math.abs(b.vy)*.82}
+ for(const [px,py] of POOL_POCKETS){if(Math.hypot(b.x-px,b.y-py)<23){b.potted=true;b.vx=b.vy=0;poolPocketed=true;if(b.type==="cue"){setPoolMessage("Foul: cue ball scratched. Turn passes.");}else if(b.type==="eight"){const own=poolGroups[poolTurn-1],remaining=poolBalls.some(q=>!q.potted&&q.type===own);poolWinner=(!own||remaining)?(poolTurn===1?2:1):poolTurn;setPoolMessage(poolWinner===poolTurn?"8-ball sunk. You win!":"8-ball sunk too early. Opponent wins.");}else{if(!poolGroups[poolTurn-1]){poolGroups[poolTurn-1]=b.type;poolGroups[1-poolTurn]=b.type==="solid"?"stripe":"solid"}if(b.type===poolGroups[poolTurn-1])poolScores[poolTurn-1]++;setPoolMessage("Pocketed ball "+b.num+".");}break}}
+ }
+ for(let i=0;i<live.length;i++)for(let j=i+1;j<live.length;j++){const a=live[i],b=live[j];if(a.potted||b.potted)continue;const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy),min=a.r+b.r;if(d>0&&d<min){const nx=dx/d,ny=dy/d,ov=(min-d)/2;a.x-=nx*ov;a.y-=ny*ov;b.x+=nx*ov;b.y+=ny*ov;const rel=(a.vx-b.vx)*nx+(a.vy-b.vy)*ny;if(rel>0){a.vx-=rel*nx*.94;a.vy-=rel*ny*.94;b.vx+=rel*nx*.94;b.vy+=rel*ny*.94}}}
+ drawPool();if(moving&&Date.now()-poolLastShot<30000){requestAnimationFrame(poolLoop);return}poolMoving=false;poolShot=false;if(poolCue.potted){poolCue.potted=false;poolCue.x=210;poolCue.y=240;poolCue.vx=poolCue.vy=0;poolTurn=poolTurn===1?2:1}else if(!poolPocketed)poolTurn=poolTurn===1?2:1;updatePoolScore();if(!poolWinner&&!poolPocketed)setPoolMessage("No ball pocketed. Player "+poolTurn+" to play.");
+}
+/* PLAYAM Checkers: 8x8 local two-player draughts */
+let checkersBoard=[],checkersTurn=1,checkersSelected=null,checkersMoves=[],checkersChain=false,checkersGameOver=false;
+function startCheckers(){showScreen("checkersScreen");resetCheckers()}
+function resetCheckers(){checkersBoard=Array.from({length:8},()=>Array(8).fill(null));for(let y=0;y<3;y++)for(let x=0;x<8;x++)if((x+y)%2===1)checkersBoard[y][x]={side:2,king:false};for(let y=5;y<8;y++)for(let x=0;x<8;x++)if((x+y)%2===1)checkersBoard[y][x]={side:1,king:false};checkersTurn=1;checkersSelected=null;checkersMoves=[];checkersChain=false;checkersGameOver=false;drawCheckers();setCheckersMessage("Red moves first.")}
+function setCheckersMessage(t){document.getElementById("checkersMessage").textContent=t}
+function checkersLegal(x,y,side){const p=checkersBoard[y]?.[x];if(!p||p.side!==side)return[];const dirs=p.king?[-1,1]:side===1?[-1]:[1],moves=[];for(const dy of dirs)for(const dx of [-1,1]){const nx=x+dx,ny=y+dy;if(ny<0||ny>7||nx<0||nx>7)continue;if(!checkersBoard[ny][nx])moves.push({x:nx,y:ny,capture:null});else if(checkersBoard[ny][nx].side!==side){const jx=nx+dx,jy=ny+dy;if(jy>=0&&jy<8&&jx>=0&&jx<8&&!checkersBoard[jy][jx])moves.push({x:jx,y:jy,capture:{x:nx,y:ny}})}}return moves}
+function checkersAllMoves(side){const all=[];for(let y=0;y<8;y++)for(let x=0;x<8;x++)if(checkersBoard[y][x]?.side===side)for(const m of checkersLegal(x,y,side))all.push({from:{x,y},...m});return all}
+function drawCheckers(){const c=document.getElementById("checkersCanvas");if(!c)return;const g=c.getContext("2d"),cell=80;g.clearRect(0,0,640,640);for(let y=0;y<8;y++)for(let x=0;x<8;x++){g.fillStyle=(x+y)%2?"#785337":"#ead7b7";g.fillRect(x*cell,y*cell,cell,cell);if(checkersSelected?.x===x&&checkersSelected?.y===y){g.fillStyle="rgba(255,220,80,.45)";g.fillRect(x*cell,y*cell,cell,cell)}if(checkersMoves.some(m=>m.x===x&&m.y===y)){g.beginPath();g.fillStyle="#9be36d";g.arc(x*cell+40,y*cell+40,12,0,Math.PI*2);g.fill()}const p=checkersBoard[y][x];if(p){g.beginPath();g.fillStyle=p.side===1?"#c93636":"#20202a";g.arc(x*cell+40,y*cell+40,29,0,Math.PI*2);g.fill();g.strokeStyle="#e9c98b";g.lineWidth=4;g.stroke();if(p.king){g.fillStyle="#ffe18a";g.font="bold 27px sans-serif";g.textAlign="center";g.textBaseline="middle";g.fillText("K",x*cell+40,y*cell+40)}}}
+ const red=checkersBoard.flat().filter(p=>p?.side===1).length,black=checkersBoard.flat().filter(p=>p?.side===2).length;document.getElementById("checkersRed").textContent=red;document.getElementById("checkersBlack").textContent=black;document.getElementById("checkersTurn").textContent=checkersGameOver?"GAME OVER":(checkersTurn===1?"RED":"BLACK")+"'S TURN";
+}
+function initCheckers(){const c=document.getElementById("checkersCanvas");if(c.dataset.bound)return;c.dataset.bound="1";c.addEventListener("click",e=>{if(checkersGameOver)return;const r=c.getBoundingClientRect(),x=Math.floor((e.clientX-r.left)*8/r.width),y=Math.floor((e.clientY-r.top)*8/r.height);if(x<0||x>7||y<0||y>7)return;const chosen=checkersMoves.find(m=>m.x===x&&m.y===y);if(checkersSelected&&chosen){const piece=checkersBoard[checkersSelected.y][checkersSelected.x];checkersBoard[y][x]=piece;checkersBoard[checkersSelected.y][checkersSelected.x]=null;if(chosen.capture)checkersBoard[chosen.capture.y][chosen.capture.x]=null;if((piece.side===1&&y===0)||(piece.side===2&&y===7))piece.king=true;checkersSelected=null;checkersMoves=[];if(chosen.capture){const more=checkersLegal(x,y,checkersTurn).filter(m=>m.capture);if(more.length){checkersSelected={x,y};checkersMoves=more;drawCheckers();setCheckersMessage("Continue the capture with the same piece.");return}}checkersTurn=checkersTurn===1?2:1;const next=checkersAllMoves(checkersTurn);if(!next.length){checkersGameOver=true;setCheckersMessage((checkersTurn===1?"Black":"Red")+" wins!");}else{const captures=next.filter(m=>m.capture);if(captures.length)setCheckersMessage("Capture is available; choose a capturing move.");else setCheckersMessage((checkersTurn===1?"Red":"Black")+" to move.");}drawCheckers();return}
+ const p=checkersBoard[y][x];if(p?.side===checkersTurn){checkersSelected={x,y};const all=checkersAllMoves(checkersTurn),mustCapture=all.some(m=>m.capture);checkersMoves=checkersLegal(x,y,checkersTurn).filter(m=>!mustCapture||m.capture);drawCheckers();}else if(!checkersSelected){setCheckersMessage("Select one of your pieces.");}});
 }
 
 </script>
