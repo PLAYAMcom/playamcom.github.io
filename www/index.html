@@ -803,7 +803,7 @@ async function loadPlayamVideos(){
   if(viewerError)throw viewerError;
   for(const row of rows){
    const {data:signed,error:sErr}=await supabaseClient.storage.from("playam-videos-staging").createSignedUrl(row.storage_path,3600);if(requestId!==playamVideoLoadSequence)return;if(sErr||!signed?.signedUrl)continue;
-   const card=document.createElement("article");card.className="shorts-card";const video=document.createElement("video");video.controls=true;video.playsInline=true;video.preload="auto";video.autoplay=true;video.muted=true;video.loop=true;video.setAttribute("playsinline","");video.setAttribute("webkit-playsinline","");video.setAttribute("muted","");video.setAttribute("autoplay","");video.src=signed.signedUrl;video.addEventListener("error",()=>{const code=video.error?.code;const reason=code===2?"A network problem interrupted video loading. Refresh and try again.":(code===3||code===4)?"This video codec is not supported by this device. Re-export it as MP4 with H.264 video and AAC audio.":"A video could not be loaded. Refresh and try again.";setPlayamVideoStatus(reason,true)});
+   const card=document.createElement("article");card.className="shorts-card";const video=document.createElement("video");video.controls=true;video.playsInline=true;video.preload="auto";video.autoplay=true;video.muted=true;video.loop=true;video.setAttribute("playsinline","");video.setAttribute("webkit-playsinline","");video.setAttribute("muted","");video.setAttribute("autoplay","");video.src=signed.signedUrl;video.addEventListener("click",()=>{if(video.paused){video.dataset.userPaused="false";video.play().catch(()=>syncPlaybackLabel())}else{video.dataset.userPaused="true";video.pause()}});video.addEventListener("error",()=>{const code=video.error?.code;const reason=code===2?"A network problem interrupted video loading. Refresh and try again.":(code===3||code===4)?"This video codec is not supported by this device. Re-export it as MP4 with H.264 video and AAC audio.":"A video could not be loaded. Refresh and try again.";setPlayamVideoStatus(reason,true)});
    const copy=document.createElement("div");copy.className="shorts-card-copy";const creator=document.createElement("div");creator.className="shorts-card-creator";creator.textContent=row.creator_name||"PLAYAM Player";const captionEl=document.createElement("p");captionEl.className="shorts-card-caption";captionEl.textContent=row.caption||"";copy.append(creator,captionEl);
    const actions=document.createElement("div");actions.className="shorts-engagement";
    const playbackButton=document.createElement("button");playbackButton.type="button";playbackButton.className="shorts-action shorts-playback-action";playbackButton.textContent="⏸ Pause video";
@@ -813,6 +813,7 @@ async function loadPlayamVideos(){
    const playObserver=new IntersectionObserver(entries=>{for(const entry of entries){if(entry.isIntersecting&&entry.intersectionRatio>=0.6){if(video.dataset.userPaused!=="true")video.play().catch(()=>syncPlaybackLabel())}else{video.pause()}}},{threshold:[0,0.6,1]});playObserver.observe(video);
    const likeButton=document.createElement("button");likeButton.type="button";likeButton.className="shorts-action";likeButton.textContent="♡ Like";
    const commentButton=document.createElement("button");commentButton.type="button";commentButton.className="shorts-action";commentButton.textContent="💬 Comments";
+   const shareButton=document.createElement("button");shareButton.type="button";shareButton.className="shorts-action";shareButton.textContent="↗ Share";shareButton.addEventListener("click",async()=>{const shareData={title:"PLAYAM Shorts",text:row.caption||"Watch this video on PLAYAM",url:window.location.href};try{if(navigator.share)await navigator.share(shareData);else if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(shareData.url);setPlayamVideoStatus("PLAYAM link copied. Share it with your friends.")}else setPlayamVideoStatus("Sharing is not available in this browser.",true)}catch(e){if(e?.name!=="AbortError")setPlayamVideoStatus("Could not share this video.",true)}});
    const commentPanel=document.createElement("div");commentPanel.className="shorts-comments hidden";
    let likedByViewer=false,likeCount=0;
    try{
@@ -861,7 +862,7 @@ async function loadPlayamVideos(){
     commentPanel.classList.toggle("hidden");
     if(!commentPanel.dataset.loaded||commentPanel.dataset.loaded!=="true"){await loadPlayamVideoComments(row.id,commentPanel);commentPanel.dataset.loaded="true"}
    });
-   actions.append(playbackButton,likeButton,commentButton);copy.append(actions,commentPanel);card.append(video,copy);list.append(card);
+   actions.append(playbackButton,likeButton,commentButton,shareButton);copy.append(actions,commentPanel);card.append(video,copy);list.append(card);
 
   }
   if(!list.children.length)list.innerHTML='<div class="shorts-empty">Videos are listed, but none could be prepared for playback. Please refresh and try again.</div>';
@@ -1340,3 +1341,31 @@ checkLogin();
 </script>
 </body>
 </html>
+
+/* PLAYAM Shorts: swipe-first full-screen mobile presentation */
+@media(max-width:760px){
+ #homeScreen.playam-vertical-feed .feed-video-page{position:relative;height:calc(100dvh - 102px - env(safe-area-inset-bottom));min-height:calc(100dvh - 102px - env(safe-area-inset-bottom));padding:0;overflow:hidden;display:block;background:#05050b}
+ #homeScreen.playam-vertical-feed .feed-video-page>.feed-page-head{position:absolute;z-index:8;top:12px;left:14px;right:14px;width:auto;pointer-events:none;text-shadow:0 1px 8px #000}
+ #homeScreen.playam-vertical-feed .feed-video-page>.feed-page-head>*{pointer-events:auto}
+ #homeScreen.playam-vertical-feed .feed-video-page .feed-page-head h2{font-size:20px;margin-top:3px}
+ #homeScreen.playam-vertical-feed .feed-video-page .feed-page-count{color:#fff}
+ #homeScreen.playam-vertical-feed .feed-video-page .shorts-toolbar{position:absolute;z-index:9;top:62px;left:14px;right:14px;display:flex;gap:7px;margin:0}
+ #homeScreen.playam-vertical-feed .feed-video-page .shorts-toolbar input{min-width:0;min-height:40px;margin:0;padding:9px 11px;background:#11101dcc;border:1px solid #ffffff55;border-radius:12px}
+ #homeScreen.playam-vertical-feed .feed-video-page .shorts-upload-button{width:auto;min-height:40px;padding:8px 12px;font-size:10px;white-space:nowrap}
+ #homeScreen.playam-vertical-feed .feed-video-page .shorts-status{position:absolute;z-index:8;top:108px;left:14px;right:14px;min-height:0;margin:0;color:#fff;font-size:10px;text-shadow:0 1px 5px #000;pointer-events:none}
+ #homeScreen.playam-vertical-feed .feed-video-page .shorts-list{position:absolute;inset:0;display:block;height:100%;margin:0;padding:0;overflow-y:auto;overflow-x:hidden;scroll-snap-type:y mandatory;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+ #homeScreen.playam-vertical-feed .feed-video-page .shorts-list::-webkit-scrollbar{display:none}
+ #homeScreen.playam-vertical-feed .feed-video-page .shorts-card{position:relative;display:block;width:100%;height:100%;min-height:100%;max-width:none;margin:0;padding:0;border:0;border-radius:0;background:#05050b;overflow:hidden;scroll-snap-align:start;scroll-snap-stop:always}
+ #homeScreen.playam-vertical-feed .feed-video-page .shorts-card video{position:absolute;inset:0;display:block;width:100%;height:100%;min-height:100%;max-height:none;aspect-ratio:auto;object-fit:cover;background:#05050b}
+ #homeScreen.playam-vertical-feed .feed-video-page .shorts-card-copy{position:absolute;z-index:5;left:0;right:82px;bottom:12px;padding:46px 12px 14px;background:linear-gradient(0deg,rgba(0,0,0,.86),rgba(0,0,0,.38) 68%,transparent);text-shadow:0 1px 5px #000}
+ #homeScreen.playam-vertical-feed .feed-video-page .shorts-card-creator{font-size:14px;color:#fff;margin-bottom:7px}
+ #homeScreen.playam-vertical-feed .feed-video-page .shorts-card-caption{font-size:13px;line-height:1.4;color:#fff}
+ #homeScreen.playam-vertical-feed .feed-video-page .shorts-engagement{position:absolute;z-index:7;right:9px;bottom:24px;display:flex;flex-direction:column;align-items:center;gap:10px;width:68px;margin:0}
+ #homeScreen.playam-vertical-feed .feed-video-page .shorts-action{display:flex;align-items:center;justify-content:center;min-height:42px;width:66px;padding:7px 5px;border:1px solid #ffffff44;border-radius:13px;background:#171426c9;color:#fff;font-size:10px;line-height:1.2;text-align:center;white-space:normal;overflow-wrap:anywhere}
+ #homeScreen.playam-vertical-feed .feed-video-page .shorts-action.liked{background:#7a2459e8;border-color:#ff9bd3}
+ #homeScreen.playam-vertical-feed .feed-video-page .shorts-delete-action{background:#9a2346ed!important;border-color:#ff9ab8!important}
+ #homeScreen.playam-vertical-feed .feed-video-page .shorts-owner-label{position:absolute;left:12px;top:10px;z-index:8;background:#8d275ee8;color:#fff}
+ #homeScreen.playam-vertical-feed .feed-video-page .shorts-comments{position:absolute;z-index:10;left:10px;right:10px;bottom:10px;max-height:48%;overflow:auto;padding:14px;border:1px solid #ffffff44;border-radius:18px;background:#11101af2;text-shadow:none}
+ #homeScreen.playam-vertical-feed .feed-video-page .shorts-comments input{background:#252238}
+ #homeScreen.playam-vertical-feed .feed-video-page .feed-feature-note{display:none}
+}
