@@ -770,8 +770,8 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
   </div>
  </aside>
  <nav class="mobile-tabbar playam-tiktok-tabbar" aria-label="PLAYAM main navigation">
-  <button class="mobile-tab active" type="button" onclick="goHomeSection('feedVideos')" aria-label="Home feed"><span>⌂</span>Home</button>
-  <button class="mobile-tab" type="button" onclick="goHomeSection('feedGames')"><span>🎮</span>Games</button>
+  <button class="mobile-tab" type="button" onclick="goHomeSection('feedVideos')" aria-label="Home feed"><span>⌂</span>Home</button>
+  <button class="mobile-tab active" type="button" onclick="goHomeSection('feedGames')"><span>🎮</span>Games</button>
   <button class="mobile-tab create-tab" type="button" onclick="triggerPlayamCreate()" aria-label="Create or upload video"><span>＋</span></button>
   <button class="mobile-tab" type="button" onclick="goHomeSection('feedMessages')"><span>✉</span>Inbox</button>
   <button class="mobile-tab" type="button" onclick="goHomeSection('feedProfile')"><span>👤</span>Profile</button>
@@ -793,7 +793,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
      <div class="feed-kicker">YOUR WORLD. YOUR PLAY.</div>
      <h2>Welcome to PLAYAM!</h2>
      <p>Play games, meet players, watch creators and discover new ways to connect.</p>
-     <div class="feed-cta-row"><button class="primary" onclick="showSoloSetup()">PLAY NOW</button><button class="secondary" onclick="showFindPlayer()">FIND PLAYERS</button></div>
+     <div class="feed-cta-row"><button class="primary" onclick="goHomeSection('feedGames')">EXPLORE GAMES</button><button class="secondary" onclick="showFindPlayer()">FIND PLAYERS</button></div>
      <button class="secondary" style="width:100%;margin-top:10px" onclick="openPlayamGameInvites()">🎮 GAME INVITATIONS <span id="playamGameInviteBadge"></span></button><div id="playamGameInvitesPanel" class="playam-live-panel hidden"><h3>Game invitations</h3><div id="playamGameInvitesList"></div><p id="playamGameInvitesStatus" role="status"></p></div>
     </div>
     <div class="feed-bottom-hint"><span>SWIPE UP TO EXPLORE</span><span class="feed-chevron">⌄</span></div>
@@ -1263,7 +1263,7 @@ function stopInactiveGameLoops(nextScreen){
 function hideScreens(){screenIds.forEach(id=>document.getElementById(id)?.classList.add("hidden"))}
 function setNav(id){document.querySelectorAll(".navbtn").forEach(b=>b.classList.remove("active"));if(id)document.getElementById(id)?.classList.add("active")}
 function showScreen(id,nav=""){stopInactiveGameLoops(id);hideScreens();const target=document.getElementById(id);if(!target){console.error("Unknown PLAYAM screen:",id);return}target.classList.remove("hidden");setNav(nav);showMessage("")}
-function showHome(){stopLobbyRefresh();stopGameRefresh();showScreen("homeScreen","navHome");void loadPlayamGameAd();const main=document.querySelector(".main");if(main)main.onscroll=syncFeedTab;requestAnimationFrame(()=>{if(main){const videos=document.getElementById("feedVideos");main.scrollTop=videos?videos.offsetTop:0;}syncFeedTab();loadPlayamVideos()})}
+function showHome(){stopLobbyRefresh();stopGameRefresh();showScreen("homeScreen","navHome");void loadPlayamGameAd();const main=document.querySelector(".main");if(main)main.onscroll=syncFeedTab;requestAnimationFrame(()=>{if(main){const videos=document.getElementById("feedVideos");const games=document.getElementById("feedGames");main.scrollTop=games?games.offsetTop:0;}syncFeedTab();loadPlayamVideos()})}
 
 /* Live AR face effects powered by MediaPipe Face Landmarker */
 let playamARStream=null,playamARLandmarker=null,playamARFrame=0,playamAREffect="none",playamARRecorder=null,playamARChunks=[],playamMusicUrl=null,playamAudioContext=null,playamMusicGain=null,playamMusicElementSource=null,playamCameraFilter="none",playamCreateMode="video",playamTextOverlay="";
