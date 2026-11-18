@@ -559,7 +559,34 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
  .main:has(#homeScreen:not(.hidden))>.topbar{display:none}
 }
 
-.ludo-mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:18px 0}.ludo-mode{display:flex;flex-direction:column;gap:9px;text-align:left;min-height:150px;background:#20203b;color:#fff;border:1px solid #454565;padding:16px}.ludo-mode.selected{border:2px solid #b57cff;background:#30234b}.ludo-mode span{font-size:28px}.ludo-mode small{color:#bdbbd2;font-weight:500;line-height:1.4}.ludo-coming{padding:14px;border:1px solid #49405e;border-radius:12px;color:#c9bddb;font-size:12px;line-height:1.5;margin:12px 0}.game-title{margin:8px 0}.ludo-status{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.ludo-status button{padding:12px 16px}@media(max-width:480px){.ludo-mode-grid{grid-template-columns:1fr}.ludo-mode{min-height:120px}}</style>
+.ludo-mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:18px 0}.ludo-mode{display:flex;flex-direction:column;gap:9px;text-align:left;min-height:150px;background:#20203b;color:#fff;border:1px solid #454565;padding:16px}.ludo-mode.selected{border:2px solid #b57cff;background:#30234b}.ludo-mode span{font-size:28px}.ludo-mode small{color:#bdbbd2;font-weight:500;line-height:1.4}.ludo-coming{padding:14px;border:1px solid #49405e;border-radius:12px;color:#c9bddb;font-size:12px;line-height:1.5;margin:12px 0}.game-title{margin:8px 0}.ludo-status{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.ludo-status button{padding:12px 16px}@media(max-width:480px){.ludo-mode-grid{grid-template-columns:1fr}.ludo-mode{min-height:120px}}
+/* PLAYAM camera-first creator */
+#playamCreatePanel.camera-mode{padding:0;align-items:stretch;background:#050509;backdrop-filter:none}
+#playamCreatePanel.camera-mode .playam-create-sheet{width:100%;height:100dvh;max-height:100dvh;padding:0;border:0;border-radius:0;background:#050509;overflow:hidden;box-shadow:none}
+#playamCreatePanel.camera-mode .playam-create-sheet> :not(#playamARPanel){display:none!important}
+#playamCreatePanel.camera-mode #playamARPanel{display:flex!important;position:absolute;inset:0;margin:0;padding:0;flex-direction:column;gap:8px;background:#050509}
+#playamCreatePanel.camera-mode #playamARPanel.hidden{display:flex!important}
+#playamCreatePanel.camera-mode .playam-ar-note{display:none}
+.playam-camera-top{position:absolute;z-index:5;top:calc(env(safe-area-inset-top) + 12px);left:16px;right:16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.playam-camera-close,.playam-add-sound{border:1px solid #ffffff44;border-radius:22px;background:#17151dcc;color:#fff;padding:10px 15px;font-weight:800}
+.playam-camera-close{width:42px;height:42px;padding:0;font-size:25px}.playam-camera-label{font-size:11px;font-weight:900;letter-spacing:2px;text-shadow:0 2px 8px #000}
+#playamCreatePanel.camera-mode .playam-ar-stage{position:absolute;inset:0;width:100%;height:100%;max-height:none;border-radius:0;background:#08080c}
+#playamCreatePanel.camera-mode .playam-ar-stage video,#playamCreatePanel.camera-mode .playam-ar-stage canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.playam-camera-text-preview{position:absolute;left:8%;right:8%;top:42%;color:white;font-size:30px;font-weight:900;text-align:center;text-shadow:0 2px 8px #000;pointer-events:none}
+.playam-camera-text{position:absolute;z-index:7;top:22%;left:8%;width:84%;padding:12px;border-radius:12px;background:#111d;color:#fff;border:1px solid #ffffff66}
+.playam-camera-tools{position:absolute;z-index:6;left:0;right:0;bottom:calc(145px + env(safe-area-inset-bottom));padding:0 12px}
+.playam-camera-modes,.playam-camera-filters{display:flex;justify-content:center;gap:9px;overflow-x:auto;padding:8px 0}
+.playam-camera-modes button,.playam-camera-filters button{flex:0 0 auto;border:1px solid #ffffff44;border-radius:20px;background:#17151dcc;color:#fff;padding:9px 13px;font-size:12px;font-weight:800}
+.playam-camera-modes button.active,.playam-camera-filters button.active{background:#fff;color:#171020;border-color:#fff}
+.playam-camera-filter-label{text-align:center;color:#fff;font-size:10px;font-weight:900;letter-spacing:2px;text-shadow:0 1px 5px #000}
+#playamCreatePanel.camera-mode .playam-ar-effects{position:absolute;z-index:6;left:0;right:0;bottom:calc(105px + env(safe-area-inset-bottom));display:flex;gap:8px;overflow-x:auto;padding:7px 12px;background:transparent}
+#playamCreatePanel.camera-mode .playam-ar-effects button{flex:0 0 auto;border:1px solid #ffffff66;border-radius:18px;background:#17151dcc;color:white;padding:8px 11px;font-size:11px}
+#playamCreatePanel.camera-mode .playam-ar-effects button.active{background:#fff;color:#171020}
+.playam-camera-bottom{position:absolute;z-index:8;bottom:calc(18px + env(safe-area-inset-bottom));left:18px;right:18px;display:flex;align-items:center;justify-content:space-between;color:#fff}
+.playam-camera-gallery,.playam-camera-create{min-width:72px;border:0;background:transparent;color:#fff;font-weight:800;font-size:13px}.playam-camera-gallery{font-size:24px}.playam-camera-gallery small,.playam-camera-create small{display:block;font-size:10px;font-weight:600}
+.playam-camera-shutter{width:76px;height:76px;border:6px solid #fff;border-radius:50%;background:#ff315b;color:#fff;font-size:34px;box-shadow:0 0 0 3px #0008}
+#playamCreatePanel.camera-mode .playam-music-picker{display:none}
+</style>
 <style>
 .playam-daily-showdown{margin:18px 0 22px;padding:20px;border-radius:22px;border:1px solid #7950ad;background:radial-gradient(circle at 90% 0%,#54327b 0,#211a37 48%,#121222 100%);box-shadow:0 14px 35px #0005;color:#fff}
 .pds-top,.pds-scoreline,.pds-actions{display:flex;align-items:center;justify-content:space-between;gap:10px}
@@ -955,10 +982,10 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
     </section>
     <button class="secondary playam-create-upload" type="button" onclick="openPlayamARCamera()">✦ Open camera with live face effects</button>
     <section id="playamARPanel" class="playam-ar-panel hidden" aria-label="Live face filters">
-     <div class="playam-studio-top"><h3 style="margin:0">Live face filters</h3><button class="secondary" type="button" onclick="closePlayamARCamera()">Close</button></div>
+     <div class="playam-camera-top"><button type="button" class="playam-camera-close" onclick="closePlayamCreate()" aria-label="Close camera">×</button><button type="button" class="playam-add-sound" onclick="document.getElementById('playamMusicFile').click()">♫ Add music</button><span class="playam-camera-label">PLAYAM CAMERA</span></div>
      <p class="playam-ar-note">Real-time face tracking. Effects follow your face as you move. Allow camera access to begin.</p>
-     <div class="playam-ar-stage"><video id="playamARVideo" playsinline muted></video><canvas id="playamARCanvas"></canvas></div>
-     <div class="playam-ar-effects">
+     <div class="playam-ar-stage"><video id="playamARVideo" playsinline muted></video><canvas id="playamARCanvas"></canvas><div id="playamCameraTextPreview" class="playam-camera-text-preview"></div></div><input id="playamCameraText" class="playam-camera-text hidden" maxlength="90" placeholder="Type text to add to your video…" oninput="playamTextOverlay=this.value;document.getElementById('playamCameraTextPreview').textContent=this.value">
+     <div class="playam-camera-tools"><div class="playam-camera-modes"><button type="button" data-create-mode="video" class="active" onclick="setPlayamCreateMode('video',this)">Video</button><button type="button" data-create-mode="photo" onclick="setPlayamCreateMode('photo',this)">Photo</button><button type="button" data-create-mode="text" onclick="setPlayamCreateMode('text',this)">Text</button></div><div class="playam-camera-filter-label">FILTERS</div><div class="playam-camera-filters"><button class="active" data-camera-filter="natural" onclick="setPlayamCameraFilter('natural',this)">Natural</button><button data-camera-filter="glow" onclick="setPlayamCameraFilter('glow',this)">Glow</button><button data-camera-filter="cinema" onclick="setPlayamCameraFilter('cinema',this)">Cinema</button><button data-camera-filter="vintage" onclick="setPlayamCameraFilter('vintage',this)">Vintage</button><button data-camera-filter="mono" onclick="setPlayamCameraFilter('mono',this)">Mono</button><button data-camera-filter="warm" onclick="setPlayamCameraFilter('warm',this)">Warm</button></div></div><div class="playam-ar-effects">
       <button type="button" class="active" data-ar="none" onclick="setPlayamAREffect('none',this)">Natural</button>
       <button type="button" data-ar="glasses" onclick="setPlayamAREffect('glasses',this)">Glasses</button>
       <button type="button" data-ar="crown" onclick="setPlayamAREffect('crown',this)">Crown</button>
@@ -975,7 +1002,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
       <input id="playamMusicVolume" type="range" min="0" max="100" value="35" oninput="updatePlayamMusicVolume(this.value)">
       <p id="playamMusicStatus" class="playam-ar-note" role="status">No music selected. Your microphone will still be recorded.</p>
      </div>
-     <div class="feed-inline-actions"><button class="primary" id="playamARRecordBtn" type="button" onclick="togglePlayamARRecording()">● Start recording</button></div>
+     <div class="playam-camera-bottom"><button type="button" class="playam-camera-gallery" onclick="openPlayamUpload()">▧<small>Upload</small></button><button class="playam-camera-shutter" id="playamARRecordBtn" type="button" onclick="playamCameraAction()" aria-label="Capture">●</button><button type="button" class="playam-camera-create" onclick="playamCameraAction()">Create<small>Record your moment</small></button></div>
      <p id="playamARStatus" class="playam-ar-note" role="status">Starting camera and face tracking…</p>
     </section>
     <article class="playam-studio-coming">
@@ -1088,7 +1115,7 @@ function showScreen(id,nav=""){stopInactiveGameLoops(id);hideScreens();const tar
 function showHome(){stopLobbyRefresh();stopGameRefresh();showScreen("homeScreen","navHome");void loadPlayamGameAd();const main=document.querySelector(".main");if(main)main.onscroll=syncFeedTab;requestAnimationFrame(()=>{if(main){const videos=document.getElementById("feedVideos");main.scrollTop=videos?videos.offsetTop:0;}syncFeedTab();loadPlayamVideos()})}
 
 /* Live AR face effects powered by MediaPipe Face Landmarker */
-let playamARStream=null,playamARLandmarker=null,playamARFrame=0,playamAREffect="none",playamARRecorder=null,playamARChunks=[],playamMusicUrl=null,playamAudioContext=null,playamMusicGain=null,playamMusicElementSource=null;
+let playamARStream=null,playamARLandmarker=null,playamARFrame=0,playamAREffect="none",playamARRecorder=null,playamARChunks=[],playamMusicUrl=null,playamAudioContext=null,playamMusicGain=null,playamMusicElementSource=null,playamCameraFilter="none",playamCreateMode="video",playamTextOverlay="";
 async function openPlayamARCamera(){
  const panel=document.getElementById("playamARPanel");panel.classList.remove("hidden");
  const status=document.getElementById("playamARStatus");
@@ -1113,11 +1140,14 @@ function closePlayamARCamera(){
  document.getElementById("playamARPanel").classList.add("hidden");
 }
 function setPlayamAREffect(effect,button){playamAREffect=effect;document.querySelectorAll("[data-ar]").forEach(b=>b.classList.toggle("active",b===button));}
+function setPlayamCameraFilter(filter,button){playamCameraFilter=({natural:"none",glow:"brightness(1.12) saturate(1.2)",cinema:"contrast(1.18) saturate(.82)",vintage:"sepia(.35) contrast(1.08)",mono:"grayscale(1)",warm:"sepia(.18) saturate(1.25)"})[filter]||"none";document.querySelectorAll("[data-camera-filter]").forEach(b=>b.classList.toggle("active",b===button));}
+function setPlayamCreateMode(mode,button){playamCreateMode=mode;document.querySelectorAll("[data-create-mode]").forEach(b=>b.classList.toggle("active",b===button));const field=document.getElementById("playamCameraText");if(field)field.classList.toggle("hidden",mode!=="text");const record=document.getElementById("playamARRecordBtn");if(record)record.textContent=mode==="photo"?"◉ Take photo":"●"; }
+function playamCameraAction(){if(playamCreateMode==="photo"){const c=document.getElementById("playamARCanvas");if(!c||!c.width){document.getElementById("playamARStatus").textContent="Wait for the camera preview, then take your photo.";return;}c.toBlob(blob=>{if(blob){window.playamPhotoFile=new File([blob],"playam-photo.png",{type:"image/png"});document.getElementById("playamARStatus").textContent="Photo captured. Photo-post publishing is not connected yet.";}},"image/png");return;}togglePlayamARRecording();}
 function drawPlayamARFrame(){
  const video=document.getElementById("playamARVideo"),canvas=document.getElementById("playamARCanvas");if(!video||!canvas||!playamARLandmarker||video.readyState<2){playamARFrame=requestAnimationFrame(drawPlayamARFrame);return;}
  const w=video.videoWidth,h=video.videoHeight;if(!w||!h){playamARFrame=requestAnimationFrame(drawPlayamARFrame);return;}
  if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}
- const ctx=canvas.getContext("2d");ctx.clearRect(0,0,w,h);
+ const ctx=canvas.getContext("2d");ctx.save();ctx.filter=playamCameraFilter;ctx.drawImage(video,0,0,w,h);ctx.restore();
  try{
   const result=playamARLandmarker.detectForVideo(video,performance.now());const face=result.faceLandmarks?.[0];
   if(face){const p=i=>({x:face[i].x*w,y:face[i].y*h}),mid=(a,b)=>({x:(a.x+b.x)/2,y:(a.y+b.y)/2}),left=p(33),right=p(263),nose=p(1),forehead=p(10),chin=p(152),mouthL=p(61),mouthR=p(291),lipTop=p(13),lipBottom=p(14),eyeL=p(133),eyeR=p(362),dist=Math.hypot(right.x-left.x,right.y-left.y);
@@ -1165,8 +1195,8 @@ function selectPlayamTemplate(name,prompt){
  const panel=document.getElementById("playamCreatePanel");
  if(panel)panel.dataset.selectedTemplate=name;
 }
-function triggerPlayamCreate(){const panel=document.getElementById("playamCreatePanel");if(panel){panel.classList.remove("hidden");panel.setAttribute("aria-hidden","false")}else{const input=document.getElementById("playamVideoFile");if(input)input.click();else showMessage("Video upload is not available on this screen yet.");}}
-function closePlayamCreate(){const panel=document.getElementById("playamCreatePanel");if(panel){panel.classList.add("hidden");panel.setAttribute("aria-hidden","true")}}
+function triggerPlayamCreate(){const panel=document.getElementById("playamCreatePanel");if(!panel)return;panel.classList.remove("hidden");panel.classList.add("camera-mode");panel.setAttribute("aria-hidden","false");openPlayamARCamera();}
+function closePlayamCreate(){const panel=document.getElementById("playamCreatePanel");if(panel){panel.classList.add("hidden");panel.classList.remove("camera-mode");panel.setAttribute("aria-hidden","true")}closePlayamARCamera();}
 function openPlayamUpload(){closePlayamCreate();const input=document.getElementById("playamVideoFile");if(input)input.click();else showMessage("Video upload is not available on this screen yet.");}
 function showFindPlayer(){stopLobbyRefresh();stopGameRefresh();showScreen("findPlayerScreen")}
 function showSettings(){showScreen("settingsScreen")}
