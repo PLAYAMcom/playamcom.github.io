@@ -673,6 +673,8 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 #playamInstallBanner button{padding:10px 14px}
 #playamInstallHelp{display:none;font-size:12px;color:#d7c9ed;line-height:1.5;margin-top:10px}
 #playamInstallBanner .install-dismiss{margin-left:auto;background:transparent;color:#c8bfd8;padding:6px 10px}
+</style><style id="playam-inbox-styles">
+.playam-inbox-panel,.playam-chat-panel{width:100%;margin:12px 0}.playam-inbox-toolbar,.playam-chat-heading,.playam-chat-compose{display:flex;align-items:center;gap:9px;margin:12px 0}.playam-inbox-toolbar button{flex:1}.playam-inbox-status{min-height:20px;margin:10px 2px;color:#c6a15b;font-size:12px}.playam-conversation-list,.playam-search-results{display:flex;flex-direction:column;gap:8px}.playam-conversation-item,.playam-player-result{display:flex;align-items:center;gap:12px;width:100%;padding:13px;border:1px solid #51405f;border-radius:15px;background:#211b2d;color:#f4f0f8;text-align:left}.playam-inbox-avatar{width:43px;height:43px;flex:0 0 43px;display:grid;place-items:center;border-radius:50%;background:#512b81;border:1px solid #c6a15b;color:#fff;font-weight:900}.playam-conversation-copy,.playam-player-copy{display:flex;flex:1;min-width:0;flex-direction:column;gap:4px}.playam-conversation-copy small,.playam-player-copy small{font-size:11px;color:#b9afc8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.playam-chat-heading strong{font-size:15px}.playam-chat-messages{display:flex;flex-direction:column;gap:9px;min-height:35vh;max-height:52vh;overflow-y:auto;padding:12px;border:1px solid #51405f;border-radius:16px;background:#171321}.playam-chat-bubble{max-width:84%;padding:10px 12px;border-radius:15px;background:#2b2338;color:#f4f0f8;font-size:13px;line-height:1.45;overflow-wrap:anywhere}.playam-chat-bubble.mine{align-self:flex-end;background:#512b81;border:1px solid #9875bd}.playam-chat-bubble time{display:block;margin-top:5px;font-size:9px;color:#d3c5e4}.playam-chat-empty{margin:auto;text-align:center;color:#b9afc8;font-size:12px}.playam-chat-compose input{flex:1;min-width:0;margin:0}.playam-chat-compose button{min-width:76px}
 </style></head>
 <body>
 <div class="staging-banner" role="status">PLAYAM STAGING ONLY — TEST ACCOUNTS ONLY — NOT PRODUCTION</div>
@@ -850,7 +852,13 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 
    <section class="feed-page feed-community-page" id="feedMessages">
     <div class="feed-page-head"><div><div class="feed-kicker">STAY CONNECTED</div><h2>Messages &amp; Chat</h2></div><span>💬</span></div>
-    <div class="feed-community-visual"><span>💬</span><h3>Your PLAYAM conversations</h3><p>Private messages and player-to-player chat will live here.</p></div>
+    <section id="playamInboxPanel" class="playam-inbox-panel">
+     <div class="playam-inbox-toolbar"><button class="primary" type="button" onclick="showPlayamNewMessage()">＋ New message</button><button class="secondary" type="button" onclick="loadPlayamInbox()">↻ Refresh</button></div>
+     <p id="playamInboxStatus" class="playam-inbox-status" role="status" aria-live="polite">Sign in to view your messages.</p>
+     <div id="playamConversationList" class="playam-conversation-list"></div>
+     <div id="playamNewMessagePanel" class="playam-new-message hidden"><div class="playam-chat-heading"><button class="secondary" type="button" onclick="hidePlayamNewMessage()">← Inbox</button><strong>Find a player</strong></div><input id="playamPlayerSearch" type="search" maxlength="40" placeholder="Search username or player name" aria-label="Search players" oninput="searchPlayamPlayers(this.value)"><div id="playamPlayerSearchResults" class="playam-search-results"></div></div>
+    </section>
+    <section id="playamChatPanel" class="playam-chat-panel hidden"><div class="playam-chat-heading"><button class="secondary" type="button" onclick="closePlayamChat()">← Inbox</button><strong id="playamChatTitle">Conversation</strong></div><div id="playamChatMessages" class="playam-chat-messages" aria-live="polite"></div><form class="playam-chat-compose" onsubmit="event.preventDefault();sendPlayamMessage();return false"><input id="playamMessageInput" type="text" maxlength="2000" placeholder="Write a message…" autocomplete="off" aria-label="Write a message"><button class="primary" type="submit">Send</button></form><p id="playamChatStatus" class="playam-inbox-status" role="status" aria-live="polite"></p></section>
     <p class="feed-feature-note">Messaging is a planned platform feature; no chat inbox is connected to this screen yet.</p>
     <button class="secondary feed-wide-button" onclick="showFindPlayer()">FIND PLAYERS</button>
    </section>
@@ -2348,5 +2356,114 @@ if ('serviceWorker' in navigator) {
     });
   });
 }
+</script><script id="playam-private-messaging">
+(function(){
+let currentUser=null,currentConversation=null,currentPartner=null,searchSeq=0;
+const $=id=>document.getElementById(id);
+const client=()=>window.supabaseClient||window.supabase;
+function safeError(e){return e&&e.message?e.message:'Something went wrong. Please try again.'}
+function initials(s){return String(s||'P').trim().charAt(0).toUpperCase()||'P'}
+function stamp(s){const d=new Date(s);return isNaN(d)?'':d.toLocaleString([],{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}
+async function signedIn(){
+ const c=client();if(!c||!c.auth)throw new Error('PLAYAM connection is not ready. Refresh and try again.');
+ const {data,error}=await c.auth.getUser();if(error)throw error;if(!data.user)throw new Error('Please sign in to use private messages.');currentUser=data.user;return data.user;
+}
+window.loadPlayamInbox=async function(){
+ const c=client(),list=$('playamConversationList'),status=$('playamInboxStatus');if(!c||!list||!status)return;
+ status.textContent='Loading conversations…';list.replaceChildren();
+ try{
+  const user=await signedIn();
+  const [r1,r2]=await Promise.all([
+   c.from('private_conversations').select('id,user_one_auth_user_id,user_two_auth_user_id,updated_at').eq('user_one_auth_user_id',user.id).order('updated_at',{ascending:false}).limit(100),
+   c.from('private_conversations').select('id,user_one_auth_user_id,user_two_auth_user_id,updated_at').eq('user_two_auth_user_id',user.id).order('updated_at',{ascending:false}).limit(100)
+  ]);
+  if(r1.error)throw r1.error;if(r2.error)throw r2.error;
+  const conv=[...(r1.data||[]),...(r2.data||[])].sort((a,b)=>new Date(b.updated_at)-new Date(a.updated_at));
+  if(!conv.length){status.textContent='No messages yet. Choose “New message” to find a player.';return}
+  const partnerIds=[...new Set(conv.map(x=>x.user_one_auth_user_id===user.id?x.user_two_auth_user_id:x.user_one_auth_user_id))],ids=conv.map(x=>x.id);
+  const [pr,mr]=await Promise.all([
+   c.from('playam_profiles').select('user_id,display_name,username').in('user_id',partnerIds),
+   c.from('private_messages').select('conversation_id,body,sender_auth_user_id,created_at').in('conversation_id',ids).is('deleted_at',null).order('created_at',{ascending:false}).limit(200)
+  ]);
+  if(pr.error)throw pr.error;if(mr.error)throw mr.error;
+  const profiles=new Map((pr.data||[]).map(p=>[p.user_id,p])),latest=new Map();
+  (mr.data||[]).forEach(m=>{if(!latest.has(m.conversation_id))latest.set(m.conversation_id,m)});
+  conv.forEach(x=>{
+   const pid=x.user_one_auth_user_id===user.id?x.user_two_auth_user_id:x.user_one_auth_user_id,p=profiles.get(pid)||{display_name:'PLAYAM Player',username:'player'},m=latest.get(x.id);
+   const b=document.createElement('button');b.type='button';b.className='playam-conversation-item';
+   const av=document.createElement('span');av.className='playam-inbox-avatar';av.textContent=initials(p.display_name);
+   const copy=document.createElement('span');copy.className='playam-conversation-copy';
+   const name=document.createElement('strong');name.textContent=(p.display_name||'PLAYAM Player')+' · @'+(p.username||'player');
+   const preview=document.createElement('small');preview.textContent=m?((m.sender_auth_user_id===user.id?'You: ':'')+(m.body||'Attachment')):'Start chatting';
+   const time=document.createElement('small');time.textContent=m?stamp(m.created_at):'';
+   copy.append(name,preview,time);b.append(av,copy);b.addEventListener('click',()=>openPlayamConversation(x.id,pid,p));list.append(b);
+  });
+  status.textContent=conv.length+' conversation'+(conv.length===1?'':'s');
+ }catch(e){status.textContent=safeError(e);status.style.color='#ff9bb8'}
+};
+window.showPlayamNewMessage=function(){$('playamNewMessagePanel')?.classList.remove('hidden');$('playamPlayerSearch')?.focus()};
+window.hidePlayamNewMessage=function(){$('playamNewMessagePanel')?.classList.add('hidden')};
+window.searchPlayamPlayers=async function(value){
+ const seq=++searchSeq,out=$('playamPlayerSearchResults'),term=String(value||'').trim().replace(/^@/,'');if(!out)return;out.replaceChildren();
+ if(term.length<2){out.textContent='Type at least 2 characters to search.';return}
+ try{
+  const c=client(),user=await signedIn();
+  const {data,error}=await c.from('playam_profiles').select('user_id,display_name,username').neq('user_id',user.id).or('username.ilike.%'+term+'%,display_name.ilike.%'+term+'%').limit(20);
+  if(seq!==searchSeq)return;if(error)throw error;
+  if(!data?.length){out.textContent='No players found.';return}
+  data.forEach(p=>{
+   const b=document.createElement('button');b.type='button';b.className='playam-player-result';
+   const av=document.createElement('span');av.className='playam-inbox-avatar';av.textContent=initials(p.display_name);
+   const copy=document.createElement('span');copy.className='playam-player-copy';
+   const name=document.createElement('strong');name.textContent=p.display_name;
+   const handle=document.createElement('small');handle.textContent='@'+p.username;
+   copy.append(name,handle);b.append(av,copy);b.addEventListener('click',()=>startPlayamConversation(p));out.append(b);
+  });
+ }catch(e){out.textContent=safeError(e)}
+};
+async function startPlayamConversation(p){
+ try{
+  const c=client(),user=await signedIn();
+  const [a,b]=await Promise.all([
+   c.from('private_conversations').select('id').eq('user_one_auth_user_id',user.id).eq('user_two_auth_user_id',p.user_id).maybeSingle(),
+   c.from('private_conversations').select('id').eq('user_one_auth_user_id',p.user_id).eq('user_two_auth_user_id',user.id).maybeSingle()
+  ]);
+  if(a.error)throw a.error;if(b.error)throw b.error;let conversation=a.data||b.data;
+  if(!conversation){const ids=[user.id,p.user_id].sort();const ins=await c.from('private_conversations').insert({user_one_auth_user_id:ids[0],user_two_auth_user_id:ids[1]}).select('id').single();if(ins.error)throw ins.error;conversation=ins.data}
+  hidePlayamNewMessage();await openPlayamConversation(conversation.id,p.user_id,p);await loadPlayamInbox();
+ }catch(e){$('playamInboxStatus').textContent=safeError(e);$('playamInboxStatus').style.color='#ff9bb8'}
+}
+async function openPlayamConversation(id,pid,p){
+ currentConversation=id;currentPartner=p;await signedIn();
+ $('playamInboxPanel').classList.add('hidden');$('playamChatPanel').classList.remove('hidden');
+ $('playamChatTitle').textContent=(p.display_name||'Player')+' · @'+(p.username||'player');await loadPlayamConversationMessages();
+}
+window.loadPlayamConversationMessages=async function(){
+ if(!currentConversation||!currentUser)return;const c=client(),out=$('playamChatMessages'),status=$('playamChatStatus');
+ try{
+  const {data,error}=await c.from('private_messages').select('id,sender_auth_user_id,body,created_at').eq('conversation_id',currentConversation).is('deleted_at',null).order('created_at',{ascending:true}).limit(200);
+  if(error)throw error;out.replaceChildren();
+  if(!data?.length){const empty=document.createElement('p');empty.className='playam-chat-empty';empty.textContent='Say hello and start the conversation.';out.append(empty)}
+  (data||[]).forEach(m=>{
+   const bubble=document.createElement('div');bubble.className='playam-chat-bubble'+(m.sender_auth_user_id===currentUser.id?' mine':'');
+   const body=document.createElement('div');body.textContent=m.body||'Attachment';const time=document.createElement('time');time.textContent=stamp(m.created_at);bubble.append(body,time);out.append(bubble);
+  });
+  out.scrollTop=out.scrollHeight;
+  const mark=await c.from('private_messages').update({read_at:new Date().toISOString()}).eq('conversation_id',currentConversation).neq('sender_auth_user_id',currentUser.id).is('read_at',null);
+  if(mark.error)console.warn('Could not mark messages read',mark.error);
+ }catch(e){status.textContent=safeError(e);status.style.color='#ff9bb8'}
+};
+window.sendPlayamMessage=async function(){
+ const input=$('playamMessageInput'),status=$('playamChatStatus'),body=String(input?.value||'').trim();if(!body||!currentConversation)return;
+ if(body.length>2000){status.textContent='Messages are limited to 2,000 characters.';return}
+ const button=document.querySelector('.playam-chat-compose button');if(button)button.disabled=true;
+ try{
+  const c=client(),user=await signedIn(),{error}=await c.from('private_messages').insert({conversation_id:currentConversation,sender_auth_user_id:user.id,body,idempotency_key:crypto.randomUUID()});
+  if(error)throw error;input.value='';status.textContent='Sent';await loadPlayamConversationMessages();
+ }catch(e){status.textContent=safeError(e);status.style.color='#ff9bb8'}finally{if(button)button.disabled=false}
+};
+window.closePlayamChat=function(){currentConversation=null;currentPartner=null;$('playamChatPanel').classList.add('hidden');$('playamInboxPanel').classList.remove('hidden');loadPlayamInbox()};
+document.addEventListener('DOMContentLoaded',()=>{const tab=document.querySelector('[data-tab="inbox"],[onclick*="Inbox"],[onclick*="inbox"]');if(tab)tab.addEventListener('click',()=>window.loadPlayamInbox())});
+})();
 </script></body>
 </html>
