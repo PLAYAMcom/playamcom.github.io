@@ -1043,9 +1043,15 @@ let soloQuestions=[],soloAnswers=[],soloQuestionIndex=0,soloDifficulty="starter"
 const screenIds=["homeScreen","findPlayerScreen","settingsScreen","soloSetupScreen","soloGameScreen","soloResultsScreen","createScreen","joinScreen","lobbyScreen","gameScreen","resultsScreen","snookerScreen","poolScreen","checkersScreen","ayoScreen","ludoLobby","ludoScreen","footballScreen","strikeScreen"];
 
 function showMessage(t){const authScreen=document.getElementById("authScreen");const authVisible=authScreen&&!authScreen.classList.contains("hidden");const target=document.getElementById(authVisible?"authMessage":"message");if(target)target.innerText=t||""}
-function hideScreens(){screenIds.forEach(id=>document.getElementById(id).classList.add("hidden"))}
+function stopInactiveGameLoops(nextScreen){
+ if(nextScreen!=="snookerScreen"){snookerAnimating=false;snookerShotActive=false;snookerBalls.forEach(b=>{b.vx=0;b.vy=0})}
+ if(nextScreen!=="poolScreen"){poolMoving=false;poolShot=false;poolBalls.forEach(b=>{b.vx=0;b.vy=0})}
+ if(nextScreen!=="gameScreen")stopGameRefresh();
+ if(nextScreen!=="lobbyScreen")stopLobbyRefresh();
+}
+function hideScreens(){screenIds.forEach(id=>document.getElementById(id)?.classList.add("hidden"))}
 function setNav(id){document.querySelectorAll(".navbtn").forEach(b=>b.classList.remove("active"));if(id)document.getElementById(id)?.classList.add("active")}
-function showScreen(id,nav=""){hideScreens();document.getElementById(id).classList.remove("hidden");setNav(nav);showMessage("")}
+function showScreen(id,nav=""){stopInactiveGameLoops(id);hideScreens();const target=document.getElementById(id);if(!target){console.error("Unknown PLAYAM screen:",id);return}target.classList.remove("hidden");setNav(nav);showMessage("")}
 function showHome(){stopLobbyRefresh();stopGameRefresh();showScreen("homeScreen","navHome");void loadPlayamGameAd();const main=document.querySelector(".main");if(main)main.onscroll=syncFeedTab;requestAnimationFrame(()=>{if(main){const videos=document.getElementById("feedVideos");main.scrollTop=videos?videos.offsetTop:0;}syncFeedTab();loadPlayamVideos()})}
 
 /* Live AR face effects powered by MediaPipe Face Landmarker */
