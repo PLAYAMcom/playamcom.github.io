@@ -1412,7 +1412,7 @@ const playamFilterPresets={
  mono:{brightness:103,contrast:112,saturate:0,sepia:0,grayscale:100},
  hd:{brightness:105,contrast:116,saturate:112,sepia:0,grayscale:0}
 };
-let playamSelectedFilter="original",playamEditorObjectUrl=null,playamEditorBusy=false;
+let playamEditorSelectedFilter="original",playamEditorObjectUrl=null,playamEditorBusy=false;
 function previewPlayamEditor(event){
  const file=event?.target?.files?.[0];if(!file)return;
  if(!["video/mp4","video/webm","video/quicktime"].includes(file.type)){setPlayamVideoStatus("Please choose an MP4, WebM or MOV video.",true);event.target.value="";return}
@@ -1420,7 +1420,7 @@ function previewPlayamEditor(event){
  const preview=document.getElementById("playamEditorPreview"),panel=document.getElementById("playamQuickEditor");
  if(playamEditorObjectUrl)URL.revokeObjectURL(playamEditorObjectUrl);
  playamEditorObjectUrl=URL.createObjectURL(file);preview.src=playamEditorObjectUrl;preview.load();panel.classList.remove("hidden");
- playamSelectedFilter="original";document.querySelectorAll(".playam-filter-choice").forEach(b=>b.classList.toggle("active",b.dataset.filter==="original"));
+ playamEditorSelectedFilter="original";document.querySelectorAll(".playam-filter-choice").forEach(b=>b.classList.toggle("active",b.dataset.filter==="original"));
  ["playamFilterIntensity","playamBrightness","playamContrast","playamSaturation"].forEach((id,i)=>{const el=document.getElementById(id);if(el)el.value=[70,100,100,100][i]});
  updatePlayamFilterIntensity(70);updatePlayamEditorPreview();setPlayamEditorStatus("Choose a filter, adjust it, then apply your look to upload.");
  panel.scrollIntoView({behavior:"smooth",block:"nearest"});
@@ -1428,11 +1428,11 @@ function previewPlayamEditor(event){
 function setPlayamEditorStatus(message,isError=false){const el=document.getElementById("playamEditorStatus");if(el){el.textContent=message;el.style.color=isError?"#ff9bb8":"#d3b6ff"}}
 function selectPlayamFilter(name,button){
  if(name==="hd"){setPlayamEditorStatus("HD Enhance is a premium filter. Secure purchase and unlock will be added before launch.");return}
- playamSelectedFilter=name;document.querySelectorAll(".playam-filter-choice").forEach(b=>b.classList.toggle("active",b===button));updatePlayamEditorPreview();
+ playamEditorSelectedFilter=name;document.querySelectorAll(".playam-filter-choice").forEach(b=>b.classList.toggle("active",b===button));updatePlayamEditorPreview();
 }
 function updatePlayamFilterIntensity(value){const el=document.getElementById("playamIntensityValue");if(el)el.textContent=value+"%";updatePlayamEditorPreview()}
 function getPlayamFilterValues(){
- const p=playamFilterPresets[playamSelectedFilter]||playamFilterPresets.original;
+ const p=playamFilterPresets[playamEditorSelectedFilter]||playamFilterPresets.original;
  const amount=Number(document.getElementById("playamFilterIntensity")?.value||70)/100;
  const mix=(base)=>100+(base-100)*amount;
  return {brightness:mix(p.brightness)*Number(document.getElementById("playamBrightness")?.value||100)/100,
@@ -1452,7 +1452,7 @@ async function exportPlayamEditedVideo(){
  if(playamEditorBusy)return;
  const preview=document.getElementById("playamEditorPreview"),source=(document.getElementById("playamVideoFile")?.files?.[0]||document.getElementById("playamRecordFile")?.files?.[0]);
  if(!source||!preview?.src){setPlayamEditorStatus("Choose a video first.",true);return}
- if(playamSelectedFilter==="hd"){setPlayamEditorStatus("HD Enhance is not unlocked yet. Choose a free filter for now.",true);return}
+ if(playamEditorSelectedFilter==="hd"){setPlayamEditorStatus("HD Enhance is not unlocked yet. Choose a free filter for now.",true);return}
  if(!preview.videoWidth||!preview.videoHeight){setPlayamEditorStatus("Wait for the video preview to load, then try again.",true);return}
  if(!window.MediaRecorder||!HTMLCanvasElement.prototype.captureStream){setPlayamEditorStatus("This browser cannot export filtered video yet. You can upload the original video instead.",true);return}
  playamEditorBusy=true;const btn=document.querySelector(".playam-editor-publish");if(btn){btn.disabled=true;btn.textContent="APPLYING FILTER…"}
@@ -2298,7 +2298,7 @@ function reloadStrike(){const w=strikeWeapons[strikeWeapon],n=Math.min(w.mag-str
  };
  document.addEventListener('DOMContentLoaded',paint);paint();
 })();
-
+</script>
 <script>
 (function () {
   var banner = document.getElementById('playamInstallBanner');
@@ -2346,7 +2346,6 @@ function reloadStrike(){const w=strikeWeapons[strikeWeapon],n=Math.min(w.mag-str
     banner.style.display = 'none';
   });
 })();
-</script>
 </script>
 <script>
 /* PLAYAM install support: register the service worker for supported browsers. */
