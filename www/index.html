@@ -665,9 +665,28 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 #authScreen #email,#authScreen #password{position:relative;z-index:2;min-height:50px;pointer-events:auto}
 #authScreen #authMessage{min-height:22px;margin-top:10px;color:#ffd6a1;font-size:13px}
 .playam-auth-field-label{display:block;text-align:left;color:#d6cce4;font-size:12px;font-weight:700;margin:12px 0 2px}
+
+/* Install prompt */
+#playamInstallBanner{display:none;position:relative;margin:12px auto;padding:14px 16px;max-width:760px;border:1px solid #62458c;border-radius:14px;background:linear-gradient(110deg,#211735,#17172b);color:#fff}
+#playamInstallBanner .install-copy{font-size:13px;color:#d7c9ed;line-height:1.45;margin:4px 0 10px}
+#playamInstallBanner .install-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+#playamInstallBanner button{padding:10px 14px}
+#playamInstallHelp{display:none;font-size:12px;color:#d7c9ed;line-height:1.5;margin-top:10px}
+#playamInstallBanner .install-dismiss{margin-left:auto;background:transparent;color:#c8bfd8;padding:6px 10px}
 </style></head>
 <body>
 <div class="staging-banner" role="status">PLAYAM STAGING ONLY — TEST ACCOUNTS ONLY — NOT PRODUCTION</div>
+
+<div id="playamInstallBanner" role="region" aria-label="Install PLAYAM">
+ <strong>Install PLAYAM on your phone</strong>
+ <p class="install-copy" id="playamInstallCopy">Add PLAYAM to your Home Screen for quicker access.</p>
+ <div class="install-actions">
+  <button id="playamInstallButton" class="primary" type="button">Install PLAYAM</button>
+  <button id="playamInstallDismiss" class="install-dismiss" type="button" aria-label="Dismiss install message">Not now</button>
+ </div>
+ <p id="playamInstallHelp">In Safari, tap the Share button, choose “Add to Home Screen”, then tap “Add”.</p>
+</div>
+
 
 <div id="authScreen">
  <div class="logo">PLAYAM 🎮</div>
@@ -2270,6 +2289,55 @@ function reloadStrike(){const w=strikeWeapons[strikeWeapon],n=Math.min(w.mag-str
  };
  document.addEventListener('DOMContentLoaded',paint);paint();
 })();
+
+<script>
+(function () {
+  var banner = document.getElementById('playamInstallBanner');
+  var installButton = document.getElementById('playamInstallButton');
+  var help = document.getElementById('playamInstallHelp');
+  var copy = document.getElementById('playamInstallCopy');
+  if (!banner || !installButton) return;
+
+  var deferredPrompt = null;
+  var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  if (isStandalone) return;
+
+  var ua = window.navigator.userAgent || '';
+  var isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+  if (isIOS) {
+    banner.style.display = 'block';
+    installButton.textContent = 'How to install';
+    installButton.addEventListener('click', function () {
+      help.style.display = help.style.display === 'block' ? 'none' : 'block';
+    });
+  } else {
+    window.addEventListener('beforeinstallprompt', function (event) {
+      event.preventDefault();
+      deferredPrompt = event;
+      banner.style.display = 'block';
+    });
+    installButton.addEventListener('click', async function () {
+      if (!deferredPrompt) {
+        copy.textContent = 'Open your browser menu and look for “Install app” or “Add to Home screen”.';
+        help.style.display = 'block';
+        return;
+      }
+      deferredPrompt.prompt();
+      await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      banner.style.display = 'none';
+    });
+  }
+
+  document.getElementById('playamInstallDismiss').addEventListener('click', function () {
+    banner.style.display = 'none';
+  });
+  window.addEventListener('appinstalled', function () {
+    banner.style.display = 'none';
+  });
+})();
+</script>
 </script>
 <script>
 /* PLAYAM install support: register the service worker for supported browsers. */
