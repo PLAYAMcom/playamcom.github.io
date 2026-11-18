@@ -462,6 +462,47 @@ textarea{line-height:1.5;resize:vertical}
 
 .ayo-board{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px;padding:12px;background:#6d4428;border:5px solid #a97945;border-radius:24px;margin:16px 0}.ayo-pit{aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 35% 30%,#b98555,#422719 75%);border:2px solid #d3a16c;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:2px}.ayo-pit strong{font-size:clamp(17px,5vw,27px)}.ayo-pit small{font-size:9px}.ludo-status{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:12px 0;flex-wrap:wrap}.ludo-status strong{color:#ffd28b}.ludo-status span{font-size:22px}.ludo-status button{padding:10px 15px}.ludo-board-wrap{width:min(100%,520px);margin:10px auto;border:5px solid #9b6534;border-radius:12px;overflow:hidden;background:#f4ead5}.ludo-board-wrap canvas{display:block;width:100%;height:auto;touch-action:manipulation}
 .football-wrap,.strike-wrap{width:min(100%,600px);margin:12px auto;border:3px solid #a97945;border-radius:12px;overflow:hidden;background:#234b35}.football-wrap canvas,.strike-wrap canvas{display:block;width:100%;height:auto;touch-action:manipulation}.football-directions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}.football-directions button,.strike-weapons button,.strike-move button,.strike-controls>div>button{padding:11px 8px;border-radius:9px;border:1px solid #777;background:#242a35;color:white;font-weight:700}.strike-weapons{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}.strike-controls{display:flex;justify-content:space-between;align-items:center;gap:10px}.strike-move{display:grid;grid-template-columns:repeat(3,40px);gap:4px}.strike-move button:first-child{grid-column:2}.strike-move button:nth-child(2){grid-column:1;grid-row:2}.strike-move button:nth-child(3){grid-column:2;grid-row:2}.strike-move button:nth-child(4){grid-column:3;grid-row:2}
+
+/* PLAYAM DESIGN MATCH — charcoal, royal purple and champagne gold */
+:root{--bg:#171321;--panel:#211b2d;--panel2:#2a2140;--purple:#512B81;--pink:#8d65b4;--blue:#71549a;--text:#F4F0F8;--muted:#b9afc8;--playam-gold:#C6A15B}
+body{background:var(--bg);color:var(--text)}
+#authScreen{background:linear-gradient(155deg,#211b2d,#171321);border:1px solid rgba(198,161,91,.38);box-shadow:0 24px 70px #09061080}
+.logo,.feed-brand{background:linear-gradient(100deg,#f4f0f8 8%,#c6a15b 58%,#a989d1);color:transparent;background-clip:text}
+.primary{background:linear-gradient(110deg,#512B81,#7650a1);border:1px solid #9875bd;color:#fff;box-shadow:0 8px 24px #512b8140}
+.secondary{background:#2b2338;color:#f4f0f8;border:1px solid #66527c}
+.back{border-color:#766785;color:#f4f0f8}
+.sidebar{background:#171321;border-right:1px solid #3a3046}
+.feed-kicker{color:#c6a15b}
+.feed-page-count{color:#c9bdd5}
+.feed-welcome{background:radial-gradient(ellipse at 88% 8%,rgba(81,43,129,.46),transparent 43%),radial-gradient(ellipse at 8% 92%,rgba(198,161,91,.11),transparent 38%),#171321}
+.feed-welcome-content h2{color:#f4f0f8}
+.feed-welcome-content p{color:#cfc5d8}
+.feed-bottom-hint{color:#c6a15b}
+.feed-game-card,.feed-profile-card,.feed-feature-panel{background:linear-gradient(145deg,#2b2338,#1d1827);border-color:#51405f}
+.feed-game-card.featured{border-color:rgba(198,161,91,.55)}
+.feed-game-card p,.feed-feature-panel small,.feed-profile-card p{color:#c2b7ce}
+.video-stage{background:linear-gradient(155deg,#302044,#512B81 52%,#171321)}
+.video-stage-glow{background:radial-gradient(circle at 50% 32%,rgba(198,161,91,.2),transparent 34%)}
+.shorts-card{background:#1d1827;border-color:#51405f}
+.shorts-card video{background:#100d16}
+.shorts-card-creator{color:#d5bfeb}
+.shorts-engagement .shorts-action{background:#2b2338;border-color:#625071;color:#f4f0f8}
+.shorts-engagement .shorts-action.liked{border-color:#c6a15b;color:#e6c987}
+.shorts-comments{border-color:#51405f}
+.shorts-comment-form input{background:#171321;border-color:#51405f}
+.shorts-comment{background:#2b2338}
+.feed-live-visual,.feed-community-visual,.feed-earn-visual{background:radial-gradient(circle at 50% 35%,rgba(198,161,91,.13),transparent 48%),linear-gradient(145deg,#2b2338,#171321);border-color:#51405f}
+.feed-avatar{background:linear-gradient(145deg,#512B81,#332343);border:2px solid #c6a15b}
+.feed-icon-button{background:#2b2338;border-color:#665578}
+.mobile-tabbar{background:rgba(23,19,33,.98)!important;border-top:1px solid rgba(198,161,91,.42)!important}
+.mobile-tab{color:#b9afc8!important;font-weight:850!important}
+.mobile-tab.active{color:#f4f0f8!important;background:rgba(81,43,129,.38)!important}
+.mobile-tab.active span{filter:drop-shadow(0 0 5px #c6a15b)}
+.mobile-tab.create-tab{background:linear-gradient(145deg,#512B81,#7650a1)!important;color:white!important;border:1px solid #c6a15b!important}
+input,select,textarea{background:#1d1827;border-color:#51405f;color:#f4f0f8}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid #c6a15b;outline-offset:2px}
+@media(max-width:760px){.feed-page{background-color:#171321}.mobile-tabbar{min-height:68px!important}.mobile-tab{font-size:10px!important}.mobile-tab span{font-size:21px!important}}
+
 </style>
 </head>
 <body>
