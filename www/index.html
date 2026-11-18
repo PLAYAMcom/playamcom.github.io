@@ -540,7 +540,17 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 }
 
 .ludo-mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:18px 0}.ludo-mode{display:flex;flex-direction:column;gap:9px;text-align:left;min-height:150px;background:#20203b;color:#fff;border:1px solid #454565;padding:16px}.ludo-mode.selected{border:2px solid #b57cff;background:#30234b}.ludo-mode span{font-size:28px}.ludo-mode small{color:#bdbbd2;font-weight:500;line-height:1.4}.ludo-coming{padding:14px;border:1px solid #49405e;border-radius:12px;color:#c9bddb;font-size:12px;line-height:1.5;margin:12px 0}.game-title{margin:8px 0}.ludo-status{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.ludo-status button{padding:12px 16px}@media(max-width:480px){.ludo-mode-grid{grid-template-columns:1fr}.ludo-mode{min-height:120px}}</style>
-</head>
+<style>
+.playam-daily-showdown{margin:18px 0 22px;padding:20px;border-radius:22px;border:1px solid #7950ad;background:radial-gradient(circle at 90% 0%,#54327b 0,#211a37 48%,#121222 100%);box-shadow:0 14px 35px #0005;color:#fff}
+.pds-top,.pds-scoreline,.pds-actions{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.pds-tag{font-size:11px;font-weight:900;letter-spacing:1.3px;color:#f4cf76}.pds-streak{font-size:11px;color:#d8c8f2}
+.playam-daily-showdown h3{font-size:25px;margin:13px 0 5px}.playam-daily-showdown>p{font-size:13px;line-height:1.5;color:#d8d0e7;margin:5px 0 15px}
+.pds-scoreline{background:#0c0b18a8;border:1px solid #ffffff20;border-radius:14px;padding:12px;margin:14px 0}
+.pds-scoreline div{display:flex;flex-direction:column;gap:4px}.pds-scoreline small{font-size:9px;letter-spacing:.8px;color:#bcb0d2}.pds-scoreline strong{font-size:23px;font-variant-numeric:tabular-nums}
+.pds-tap{width:100%;min-height:86px;border:2px solid #f3d17d;border-radius:16px;background:linear-gradient(135deg,#8c4dd4,#4a2382);color:white;font-size:24px;font-weight:900;letter-spacing:1px;touch-action:manipulation}
+.pds-tap:disabled{opacity:.65}.pds-actions{margin-top:10px}.pds-actions button{flex:1;font-size:12px;padding:10px 7px}.playam-daily-showdown .pds-feedback{min-height:18px;margin:12px 0 0;font-size:12px;color:#eadcfb}
+@media(max-width:480px){.playam-daily-showdown{padding:16px}.pds-scoreline{padding:10px}.pds-scoreline strong{font-size:20px}}
+</style></head>
 <body>
 <div class="staging-banner" role="status">PLAYAM STAGING ONLY — TEST ACCOUNTS ONLY — NOT PRODUCTION</div>
 
@@ -620,7 +630,15 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 
    <section class="feed-page feed-games-page" id="feedGames">
     <div class="feed-page-head"><div><div class="feed-kicker">PLAY TOGETHER</div><h2>Explore Games</h2></div><span class="feed-page-count">01 / 06</span></div>
-    <div class="feed-game-grid">
+    <section class="playam-daily-showdown" aria-label="Daily PLAYAM challenge">
+ <div class="pds-top"><span class="pds-tag">⚡ DAILY SHOWDOWN</span><span class="pds-streak" id="pdsBest">BEST: 0</span></div>
+ <h3>🔥 Tap Rush</h3><p>15 seconds. Tap as fast as you can. Beat your personal best and challenge a friend to top your score!</p>
+ <div class="pds-scoreline"><div><small>YOUR SCORE</small><strong id="pdsScore">0</strong></div><div><small>TIME LEFT</small><strong id="pdsTime">15s</strong></div><div><small>BEST TODAY</small><strong id="pdsToday">0</strong></div></div>
+ <button type="button" class="pds-tap" id="pdsTap" onclick="playamTapRushTap()" disabled>READY?</button>
+ <div class="pds-actions"><button type="button" class="primary" id="pdsStart" onclick="playamTapRushStart()">START CHALLENGE</button><button type="button" class="secondary" onclick="playamTapRushShare()">SHARE SCORE</button></div>
+ <p class="pds-feedback" id="pdsFeedback" aria-live="polite">Your daily challenge is waiting. No coins or money required — just skill!</p>
+</section>
+<div class="feed-game-grid">
      <article class="feed-game-card featured"><span class="feed-game-icon">⚖️</span><div><h3>Friendship Court</h3><p>Questions, votes and friendly competition.</p></div><button class="primary" onclick="showSoloSetup()">PLAY SOLO</button><button class="secondary" onclick="showCreateRoomForGame('friendship-court')">CREATE ROOM</button></article>
      <article class="feed-game-card"><span class="feed-game-icon">🤔</span><div><h3>Would You Rather?</h3><p>Choose between two tough options.</p></div><button class="primary" onclick="showCreateRoomForGame('would-you-rather')">PLAY</button></article>
      <article class="feed-game-card"><span class="feed-game-icon">🎭</span><div><h3>Truth or Dare</h3><p>Take on a truth or a challenge.</p></div><button class="primary" onclick="showCreateRoomForGame('truth-or-dare')">PLAY</button></article>
@@ -1999,5 +2017,17 @@ function fireStrike(){if(strikeMag<=0){strikeMsg("Magazine empty. Reload.");retu
 function reloadStrike(){const w=strikeWeapons[strikeWeapon],n=Math.min(w.mag-strikeMag,strikeReserve);if(n<=0){strikeMsg("No reload needed or no reserve ammo.");return}strikeMag+=n;strikeReserve-=n;updateStrike();strikeMsg("Reloaded "+n+" rounds.")}
 
 </script>
-</body>
+<script>
+(function(){
+ const key='playamTapRushBestV1';
+ let score=0,time=15,timer=null,active=false;
+ const el=id=>document.getElementById(id);
+ function best(){try{return Number(localStorage.getItem(key)||0)}catch(e){return 0}}
+ function paint(){if(el('pdsScore'))el('pdsScore').textContent=score;if(el('pdsTime'))el('pdsTime').textContent=time+'s';if(el('pdsBest'))el('pdsBest').textContent='BEST: '+best();if(el('pdsToday'))el('pdsToday').textContent=best()}
+ window.playamTapRushStart=function(){if(active)return;clearInterval(timer);score=0;time=15;active=true;el('pdsTap').disabled=false;el('pdsTap').textContent='TAP!';el('pdsStart').disabled=true;el('pdsFeedback').textContent='GO! Keep tapping until the timer hits zero.';paint();timer=setInterval(function(){time--;paint();if(time<=0){clearInterval(timer);active=false;el('pdsTap').disabled=true;el('pdsTap').textContent='TIME UP!';el('pdsStart').disabled=false;let old=best();if(score>old){try{localStorage.setItem(key,String(score))}catch(e){}el('pdsFeedback').textContent='🏆 NEW PERSONAL BEST! You scored '+score+'. Run it back or challenge a friend!'}else{el('pdsFeedback').textContent='Nice run! You scored '+score+'. '+(score===old?'You matched your best!':'Your best is '+old+'. Can you beat it?')}paint()}},1000)}
+ window.playamTapRushTap=function(){if(!active)return;score++;paint();if(score%10===0){el('pdsTap').textContent='🔥 '+score+' — KEEP GOING!'}else{el('pdsTap').textContent='TAP!'}}
+ window.playamTapRushShare=function(){const msg='I scored '+score+' on PLAYAM Tap Rush! Can you beat me?';if(navigator.share){navigator.share({title:'PLAYAM Tap Rush',text:msg}).catch(()=>{})}else if(navigator.clipboard){navigator.clipboard.writeText(msg).then(()=>{el('pdsFeedback').textContent='Score copied — send it to a friend!'}).catch(()=>{el('pdsFeedback').textContent=msg})}else{el('pdsFeedback').textContent=msg}}
+ document.addEventListener('DOMContentLoaded',paint);paint();
+})();
+</script></body>
 </html>
