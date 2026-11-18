@@ -435,7 +435,7 @@ textarea{line-height:1.5;resize:vertical}
 .playam-ar-stage{max-height:48dvh}
 @media(max-width:420px){.playam-create-overlay{padding:8px}.playam-create-sheet{max-height:92dvh;padding:22px 13px 16px}.playam-template-art{height:56px}}
 /* PLAYAM Create menu and Studio preview — staging */
-.playam-create-overlay{position:fixed;inset:0;z-index:1500;display:flex;align-items:flex-end;justify-content:center;padding:16px;background:#05040bdc;backdrop-filter:blur(8px)}
+.playam-create-overlay{position:fixed;inset:0;z-index:99999;display:flex;align-items:flex-end;justify-content:center;padding:16px;background:#05040bdc;backdrop-filter:blur(8px)}
 .playam-create-sheet{position:relative;width:min(100%,520px);max-height:88dvh;overflow:auto;padding:25px 20px 22px;border:1px solid #554174;border-radius:24px 24px 18px 18px;background:linear-gradient(155deg,#211735,#10101e 70%);box-shadow:0 -14px 48px #0009}
 .playam-create-sheet h2{margin:7px 0;font-size:24px}.playam-create-sheet>p{color:#c3bad5;font-size:13px;line-height:1.5}
 .playam-create-close{position:absolute;right:14px;top:12px;width:36px;height:36px;padding:0;border:1px solid #ffffff28;border-radius:50%;background:#ffffff12;color:white;font-size:25px}
@@ -571,7 +571,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .playam-camera-close,.playam-add-sound{border:1px solid #ffffff44;border-radius:22px;background:#17151dcc;color:#fff;padding:10px 15px;font-weight:800}
 .playam-camera-close{width:42px;height:42px;padding:0;font-size:25px}.playam-camera-label{font-size:11px;font-weight:900;letter-spacing:2px;text-shadow:0 2px 8px #000}
 #playamCreatePanel.camera-mode .playam-ar-stage{position:absolute;inset:0;width:100%;height:100%;max-height:none;border-radius:0;background:#08080c}
-#playamCreatePanel.camera-mode .playam-ar-stage video,#playamCreatePanel.camera-mode .playam-ar-stage canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+#playamCreatePanel.camera-mode .playam-ar-stage video,#playamCreatePanel.camera-mode .playam-ar-stage canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
 .playam-camera-text-preview{position:absolute;left:8%;right:8%;top:42%;color:white;font-size:30px;font-weight:900;text-align:center;text-shadow:0 2px 8px #000;pointer-events:none}
 .playam-camera-text{position:absolute;z-index:7;top:22%;left:8%;width:84%;padding:12px;border-radius:12px;background:#111d;color:#fff;border:1px solid #ffffff66}
 .playam-camera-tools{position:absolute;z-index:6;left:0;right:0;bottom:calc(145px + env(safe-area-inset-bottom));padding:0 12px}
@@ -657,7 +657,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 #authScreen button,#authScreen input{position:relative;z-index:1001;pointer-events:auto;touch-action:manipulation}
 #authScreen #signInButton{min-height:50px;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .shorts-comments-voice{display:flex;align-items:center;gap:8px;margin-top:9px}.shorts-comments-voice button{border:1px solid #6b527f;border-radius:18px;background:#28203a;color:#fff;padding:9px 12px;font-weight:800}
-</style>
+body.playam-camera-open{overflow:hidden!important;overscroll-behavior:none!important}body.playam-camera-open #app,body.playam-camera-open .mobile-tabbar{pointer-events:none!important}.playam-effect-search{display:block!important;width:calc(100% - 24px);margin:8px 12px;padding:10px 12px;border:1px solid #ffffff28;border-radius:12px;background:#171426;color:#fff}.playam-effects-tray{z-index:30!important}.playam-tray-grid{max-height:36vh;overflow-y:auto;overscroll-behavior:contain}.playam-tray-categories{overflow-x:auto;flex-wrap:nowrap!important;scrollbar-width:none}.playam-tray-categories button{flex:0 0 auto}</style>
 <style>
 .playam-daily-showdown{margin:18px 0 22px;padding:20px;border-radius:22px;border:1px solid #7950ad;background:radial-gradient(circle at 90% 0%,#54327b 0,#211a37 48%,#121222 100%);box-shadow:0 14px 35px #0005;color:#fff}
 .pds-top,.pds-scoreline,.pds-actions{display:flex;align-items:center;justify-content:space-between;gap:10px}
@@ -1122,18 +1122,18 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
      </div>
      <div id="playamEffectsTray" class="playam-effects-tray hidden">
       <div class="playam-tray-grabber"></div><div class="playam-tray-heading"><strong id="playamTrayTitle">Effects</strong><button onclick="closePlayamEffectsTray()" aria-label="Close effects">×</button></div>
-      <div class="playam-tray-categories"><button class="active" data-effect-category="Trending" onclick="setPlayamTrayCategory('Trending',this)">For you</button><button data-effect-category="New" onclick="setPlayamTrayCategory('New',this)">New</button><button data-effect-category="Face" onclick="setPlayamTrayCategory('Face',this)">Face</button><button data-effect-category="Color" onclick="setPlayamTrayCategory('Color',this)">Color</button><button data-effect-category="Gaming" onclick="setPlayamTrayCategory('Gaming',this)">Gaming</button><button data-effect-category="Background" onclick="setPlayamTrayCategory('Background',this)">Background</button></div>
-      <div id="playamTrayGrid" class="playam-tray-grid">
-       <button data-effect-category="Trending Color" onclick="choosePlayamTrayEffect('none','Natural')"><i class="tray-thumb natural"></i><span>Natural</span></button>
-       <button data-effect-category="Trending Color" onclick="choosePlayamTrayEffect('glow','Glow')"><i class="tray-thumb glow"></i><span>Glow</span></button>
-       <button data-effect-category="New Color" onclick="choosePlayamTrayEffect('cinema','Cinema')"><i class="tray-thumb cinema"></i><span>Cinema</span></button>
-       <button data-effect-category="New Color" onclick="choosePlayamTrayEffect('vintage','Vintage')"><i class="tray-thumb vintage"></i><span>Vintage</span></button>
-       <button data-effect-category="Color" onclick="choosePlayamTrayEffect('mono','Mono')"><i class="tray-thumb mono"></i><span>Mono</span></button>
-       <button data-effect-category="Color" onclick="choosePlayamTrayEffect('warm','Warm')"><i class="tray-thumb warm"></i><span>Warm</span></button>
-       <button data-effect-category="Face" onclick="choosePlayamTrayEffect('face-glasses','Glasses')"><i class="tray-thumb glasses">◉</i><span>Glasses</span></button>
-       <button data-effect-category="Face" onclick="choosePlayamTrayEffect('crown','Crown')"><i class="tray-thumb crown">♛</i><span>Crown</span></button>
-       <button data-effect-category="Face" onclick="choosePlayamTrayEffect('ears','Bunny')"><i class="tray-thumb ears">♧</i><span>Bunny</span></button>
-      </div>
+      <div class="playam-tray-categories">
+<button class="active" data-effect-category="Trending" onclick="setPlayamTrayCategory('Trending',this)">For you</button>
+<button data-effect-category="Beauty" onclick="setPlayamTrayCategory('Beauty',this)">Beauty</button>
+<button data-effect-category="Cinematic" onclick="setPlayamTrayCategory('Cinematic',this)">Cinematic</button>
+<button data-effect-category="Color" onclick="setPlayamTrayCategory('Color',this)">Color</button>
+<button data-effect-category="Vintage" onclick="setPlayamTrayCategory('Vintage',this)">Vintage</button>
+<button data-effect-category="Gaming" onclick="setPlayamTrayCategory('Gaming',this)">Gaming</button>
+<button data-effect-category="Dream" onclick="setPlayamTrayCategory('Dream',this)">Dream</button>
+<button data-effect-category="Mono" onclick="setPlayamTrayCategory('Mono',this)">Mono</button>
+</div>
+<input id="playamEffectSearch" class="playam-effect-search" type="search" placeholder="Search 120+ effects" oninput="searchPlayamEffects(this.value)" aria-label="Search effects">
+<div id="playamTrayGrid" class="playam-tray-grid" aria-live="polite"></div>
       <div class="playam-filter-strength"><span>Strength</span><input type="range" min="0" max="100" value="100" oninput="setPlayamFilterStrength(this.value)"><b id="playamFilterStrengthValue">100%</b></div>
       <div id="playamToolOptions" class="playam-tool-options hidden"></div>
      </div>
@@ -1296,13 +1296,28 @@ function closePlayamARCamera(){
 function setPlayamAREffect(effect,button){playamAREffect=effect;document.querySelectorAll("[data-ar]").forEach(b=>b.classList.toggle("active",b===button));}
 function setPlayamCameraFilter(filter,button){playamSelectedFilter=filter;playamCameraFilter=({natural:"none",glow:"brightness(1.12) saturate(1.2)",cinema:"contrast(1.18) saturate(.82)",vintage:"sepia(.35) contrast(1.08)",mono:"grayscale(1)",warm:"sepia(.18) saturate(1.25)"})[filter]||"none";document.querySelectorAll("[data-camera-filter]").forEach(b=>b.classList.toggle("active",b===button));}
 let playamSelectedFilter="natural",playamFilterStrength=100,playamFacingMode="user",playamFlashOn=false,playamSpeed="1×",playamTimerSeconds=0;
-function openPlayamEffectsTray(){const t=document.getElementById("playamEffectsTray");if(t){t.classList.remove("hidden");document.getElementById("playamTrayTitle").textContent="Effects";document.getElementById("playamToolOptions").classList.add("hidden");}}
+
+const playamEffectFamilies=[
+["Beauty","Soft Glow|Fresh Skin|Golden Hour|Rosy Light|Peach Bloom|Dew Drop|Soft Focus|Warm Beauty|Cool Beauty|Radiance|Porcelain Light|Sun Kissed|Blush Light|Clean Look|Silk Skin"],
+["Cinematic","Film Drama|Teal Cinema|Golden Cinema|Indie Film|Noir Drama|Movie Night|Moody Scene|Studio Contrast|Epic Frame|Night Cinema|Soft Cinema|Action Film|Amber Scene|Blue Hour|Silver Screen"],
+["Color","Vivid Pop|Candy Color|Coral Crush|Ocean Blue|Lavender|Rose Tint|Emerald Tone|Sunset|Arctic Blue|Neon Pop|Pastel Dream|Tropical|Crimson|Aqua|Lemon Glow"],
+["Vintage","Retro 70s|Polaroid|Old Film|Sepia Story|Faded Film|Dusty Rose|Analog Warmth|Retro Fade|Classic Print|Film Grain Look|Nostalgia|Warm Memory|Soft Retro|Vintage Gold|Old Camera"],
+["Gaming","Cyber Arena|Neon Gamer|Power Up|Arcade Glow|Pixel Night|Cyber Blue|Boss Mode|Electric|RGB Rush|Battle Ready|Hologram Tone|Glitch Color|Laser Pop|Game Night|Victory Glow"],
+["Dream","Cloud Nine|Dream Haze|Fairy Light|Moon Glow|Star Dust|Ethereal|Soft Dream|Mystic|Aurora|Fantasy Light|Velvet Dream|Magic Hour|Heavenly|Iridescent|Enchanted"],
+["Mono","Pure Mono|Matte Black|Silver Mono|High Contrast|Soft Gray|Noir|Slate|Graphite|Classic B&W|Shadow|Bright Mono|Deep Mono|Urban Gray|Steel|Minimal"],
+["Color","Autumn|Spring|Winter Light|Summer Heat|Citrus|Berry|Mango|Mint|Plum|Copper|Rose Gold|Ice|Sapphire|Honey|Forest"]
+];
+const playamFilterPresets=["brightness(1.10) saturate(1.24) contrast(1.03)","contrast(1.18) saturate(.88) brightness(1.02)","sepia(.22) saturate(1.3) contrast(1.08)","saturate(1.65) contrast(1.08)","hue-rotate(18deg) saturate(1.25) brightness(1.05)","hue-rotate(195deg) saturate(1.35) contrast(1.08)","brightness(1.08) contrast(.92) saturate(.82)","grayscale(1) contrast(1.18)","sepia(.38) contrast(1.12)","hue-rotate(285deg) saturate(1.3)","brightness(1.16) saturate(1.12)","contrast(1.28) saturate(1.2)","hue-rotate(35deg) saturate(1.4)","hue-rotate(125deg) saturate(1.25)","saturate(.72) brightness(1.08)"];
+const playamEffectCatalog=playamEffectFamilies.flatMap((f,fi)=>f[1].split("|").map((name,ni)=>({id:"playamfx"+fi+"_"+ni,name:name,category:f[0],filter:playamFilterPresets[(ni+fi*3)%playamFilterPresets.length]})));
+function renderPlayamEffects(category,query){const grid=document.getElementById("playamTrayGrid");if(!grid)return;const q=(query||"").trim().toLowerCase();const items=playamEffectCatalog.filter(x=>(category==="Trending"||x.category===category)&&(!q||x.name.toLowerCase().includes(q)||x.category.toLowerCase().includes(q)));grid.innerHTML=items.map(x=>'<button type="button" data-effect-category="'+x.category+'" onclick="choosePlayamTrayEffect(\''+x.id+'\',\''+x.name+'\')"><i class="tray-thumb" style="filter:'+x.filter+';background:linear-gradient(135deg,#34254f,#e58ac4)"></i><span>'+x.name+'</span></button>').join("");document.getElementById("playamTrayTitle").textContent=(q?"Search results":category==="Trending"?"Effects for you":category+" effects")+" · "+items.length;}
+function searchPlayamEffects(q){const active=document.querySelector(".playam-tray-categories button.active");renderPlayamEffects(active?.dataset.effectCategory||"Trending",q);}
+function openPlayamEffectsTray(){const t=document.getElementById("playamEffectsTray");if(t){t.classList.remove("hidden");document.getElementById("playamToolOptions").classList.add("hidden");renderPlayamEffects(document.querySelector(".playam-tray-categories button.active")?.dataset.effectCategory||"Trending",document.getElementById("playamEffectSearch")?.value||"");}}
 function closePlayamEffectsTray(){document.getElementById("playamEffectsTray")?.classList.add("hidden");}
 function openPlayamTool(tool){openPlayamEffectsTray();const title=document.getElementById("playamTrayTitle"),opts=document.getElementById("playamToolOptions"),grid=document.getElementById("playamTrayGrid"),cats=document.querySelector(".playam-tray-categories");title.textContent=tool==="filters"?"Filters":tool==="speed"?"Recording speed":"Timer";cats.classList.toggle("hidden",tool!=="filters");grid.classList.toggle("hidden",tool!=="filters");opts.classList.toggle("hidden",tool==="filters");if(tool==="speed")opts.innerHTML=['0.3×','0.5×','1×','2×','3×'].map(v=>'<button onclick="setPlayamSpeed(\''+v+'\')">'+v+'</button>').join('');if(tool==="timer")opts.innerHTML=['Off','3 sec','10 sec'].map(v=>'<button onclick="setPlayamTimer(\''+v+'\')">'+v+'</button>').join('');}
 function setPlayamSpeed(v){playamSpeed=v;document.querySelector(".playam-camera-side-tools button:nth-child(2) b").textContent=v;closePlayamEffectsTray();}
 function setPlayamTimer(v){playamTimerSeconds=v==="3 sec"?3:v==="10 sec"?10:0;closePlayamEffectsTray();document.getElementById("playamARStatus").textContent=playamTimerSeconds?"Timer set to "+playamTimerSeconds+" seconds.":"Timer off.";}
-function setPlayamTrayCategory(category,button){document.querySelectorAll(".playam-tray-categories button").forEach(b=>b.classList.toggle("active",b===button));document.getElementById("playamTrayTitle").textContent=category==="Trending"?"Effects for you":category+" effects";document.querySelectorAll("#playamTrayGrid>button").forEach(tile=>{const tags=(tile.dataset.effectCategory||"").split(" ");tile.hidden=category!=="Trending"&&!tags.includes(category);});}
-function choosePlayamTrayEffect(effect,label){if(effect==="face-glasses"||effect==="crown"||effect==="ears"){const key=effect==="face-glasses"?"glasses":effect;setPlayamAREffect(key,document.querySelector('[data-ar="'+key+'"]'));}else{setPlayamCameraFilter(effect,null);}document.getElementById("playamARStatus").textContent=label+" effect selected.";closePlayamEffectsTray();}
+function setPlayamTrayCategory(category,button){document.querySelectorAll(".playam-tray-categories button").forEach(b=>b.classList.toggle("active",b===button));renderPlayamEffects(category,document.getElementById("playamEffectSearch")?.value||"");}
+function choosePlayamTrayEffect(effect,label){const item=playamEffectCatalog.find(x=>x.id===effect);if(item){playamSelectedFilter=effect;playamCameraFilter=item.filter;playamFilterStrength=100;}else if(effect==="face-glasses"||effect==="crown"||effect==="ears"){const key=effect==="face-glasses"?"glasses":effect;setPlayamAREffect(key,document.querySelector('[data-ar="'+key+'"]'));}else{setPlayamCameraFilter(effect,null);}document.getElementById("playamARStatus").textContent=label+" effect selected.";closePlayamEffectsTray();}
 function setPlayamFilterStrength(v){playamFilterStrength=Number(v);document.getElementById("playamFilterStrengthValue").textContent=v+"%";const base=({natural:"none",glow:"brightness(1.12) saturate(1.2)",cinema:"contrast(1.18) saturate(.82)",vintage:"sepia(.35) contrast(1.08)",mono:"grayscale(1)",warm:"sepia(.18) saturate(1.25)"})[playamSelectedFilter]||"none";const amount=playamFilterStrength/100;playamCameraFilter=base==="none"?"none":base.replace(/([0-9.]+)/g,n=>String(1+(Number(n)-1)*amount));}
 async function flipPlayamCamera(){if(!navigator.mediaDevices?.getUserMedia)return;const old=playamARStream;try{playamFacingMode=playamFacingMode==="user"?"environment":"user";const next=await navigator.mediaDevices.getUserMedia({video:{facingMode:playamFacingMode,width:{ideal:720},height:{ideal:960}},audio:true});if(old)old.getTracks().forEach(t=>t.stop());playamARStream=next;const v=document.getElementById("playamARVideo");v.srcObject=next;await v.play();}catch(e){document.getElementById("playamARStatus").textContent="Could not switch camera: "+e.message;}}
 async function togglePlayamFlash(){const track=playamARStream?.getVideoTracks()[0],caps=track?.getCapabilities?.();if(!track||!caps?.torch){document.getElementById("playamARStatus").textContent="Flash is not supported by this camera.";return;}playamFlashOn=!playamFlashOn;try{await track.applyConstraints({advanced:[{torch:playamFlashOn}]});}catch(e){playamARStatus.textContent="Flash unavailable on this device.";}}
@@ -1365,8 +1380,8 @@ function selectPlayamTemplate(name,prompt){
  if(panel)panel.dataset.selectedTemplate=name;
  closePlayamTemplateTray();
 }
-function triggerPlayamCreate(){const panel=document.getElementById("playamCreatePanel");if(!panel)return;panel.classList.remove("hidden");panel.classList.add("camera-mode");panel.setAttribute("aria-hidden","false");openPlayamARCamera();}
-function closePlayamCreate(){const panel=document.getElementById("playamCreatePanel");if(panel){panel.classList.add("hidden");panel.classList.remove("camera-mode");panel.setAttribute("aria-hidden","true")}closePlayamARCamera();}
+function triggerPlayamCreate(){const panel=document.getElementById("playamCreatePanel");if(!panel)return;document.body.classList.add("playam-camera-open");panel.classList.remove("hidden");panel.classList.add("camera-mode");panel.setAttribute("aria-hidden","false");openPlayamARCamera();}
+function closePlayamCreate(){const panel=document.getElementById("playamCreatePanel");if(panel){panel.classList.add("hidden");panel.classList.remove("camera-mode");panel.setAttribute("aria-hidden","true")}document.body.classList.remove("playam-camera-open");closePlayamARCamera();}
 function openPlayamUpload(){closePlayamCreate();const input=document.getElementById("playamVideoFile");if(input)input.click();else showMessage("Video upload is not available on this screen yet.");}
 function showFindPlayer(){stopLobbyRefresh();stopGameRefresh();showScreen("findPlayerScreen");if(typeof loadPlayamFriends==="function")loadPlayamFriends()}
 function showSettings(){showScreen("settingsScreen")}
