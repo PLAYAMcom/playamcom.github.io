@@ -859,7 +859,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
      <div id="playamNewMessagePanel" class="playam-new-message hidden"><div class="playam-chat-heading"><button class="secondary" type="button" onclick="hidePlayamNewMessage()">← Inbox</button><strong>Find a player</strong></div><input id="playamPlayerSearch" type="search" maxlength="40" placeholder="Search username or player name" aria-label="Search players" oninput="searchPlayamPlayers(this.value)"><div id="playamPlayerSearchResults" class="playam-search-results"></div></div>
     </section>
     <section id="playamChatPanel" class="playam-chat-panel hidden"><div class="playam-chat-heading"><button class="secondary" type="button" onclick="closePlayamChat()">← Inbox</button><strong id="playamChatTitle">Conversation</strong></div><div id="playamChatMessages" class="playam-chat-messages" aria-live="polite"></div><form class="playam-chat-compose" onsubmit="event.preventDefault();sendPlayamMessage();return false"><input id="playamMessageInput" type="text" maxlength="2000" placeholder="Write a message…" autocomplete="off" aria-label="Write a message"><button class="primary" type="submit">Send</button></form><p id="playamChatStatus" class="playam-inbox-status" role="status" aria-live="polite"></p></section>
-    <p class="feed-feature-note">Messaging is a planned platform feature; no chat inbox is connected to this screen yet.</p>
+
     <button class="secondary feed-wide-button" onclick="showFindPlayer()">FIND PLAYERS</button>
    </section>
 
@@ -1381,6 +1381,7 @@ function goHomeSection(id){
  requestAnimationFrame(()=>target.scrollIntoView({behavior:"smooth",block:"start"}));
  document.querySelectorAll(".mobile-tab").forEach(b=>b.classList.toggle("active",b.getAttribute("onclick")?.includes("'"+id+"'")));
  if(id==="feedVideos")loadPlayamVideos();
+ if(id==="feedMessages")loadPlayamInbox();
  if(id==="feedProfile")loadPlayamCreatorProfile().catch(e=>console.warn("Creator profile load failed",e));
 }
 
