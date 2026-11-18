@@ -307,6 +307,7 @@ textarea{line-height:1.5;resize:vertical}
 @media(prefers-reduced-motion:reduce){.main{scroll-behavior:auto}}
 
 
+.playam-buying-guide{margin:14px 0 18px;padding:17px;border:1px solid #51406f;border-radius:18px;background:linear-gradient(145deg,#211b35,#11111d);color:#f4efff}.playam-buying-guide-kicker{font-size:9px;font-weight:900;letter-spacing:.16em;color:#c9a5ff}.playam-buying-guide h3{font-size:17px;margin:7px 0}.playam-buying-guide p,.playam-buying-guide li{font-size:11px;line-height:1.55;color:#d1c9df}.playam-buying-guide ul{padding-left:18px;margin:9px 0}.playam-buying-guide li{margin:5px 0}.playam-buying-guide-note{padding:11px;margin-top:10px;border-radius:12px;background:#ffffff0b;font-size:11px;line-height:1.5;color:#e7def3}.playam-buying-guide-status{margin:10px 0 0!important;color:#b9adc9!important;font-size:10px!important}
 /* Purchased coin wallet — Staging */
 .coin-wallet-card{margin:14px 0 18px;padding:18px;border:1px solid #51406f;border-radius:20px;background:linear-gradient(145deg,#241d3b,#121222)}
 .coin-wallet-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
@@ -322,6 +323,7 @@ textarea{line-height:1.5;resize:vertical}
 .coin-package-card .coin-price{font-size:16px;font-weight:800;margin:0 0 9px}
 .coin-package-card button{width:100%;padding:10px 6px;font-size:10px;min-height:42px}
 .coin-wallet-note{font-size:10px;line-height:1.5;color:#aaa0c4;margin:10px 0 0}
+.coin-package-detail{min-height:42px;margin:0 0 9px;color:#bdb4d2;font-size:10px;line-height:1.4}
 #coinPaymentStatus{min-height:18px;line-height:1.4;margin:10px 0;color:#e3c1ff;font-size:11px}
 @media(max-width:420px){.coin-package-grid{grid-template-columns:1fr 1fr}.coin-package-card{padding:10px}.coin-package-card .coin-price{font-size:14px}}
 
@@ -963,6 +965,14 @@ body.playam-camera-open{overflow:hidden!important;overscroll-behavior:none!impor
   <section id="settingsScreen" class="screen-card hidden">
    <h2>⚙️ Settings</h2>
    <p class="muted">Manage your PLAYAM account and purchased coins.</p>
+   <section class="playam-buying-guide" aria-label="PLAYAM purchase transparency">
+    <div class="playam-buying-guide-kicker">PLAYAM STORE PROMISE</div>
+    <h3>See it clearly before you spend</h3>
+    <p>Every paid game item will have a full preview before checkout, so you can inspect what you are getting first.</p>
+    <ul><li>Preview the actual item, outfit, weapon skin or feature—not just a name.</li><li>See the full NGN price or PLAYAM Coin cost, what is included and whether it is permanent or time-limited.</li><li>Review the exact total and confirm before payment. No hidden unlocks.</li></ul>
+    <div class="playam-buying-guide-note"><strong>VIP membership:</strong> only 30-day and 90-day plans. Cosmetics you claim remain yours; VIP-only services and status benefits end when membership expires. VIP checkout will appear only when its benefits and secure payment are ready.</div>
+    <p class="playam-buying-guide-status">Paid game unlocks are not being sold through this preview guide yet. We will not pretend a preview is a completed purchase.</p>
+   </section>
    <div class="coin-wallet-card" aria-label="Purchased PLAYAM Coin wallet">
     <div class="coin-wallet-heading">
      <div><div class="feed-kicker">YOUR PURCHASED COINS</div><h3>PLAYAM Coin Wallet</h3><p>Coins for sending LIVE gifts.</p></div>
@@ -1885,7 +1895,7 @@ async function loadPlayamCoinPackages(){
    price.textContent=new Intl.NumberFormat("en-NG",{style:"currency",currency:pkg.currency||"NGN",maximumFractionDigits:0}).format(Number(pkg.amount_minor)/100);
    const button=document.createElement("button");button.type="button";button.className="primary";
    button.textContent="BUY COINS";button.addEventListener("click",()=>startPlayamCoinCheckout(pkg,button));
-   card.append(name,quantity,price,button);list.append(card);
+   const detail=document.createElement("p");detail.className="coin-package-detail";detail.textContent="Use these coins for LIVE gifts only. No gameplay advantage or game unlock is included.";button.textContent="REVIEW & BUY COINS";card.append(name,quantity,price,detail,button);list.append(card);
   }
   if(!new URLSearchParams(window.location.search).has("reference")&&!new URLSearchParams(window.location.search).has("trxref")){
    setCoinPaymentStatus("Choose a package. Payment is verified by Paystack before coins are credited.");
