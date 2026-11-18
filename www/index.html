@@ -2270,5 +2270,15 @@ function reloadStrike(){const w=strikeWeapons[strikeWeapon],n=Math.min(w.mag-str
  };
  document.addEventListener('DOMContentLoaded',paint);paint();
 })();
+</script>
+<script>
+/* PLAYAM install support: register the service worker for supported browsers. */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('./service-worker.js').catch(function (error) {
+      console.warn('PLAYAM offline support could not be enabled:', error);
+    });
+  });
+}
 </script></body>
 </html>
