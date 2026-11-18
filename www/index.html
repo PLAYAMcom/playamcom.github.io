@@ -2019,14 +2019,45 @@ function reloadStrike(){const w=strikeWeapons[strikeWeapon],n=Math.min(w.mag-str
 </script>
 <script>
 (function(){
- const key='playamTapRushBestV1';
- let score=0,time=15,timer=null,active=false;
+ const bestKey='playamTapRushBestV2', dailyPrefix='playamTapRushDailyV2-', dayKey=()=>new Date().toISOString().slice(0,10);
+ let score=0,time=15,timer=null,active=false,combo=0,lastTap=0;
  const el=id=>document.getElementById(id);
- function best(){try{return Number(localStorage.getItem(key)||0)}catch(e){return 0}}
- function paint(){if(el('pdsScore'))el('pdsScore').textContent=score;if(el('pdsTime'))el('pdsTime').textContent=time+'s';if(el('pdsBest'))el('pdsBest').textContent='BEST: '+best();if(el('pdsToday'))el('pdsToday').textContent=best()}
- window.playamTapRushStart=function(){if(active)return;clearInterval(timer);score=0;time=15;active=true;el('pdsTap').disabled=false;el('pdsTap').textContent='TAP!';el('pdsStart').disabled=true;el('pdsFeedback').textContent='GO! Keep tapping until the timer hits zero.';paint();timer=setInterval(function(){time--;paint();if(time<=0){clearInterval(timer);active=false;el('pdsTap').disabled=true;el('pdsTap').textContent='TIME UP!';el('pdsStart').disabled=false;let old=best();if(score>old){try{localStorage.setItem(key,String(score))}catch(e){}el('pdsFeedback').textContent='🏆 NEW PERSONAL BEST! You scored '+score+'. Run it back or challenge a friend!'}else{el('pdsFeedback').textContent='Nice run! You scored '+score+'. '+(score===old?'You matched your best!':'Your best is '+old+'. Can you beat it?')}paint()}},1000)}
- window.playamTapRushTap=function(){if(!active)return;score++;paint();if(score%10===0){el('pdsTap').textContent='🔥 '+score+' — KEEP GOING!'}else{el('pdsTap').textContent='TAP!'}}
- window.playamTapRushShare=function(){const msg='I scored '+score+' on PLAYAM Tap Rush! Can you beat me?';if(navigator.share){navigator.share({title:'PLAYAM Tap Rush',text:msg}).catch(()=>{})}else if(navigator.clipboard){navigator.clipboard.writeText(msg).then(()=>{el('pdsFeedback').textContent='Score copied — send it to a friend!'}).catch(()=>{el('pdsFeedback').textContent=msg})}else{el('pdsFeedback').textContent=msg}}
+ function read(key){try{return Number(localStorage.getItem(key)||0)}catch(e){return 0}}
+ function write(key,value){try{localStorage.setItem(key,String(value))}catch(e){}}
+ function paint(){
+  if(el('pdsScore'))el('pdsScore').textContent=score;
+  if(el('pdsTime'))el('pdsTime').textContent=time+'s';
+  if(el('pdsBest'))el('pdsBest').textContent='ALL-TIME BEST: '+read(bestKey);
+  if(el('pdsToday'))el('pdsToday').textContent=read(dailyPrefix+dayKey());
+ }
+ function finish(){
+  clearInterval(timer);active=false;el('pdsTap').disabled=true;el('pdsTap').textContent='TIME UP!';el('pdsStart').disabled=false;
+  const oldBest=read(bestKey),oldDaily=read(dailyPrefix+dayKey());
+  if(score>oldBest)write(bestKey,score);
+  if(score>oldDaily)write(dailyPrefix+dayKey(),score);
+  let rank=score>=100?'⚡ TAP LEGEND':score>=70?'🔥 SPEED DEMON':score>=40?'🚀 QUICK HANDS':'👏 WARMING UP';
+  el('pdsFeedback').textContent=(score>oldBest?'🏆 NEW ALL-TIME RECORD! ':score>oldDaily?'🌟 NEW DAILY BEST! ':'')+rank+' — '+score+' points. Challenge a friend to beat you!';
+  paint();
+ }
+ window.playamTapRushStart=function(){
+  if(active)return;clearInterval(timer);score=0;time=15;combo=0;lastTap=0;active=true;
+  el('pdsTap').disabled=false;el('pdsTap').textContent='TAP!';el('pdsStart').disabled=true;
+  el('pdsFeedback').textContent='GO! Build a combo by tapping quickly. Every 5-tap combo earns bonus points!';
+  paint();timer=setInterval(function(){time--;paint();if(time<=0)finish()},1000);
+ };
+ window.playamTapRushTap=function(){
+  if(!active)return;
+  const now=Date.now();combo=lastTap&&now-lastTap<550?combo+1:1;lastTap=now;
+  score+=1+(combo%5===0?5:0);paint();
+  el('pdsTap').textContent=combo%5===0?'🔥 COMBO +5!':'⚡ '+combo+'x COMBO';
+  if(combo%5===0)el('pdsFeedback').textContent='🔥 '+combo+' tap streak! Bonus +5 points — keep the combo alive!';
+ };
+ window.playamTapRushShare=function(){
+  const msg='I scored '+score+' points on PLAYAM Tap Rush! Can you beat my score?';
+  if(navigator.share){navigator.share({title:'PLAYAM Tap Rush',text:msg}).catch(()=>{})}
+  else if(navigator.clipboard){navigator.clipboard.writeText(msg).then(()=>{el('pdsFeedback').textContent='Score copied — send it to a friend!'}).catch(()=>{el('pdsFeedback').textContent=msg})}
+  else{el('pdsFeedback').textContent=msg}
+ };
  document.addEventListener('DOMContentLoaded',paint);paint();
 })();
 </script></body>
