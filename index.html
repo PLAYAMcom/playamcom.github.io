@@ -127,33 +127,6 @@ label{display:block;margin-top:13px;font-weight:bold}
 @media(max-width:560px){.wallet-cards,.wallet-package-grid{grid-template-columns:1fr}.wallet-balance{font-size:29px}}
 
 
-/* Cross-device layout refinements */
-html{min-width:320px;-webkit-text-size-adjust:100%;text-size-adjust:100%}
-body{padding-bottom:env(safe-area-inset-bottom)}
-button,.navbtn{min-height:44px;touch-action:manipulation}
-input,select,textarea{font-size:16px}
-img,video,canvas,iframe{max-width:100%}
-.main{min-width:0}
-.screen-card{width:100%}
-@media(min-width:761px) and (max-width:1100px){
- .sidebar{width:205px;padding:20px 12px}
- .main{padding:24px}
- .game-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
- .game-card{padding:18px}
-}
-@media(max-width:760px){
- .sidebar{position:sticky;top:0;z-index:20;scrollbar-width:thin}
- .main{width:100%;padding:clamp(12px,3vw,20px)}
- .screen-card{padding:clamp(15px,4vw,24px)}
- .topbar{align-items:flex-start;flex-wrap:wrap}
- .online{white-space:nowrap}
-}
-@media(max-width:420px){
- .small-grid,.wallet-cards,.wallet-package-grid{grid-template-columns:1fr}
- .welcome{font-size:21px}
- .hero h2{font-size:23px}
- #authScreen{margin:5vh 12px 24px;padding:20px}
-}
 
 </style>
 </head>
@@ -185,6 +158,11 @@ img,video,canvas,iframe{max-width:100%}
   <button class="secondary" style="width:100%;margin-top:8px" onclick="signInSocial('apple')">CONTINUE WITH APPLE</button>
   <p class="small">Google and Apple sign-in will work after their providers are configured for PLAYAM.</p>
  </div>
+ <div class="auth-method" id="rememberedAccountsPanel">
+  <h3>Switch account</h3>
+  <p class="small">Choose a saved sign-in, or add another account. For your security, passwords and verification codes are never saved here.</p>
+  <div id="rememberedAccountsList"><p class="small">No saved accounts on this device yet.</p></div>
+ </div>
  <div id="authMessage"></div>
 </div>
 
@@ -202,7 +180,8 @@ img,video,canvas,iframe{max-width:100%}
   <button class="navbtn" onclick="showSettings()">🔐 Security</button>
   <div class="sidebar-bottom">
    <div class="side-label">ACCOUNT</div>
-   <button class="navbtn" onclick="signOut()">↪ Log Out</button>
+   <button class="navbtn" onclick="openAccountSwitcher()">⇄ Switch Account</button>
+    <button class="navbtn" onclick="signOut()">↪ Log Out</button>
   </div>
  </aside>
 
@@ -602,6 +581,61 @@ function showCreateRoom(){showScreen("createScreen")}
 function showJoinRoom(){showScreen("joinScreen")}
 function showCreateRoomWithHard(){document.getElementById("game").value="friendship-court";document.getElementById("level").value="hard";showCreateRoom()}
 
+/* ACCOUNT SWITCHER — stores account labels only, never credentials */
+const PLAYAM_ACCOUNT_LIST_KEY="playam_saved_account_labels_v1";
+function getRememberedAccounts(){
+ try{const value=JSON.parse(localStorage.getItem(PLAYAM_ACCOUNT_LIST_KEY)||"[]");return Array.isArray(value)?value:[]}catch{return []}
+}
+function rememberSignedInAccount(user,method){
+ if(!user)return;
+ const email=(user.email||"").trim();
+ const phone=(user.phone||"").trim();
+ const id=user.id;
+ const label=email||phone||user.user_metadata?.full_name||"PLAYAM account";
+ const accounts=getRememberedAccounts().filter(item=>item.id!==id);
+ accounts.unshift({id,label,email,phone,method:method|| (email?"email":phone?"phone":"other")});
+ try{localStorage.setItem(PLAYAM_ACCOUNT_LIST_KEY,JSON.stringify(accounts.slice(0,5)))}catch{}
+ renderRememberedAccounts();
+}
+function renderRememberedAccounts(){
+ const box=document.getElementById("rememberedAccountsList");
+ if(!box)return;
+ const accounts=getRememberedAccounts();
+ box.innerHTML="";
+ if(!accounts.length){box.innerHTML="<p class='small'>No saved accounts on this device yet. Sign in to add one.</p>";return}
+ accounts.forEach(account=>{
+  const row=document.createElement("div");row.className="auth-method";row.style.marginTop="8px";
+  const label=document.createElement("div");label.textContent=account.label||"PLAYAM account";label.style.fontWeight="700";
+  const detail=document.createElement("p");detail.className="small";detail.textContent=account.method==="phone"?"Phone sign-in":account.method==="email"?"Email sign-in":"Saved sign-in";
+  const choose=document.createElement("button");choose.className="secondary";choose.style.width="100%";choose.textContent="USE THIS ACCOUNT";
+  choose.onclick=()=>selectRememberedAccount(account.id);
+  const forget=document.createElement("button");forget.className="secondary";forget.style.width="100%";forget.style.marginTop="6px";forget.textContent="REMOVE FROM THIS DEVICE";
+  forget.onclick=()=>{const next=getRememberedAccounts().filter(item=>item.id!==account.id);localStorage.setItem(PLAYAM_ACCOUNT_LIST_KEY,JSON.stringify(next));renderRememberedAccounts()};
+  row.append(label,detail,choose,forget);box.appendChild(row);
+ });
+}
+async function openAccountSwitcher(){
+ stopLobbyRefresh();stopGameRefresh();resetGameState();resetSoloGame();
+ const {data:{session}}=await supabaseClient.auth.getSession();
+ if(session)await supabaseClient.auth.signOut({scope:"local"});
+ document.getElementById("app").classList.add("hidden");
+ document.getElementById("authScreen").classList.remove("hidden");
+ document.getElementById("authMessage").textContent="Choose an account or sign in to another one. You'll need to verify your sign-in again.";
+ renderRememberedAccounts();
+}
+function selectRememberedAccount(id){
+ const account=getRememberedAccounts().find(item=>item.id===id);if(!account)return;
+ document.getElementById("email").value=account.email||"";
+ document.getElementById("phone").value=account.phone||"";
+ document.getElementById("password").value="";
+ document.getElementById("phoneOtp").value="";
+ document.getElementById("authMessage").textContent=account.method==="phone"?"Enter the SMS code after requesting a new code.":"Enter this account's password to continue.";
+ if(account.method==="phone")document.getElementById("phone").focus();else document.getElementById("password").focus();
+}
+function rememberCurrentSession(){
+ supabaseClient.auth.getUser().then(({data,error})=>{if(!error&&data?.user)rememberSignedInAccount(data.user)});
+}
+
 /* AUTH */
 async function signUp(){
  const email=document.getElementById("email").value.trim(),password=document.getElementById("password").value;
@@ -609,7 +643,7 @@ async function signUp(){
  showMessage("Creating your account...");
  const {data,error}=await supabaseClient.auth.signUp({email,password});
  if(error){showMessage(error.message);return}
- if(data.session)showHome();else showMessage("Account created. Please check your email if confirmation is required.");
+ if(data.session){rememberSignedInAccount(data.user,"email");showHome()}else showMessage("Account created. Please check your email if confirmation is required.");
 }
 async function signIn(){
  const email=document.getElementById("email").value.trim(),password=document.getElementById("password").value;
@@ -617,7 +651,7 @@ async function signIn(){
  showMessage("Logging in...");
  const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});
  if(error){showMessage(error.message);return}
- if(data.session)showHome();else showMessage("Login succeeded, but no active session was returned.");
+ if(data.session){rememberSignedInAccount(data.user,"email");showHome()}else showMessage("Login succeeded, but no active session was returned.");
 }
 async function sendPhoneOtp(){
  const phone=document.getElementById("phone").value.trim();
@@ -633,7 +667,7 @@ async function verifyPhoneOtp(){
  showMessage("Verifying your code...");
  const {data,error}=await supabaseClient.auth.verifyOtp({phone,token,type:"sms"});
  if(error){showMessage(error.message);return}
- if(data.session)showHome();else showMessage("Code accepted, but no active session was returned.");
+ if(data.session){rememberSignedInAccount(data.user,"phone");showHome()}else showMessage("Code accepted, but no active session was returned.");
 }
 async function signInSocial(provider){
  showMessage("Connecting to "+(provider==="google"?"Google":"Apple")+"...");
@@ -901,13 +935,14 @@ function returnHomeFromResults(){stopGameRefresh();resetGameState();showHome()}
 async function checkLogin(){
  const {data:{session},error}=await supabaseClient.auth.getSession();
  if(error){document.getElementById("authMessage").innerText=error.message;return}
- if(session){document.getElementById("authScreen").classList.add("hidden");document.getElementById("app").classList.remove("hidden");showHome()}
+ if(session){rememberCurrentSession();document.getElementById("authScreen").classList.add("hidden");document.getElementById("app").classList.remove("hidden");showHome()}
  else{document.getElementById("app").classList.add("hidden");document.getElementById("authScreen").classList.remove("hidden")}
 }
 supabaseClient.auth.onAuthStateChange((event,session)=>{
  if(event==="SIGNED_OUT"){resetGameState();resetSoloGame();document.getElementById("app").classList.add("hidden");document.getElementById("authScreen").classList.remove("hidden")}
- if(event==="SIGNED_IN"&&session){document.getElementById("authScreen").classList.add("hidden");document.getElementById("app").classList.remove("hidden");showHome()}
+ if(event==="SIGNED_IN"&&session){rememberCurrentSession();document.getElementById("authScreen").classList.add("hidden");document.getElementById("app").classList.remove("hidden");showHome()}
 });
+renderRememberedAccounts();
 checkLogin();
 </script>
 <script>
