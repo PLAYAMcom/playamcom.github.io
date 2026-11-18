@@ -336,6 +336,11 @@ textarea{line-height:1.5;resize:vertical}
 .playam-ad-card img{width:60px;height:60px;flex:0 0 60px;object-fit:cover;border-radius:9px}
 .playam-ad-card strong{display:block;color:#fff;font-size:12px;font-weight:800}
 .playam-ad-description{display:block;margin-top:3px;color:#c9c0d8;font-size:11px;line-height:1.35}
+/* Bold mobile navigation: stronger labels and icons */
+.mobile-tabbar.playam-tiktok-tabbar .mobile-tab{font-size:12px;font-weight:900;letter-spacing:.15px;text-shadow:0 0 .35px currentColor}
+.mobile-tabbar.playam-tiktok-tabbar .mobile-tab>span{font-size:23px;font-weight:900;line-height:1.1;-webkit-text-stroke:.45px currentColor}
+.mobile-tabbar.playam-tiktok-tabbar .mobile-tab.active{color:#fff;font-weight:900}
+.mobile-tabbar.playam-tiktok-tabbar .mobile-tab.create-tab{font-size:28px;font-weight:900}
 /* PLAYAM Shorts: swipe-first full-screen mobile presentation */
 @media(max-width:760px){
  #homeScreen.playam-vertical-feed .feed-video-page{position:relative;height:calc(100dvh - 102px - env(safe-area-inset-bottom));min-height:calc(100dvh - 102px - env(safe-area-inset-bottom));padding:0;overflow:hidden;display:block;background:#05050b}
@@ -818,6 +823,15 @@ textarea{line-height:1.5;resize:vertical}
       <button type="button" data-ar="blush" onclick="setPlayamAREffect('blush',this)">Blush</button>
       <button type="button" data-ar="lip" onclick="setPlayamAREffect('lip',this)">Lip tint</button>
      </div>
+     <div class="playam-music-picker">
+      <strong>♪ Add music to your video</strong>
+      <p class="playam-ar-note">Choose an audio file you own or have permission to use. A licensed PLAYAM sound catalogue will follow when music rights are secured.</p>
+      <input id="playamMusicFile" type="file" accept="audio/*" onchange="selectPlayamMusic(event)" aria-label="Choose music">
+      <audio id="playamMusicPreview" controls class="hidden"></audio>
+      <label for="playamMusicVolume">Music volume <span id="playamMusicVolumeValue">35%</span></label>
+      <input id="playamMusicVolume" type="range" min="0" max="100" value="35" oninput="updatePlayamMusicVolume(this.value)">
+      <p id="playamMusicStatus" class="playam-ar-note" role="status">No music selected. Your microphone will still be recorded.</p>
+     </div>
      <div class="feed-inline-actions"><button class="primary" id="playamARRecordBtn" type="button" onclick="togglePlayamARRecording()">● Start recording</button></div>
      <p id="playamARStatus" class="playam-ar-note" role="status">Starting camera and face tracking…</p>
     </section>
@@ -924,7 +938,7 @@ function showScreen(id,nav=""){hideScreens();document.getElementById(id).classLi
 function showHome(){stopLobbyRefresh();stopGameRefresh();showScreen("homeScreen","navHome");void loadPlayamGameAd();const main=document.querySelector(".main");if(main)main.onscroll=syncFeedTab;requestAnimationFrame(()=>{if(main){const videos=document.getElementById("feedVideos");main.scrollTop=videos?videos.offsetTop:0;}syncFeedTab();loadPlayamVideos()})}
 
 /* Live AR face effects powered by MediaPipe Face Landmarker */
-let playamARStream=null,playamARLandmarker=null,playamARFrame=0,playamAREffect="none",playamARRecorder=null,playamARChunks=[];
+let playamARStream=null,playamARLandmarker=null,playamARFrame=0,playamAREffect="none",playamARRecorder=null,playamARChunks=[],playamMusicUrl=null,playamAudioContext=null,playamMusicGain=null,playamMusicElementSource=null;
 async function openPlayamARCamera(){
  const panel=document.getElementById("playamARPanel");panel.classList.remove("hidden");
  const status=document.getElementById("playamARStatus");
@@ -967,16 +981,30 @@ function drawPlayamARFrame(){
  }catch(e){document.getElementById("playamARStatus").textContent="Face tracking paused. Please restart the camera.";}
  playamARFrame=requestAnimationFrame(drawPlayamARFrame);
 }
+function selectPlayamMusic(event){
+ const file=event?.target?.files?.[0],audio=document.getElementById("playamMusicPreview"),status=document.getElementById("playamMusicStatus");
+ if(!file)return;if(!file.type.startsWith("audio/")){status.textContent="Please choose a supported audio file.";return}
+ if(playamMusicUrl)URL.revokeObjectURL(playamMusicUrl);playamMusicUrl=URL.createObjectURL(file);audio.src=playamMusicUrl;audio.classList.remove("hidden");audio.load();status.textContent="Selected: "+file.name+" — it will mix with your microphone while recording.";
+}
+function updatePlayamMusicVolume(value){const label=document.getElementById("playamMusicVolumeValue");if(label)label.textContent=value+"%";if(playamMusicGain)playamMusicGain.gain.value=Number(value)/100;}
+async function buildPlayamRecordingAudio(){
+ const Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)throw new Error("Audio mixing is not supported in this browser.");
+ const context=new Ctx(),destination=context.createMediaStreamDestination();
+ const micTracks=playamARStream.getAudioTracks();if(micTracks.length)context.createMediaStreamSource(new MediaStream(micTracks)).connect(destination);
+ const music=document.getElementById("playamMusicPreview");
+ if(music?.src){if(!playamMusicElementSource)playamMusicElementSource=context.createMediaElementSource(music);playamMusicGain=context.createGain();playamMusicGain.gain.value=Number(document.getElementById("playamMusicVolume")?.value||35)/100;playamMusicElementSource.connect(playamMusicGain);playamMusicGain.connect(destination);playamMusicGain.connect(context.destination);music.currentTime=0;await context.resume();await music.play();}
+ playamAudioContext=context;return destination.stream;
+}
 function togglePlayamARRecording(){
  const btn=document.getElementById("playamARRecordBtn"),canvas=document.getElementById("playamARCanvas"),status=document.getElementById("playamARStatus");
  if(playamARRecorder?.state==="recording"){playamARRecorder.stop();btn.textContent="● Start recording";return;}
  try{
-  const out=canvas.captureStream(30);playamARStream.getAudioTracks().forEach(t=>out.addTrack(t));
+  const out=canvas.captureStream(30);const mixedAudio=await buildPlayamRecordingAudio();mixedAudio.getAudioTracks().forEach(t=>out.addTrack(t));
   const mime=["video/webm;codecs=vp9,opus","video/webm;codecs=vp8,opus","video/webm"].find(t=>MediaRecorder.isTypeSupported(t));
   if(!mime)throw new Error("This browser does not support recording this live AR effect.");
   playamARChunks=[];playamARRecorder=new MediaRecorder(out,{mimeType:mime});
   playamARRecorder.ondataavailable=e=>{if(e.data.size)playamARChunks.push(e.data);};
-  playamARRecorder.onstop=()=>{const blob=new Blob(playamARChunks,{type:mime}),file=new File([blob],"playam-live-filter.webm",{type:"video/webm"});window.playamEditedVideoFile=file;closePlayamARCamera();closePlayamCreate();const input=document.getElementById("playamVideoFile");if(input){const dt=new DataTransfer();dt.items.add(file);input.files=dt.files;previewPlayamEditor({target:input});}status.textContent="Recording ready to review and upload.";};
+  playamARRecorder.onstop=()=>{const blob=new Blob(playamARChunks,{type:mime}),file=new File([blob],"playam-live-filter.webm",{type:"video/webm"});window.playamEditedVideoFile=file;document.getElementById("playamMusicPreview")?.pause();if(playamAudioContext){playamAudioContext.close().catch(()=>{});playamAudioContext=null;playamMusicGain=null;playamMusicElementSource=null;}closePlayamARCamera();closePlayamCreate();const input=document.getElementById("playamVideoFile");if(input){const dt=new DataTransfer();dt.items.add(file);input.files=dt.files;previewPlayamEditor({target:input});}status.textContent="Recording ready to review and upload.";};
   playamARRecorder.start();btn.textContent="■ Stop recording";status.textContent="Recording with live face effect and microphone audio.";
  }catch(e){status.textContent=e.message||"Recording could not start on this device.";}
 }
