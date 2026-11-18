@@ -2367,7 +2367,12 @@ function initials(s){return String(s||'P').trim().charAt(0).toUpperCase()||'P'}
 function stamp(s){const d=new Date(s);return isNaN(d)?'':d.toLocaleString([],{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}
 async function signedIn(){
  const c=client();if(!c||!c.auth)throw new Error('PLAYAM connection is not ready. Refresh and try again.');
- const {data,error}=await c.auth.getUser();if(error)throw error;if(!data.user)throw new Error('Please sign in to use private messages.');currentUser=data.user;return data.user;
+ const {data,error}=await c.auth.getUser();if(error)throw error;if(!data.user)throw new Error('Please sign in to use private messages.');currentUser=data.user;
+ const found=await c.from('playam_profiles').select('user_id').eq('user_id',currentUser.id).maybeSingle();if(found.error)throw found.error;
+ if(!found.data){const meta=currentUser.user_metadata||{},display=String(meta.full_name||meta.name||(currentUser.email||'PLAYAM Player').split('@')[0]).slice(0,40),base=String((currentUser.email||'player').split('@')[0]).toLowerCase().replace(/[^a-z0-9_.]/g,'').slice(0,18)||'player',username=base+'_'+currentUser.id.slice(0,8);
+  const made=await c.from('playam_profiles').insert({user_id:currentUser.id,display_name:display,username,bio:'',avatar_url:meta.avatar_url||meta.picture||null});if(made.error&&made.error.code!=='23505')throw made.error;
+ }
+ return currentUser;
 }
 window.loadPlayamInbox=async function(){
  const c=client(),list=$('playamConversationList'),status=$('playamInboxStatus');if(!c||!list||!status)return;
