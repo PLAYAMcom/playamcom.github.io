@@ -419,6 +419,7 @@ textarea{line-height:1.5;resize:vertical}
  #homeScreen.playam-vertical-feed .feed-video-page{height:100%;min-height:100%;padding-bottom:0}
 }
 
+.snooker-scoreboard{display:grid;grid-template-columns:1fr 1.4fr 1fr;gap:8px;align-items:center;margin:14px 0}.snooker-scoreboard>div{padding:10px;border:1px solid #51416f;border-radius:13px;background:#211d39;text-align:center}.snooker-scoreboard small{display:block;font-size:10px;color:#c7b8e8;font-weight:800}.snooker-scoreboard strong{display:block;font-size:25px;margin-top:4px}.snooker-turn{font-size:11px;font-weight:900;color:#ffd28b}.snooker-table-wrap{width:100%;overflow:hidden;border:5px solid #9b6534;border-radius:13px;background:#155c3c;box-shadow:inset 0 0 0 3px #d8a35b}.snooker-table-wrap canvas{display:block;width:100%;height:auto;touch-action:none}.snooker-controls{margin:14px 0;padding:12px;border-radius:14px;background:#171528}.snooker-controls label{display:flex;justify-content:space-between;font-size:12px;font-weight:800}.snooker-controls input{margin:10px 0}.snooker-buttons{display:grid;grid-template-columns:1fr 1fr;gap:9px}.snooker-buttons button{width:100%}@media(max-width:430px){.snooker-scoreboard{grid-template-columns:1fr 1.2fr 1fr}.snooker-scoreboard strong{font-size:21px}.snooker-turn{font-size:9px}.snooker-buttons{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -507,7 +508,7 @@ textarea{line-height:1.5;resize:vertical}
      <article class="feed-game-card"><span class="feed-game-icon">🧠</span><div><h3>Mind Battle</h3><p>Put your thinking to the test.</p></div><button class="primary" onclick="showCreateRoomForGame('mind-battle')">PLAY</button></article>
      <article class="feed-game-card"><span class="feed-game-icon">🤫</span><div><h3>Secret Confessions</h3><p>Share your response in a room.</p></div><button class="primary" onclick="showCreateRoomForGame('secret-confessions')">PLAY</button></article>
     </div>
-     <article class="feed-game-card"><span class="feed-game-icon">🎱</span><div><h3>Snooker</h3><p>Precision cue-sport challenge.</p></div><button class="secondary" type="button" disabled>COMING SOON</button></article>
+     <article class="feed-game-card"><span class="feed-game-icon">🎱</span><div><h3>Snooker</h3><p>Play a local two-player cue-sport challenge.</p></div><button class="primary" type="button" onclick="startSnooker()">PLAY SNOOKER</button></article>
      <article class="feed-game-card"><span class="feed-game-icon">🎱</span><div><h3>Pool</h3><p>Classic pocket-billiards game.</p></div><button class="secondary" type="button" disabled>COMING SOON</button></article>
      <article class="feed-game-card"><span class="feed-game-icon">⚽</span><div><h3>Football</h3><p>Compete in football challenges.</p></div><button class="secondary" type="button" disabled>COMING SOON</button></article>
      <article class="feed-game-card"><span class="feed-game-icon">♟️</span><div><h3>Checkers</h3><p>Classic strategy board game.</p></div><button class="secondary" type="button" disabled>COMING SOON</button></article>
@@ -572,6 +573,15 @@ textarea{line-height:1.5;resize:vertical}
    </div>
    <button class="primary" style="width:100%;margin-top:15px" onclick="showCreateRoomWithHard()">CREATE HARD ROOM</button>
    <button class="back" style="width:100%;margin-top:8px" onclick="showHome()">← BACK TO HOME</button>
+  </section>
+
+  <section id="snookerScreen" class="screen-card hidden">
+   <div class="game-status">🎱 PLAYAM SNOOKER</div>
+   <p class="muted">Local two-player challenge · Drag from the cue ball to aim, then release to shoot.</p>
+   <div class="snooker-scoreboard"><div><small>PLAYER 1</small><strong id="snookerScore1">0</strong></div><div class="snooker-turn" id="snookerTurn">PLAYER 1'S TURN</div><div><small>PLAYER 2</small><strong id="snookerScore2">0</strong></div></div>
+   <div class="snooker-table-wrap"><canvas id="snookerCanvas" width="900" height="480" aria-label="Snooker table. Drag from the white cue ball to aim and release to shoot."></canvas></div>
+   <div class="snooker-controls"><label for="snookerPower">SHOT POWER <strong id="snookerPowerValue">55%</strong></label><input id="snookerPower" type="range" min="10" max="100" value="55"><p id="snookerMessage" class="small" aria-live="polite">Player 1 to break. Drag from the white ball and release.</p></div>
+   <div class="snooker-buttons"><button class="primary" type="button" onclick="resetSnooker()">NEW FRAME</button><button class="back" type="button" onclick="showHome()">BACK TO PLAYAM</button></div>
   </section>
 
   <section id="settingsScreen" class="screen-card hidden">
@@ -1491,6 +1501,52 @@ supabaseClient.auth.onAuthStateChange((event,session)=>{
  if(event==="SIGNED_IN"&&session&&!passwordRecoveryActive){document.getElementById("authScreen").classList.add("hidden");document.getElementById("app").classList.remove("hidden");showHome();initialisePlayamCoinWallet()}
 });
 checkLogin();
+
+/* PLAYAM Snooker MVP: local two-player physics and scoring */
+let snookerBalls=[],snookerPlayer=1,snookerScores=[0,0],snookerAim=null,snookerAnimating=false,snookerShotActive=false,snookerShotPotted=false,snookerCueBall=null,snookerLastShotAt=0;
+const SNOOKER_W=900,SNOOKER_H=480,SNOOKER_POCKETS=[[22,22],[450,18],[878,22],[22,458],[450,462],[878,458]];
+function startSnooker(){showScreen("snookerScreen");resetSnooker();requestAnimationFrame(drawSnooker)}
+function resetSnooker(){
+ snookerBalls=[];snookerPlayer=1;snookerScores=[0,0];snookerAim=null;snookerShotActive=false;snookerShotPotted=false;
+ snookerCueBall={x:205,y:240,vx:0,vy:0,r:10,color:"#fff",value:0,type:"cue"};snookerBalls.push(snookerCueBall);
+ const reds=[],redStartX=570,redStartY=240,r=9;for(let row=0;row<5;row++)for(let col=0;col<=row;col++)reds.push({x:redStartX+row*18,y:redStartY+(col-row/2)*19,vx:0,vy:0,r,color:"#d83232",value:1,type:"red"});
+ snookerBalls.push(...reds);
+ snookerBalls.push({x:300,y:240,vx:0,vy:0,r:10,color:"#f5d32d",value:2,type:"yellow"},{x:300,y:195,vx:0,vy:0,r:10,color:"#2878df",value:3,type:"green"},{x:450,y:240,vx:0,vy:0,r:10,color:"#2864d8",value:5,type:"blue"},{x:300,y:285,vx:0,vy:0,r:10,color:"#8a4aab",value:4,type:"brown"},{x:680,y:240,vx:0,vy:0,r:10,color:"#242424",value:7,type:"black"});
+ updateSnookerScore();setSnookerMessage("Player 1 to break. Drag from the white ball and release.");drawSnooker();
+}
+function setSnookerMessage(t){const e=document.getElementById("snookerMessage");if(e)e.textContent=t}
+function updateSnookerScore(){document.getElementById("snookerScore1").textContent=snookerScores[0];document.getElementById("snookerScore2").textContent=snookerScores[1];document.getElementById("snookerTurn").textContent="PLAYER "+snookerPlayer+"'S TURN"}
+function snookerCanvasPoint(e){const c=document.getElementById("snookerCanvas"),r=c.getBoundingClientRect();return{x:(e.clientX-r.left)*SNOOKER_W/r.width,y:(e.clientY-r.top)*SNOOKER_H/r.height}}
+function initSnookerInput(){
+ const c=document.getElementById("snookerCanvas");if(c.dataset.bound)return;c.dataset.bound="1";
+ c.addEventListener("pointerdown",e=>{if(snookerShotActive)return;const p=snookerCanvasPoint(e),b=snookerCueBall;if(Math.hypot(p.x-b.x,p.y-b.y)<48){snookerAim={x:p.x,y:p.y};c.setPointerCapture(e.pointerId);drawSnooker()}});
+ c.addEventListener("pointermove",e=>{if(snookerAim){snookerAim=snookerCanvasPoint(e);drawSnooker()}});
+ c.addEventListener("pointerup",e=>{if(!snookerAim)return;const p=snookerCanvasPoint(e),b=snookerCueBall,dx=b.x-p.x,dy=b.y-p.y,len=Math.hypot(dx,dy);snookerAim=null;if(len<8){drawSnooker();return}const power=Number(document.getElementById("snookerPower").value)/100,speed=Math.min(18,len*.085)*(.35+power*.9);b.vx=dx/len*speed;b.vy=dy/len*speed;snookerShotActive=true;snookerShotPotted=false;snookerLastShotAt=Date.now();setSnookerMessage("Shot in motion…");if(!snookerAnimating){snookerAnimating=true;requestAnimationFrame(snookerLoop)}});
+ const power=document.getElementById("snookerPower");power.addEventListener("input",()=>document.getElementById("snookerPowerValue").textContent=power.value+"%");
+}
+function drawSnooker(){
+ const c=document.getElementById("snookerCanvas");if(!c)return;initSnookerInput();const x=c.getContext("2d");x.clearRect(0,0,SNOOKER_W,SNOOKER_H);
+ x.fillStyle="#17623f";x.fillRect(0,0,SNOOKER_W,SNOOKER_H);x.strokeStyle="#d7a45e";x.lineWidth=5;x.strokeRect(12,12,876,456);
+ x.strokeStyle="rgba(245,230,190,.65)";x.lineWidth=2;x.beginPath();x.moveTo(250,16);x.lineTo(250,464);x.stroke();x.beginPath();x.arc(250,240,72,-Math.PI/2,Math.PI/2);x.stroke();
+ for(const [px,py] of SNOOKER_POCKETS){x.beginPath();x.fillStyle="#080909";x.arc(px,py,18,0,Math.PI*2);x.fill();x.strokeStyle="#9d713e";x.lineWidth=3;x.stroke()}
+ for(const b of snookerBalls){if(b.potted)continue;x.beginPath();x.fillStyle=b.color;x.arc(b.x,b.y,b.r,0,Math.PI*2);x.fill();x.beginPath();x.fillStyle="rgba(255,255,255,.45)";x.arc(b.x-b.r*.3,b.y-b.r*.35,b.r*.27,0,Math.PI*2);x.fill()}
+ if(snookerAim&&!snookerShotActive){const b=snookerCueBall,dx=b.x-snookerAim.x,dy=b.y-snookerAim.y,len=Math.hypot(dx,dy)||1;x.setLineDash([9,7]);x.strokeStyle="#fff";x.lineWidth=2;x.beginPath();x.moveTo(b.x,b.y);x.lineTo(b.x+dx/len*170,b.y+dy/len*170);x.stroke();x.setLineDash([])}
+}
+function snookerLoop(){
+ const live=snookerBalls.filter(b=>!b.potted);let moving=false;
+ for(const b of live){b.x+=b.vx;b.y+=b.vy;b.vx*=.986;b.vy*=.986;if(Math.hypot(b.vx,b.vy)>.12)moving=true;else{b.vx=0;b.vy=0}
+  if(b.x<b.r+14){b.x=b.r+14;b.vx=Math.abs(b.vx)*.82}if(b.x>SNOOKER_W-b.r-14){b.x=SNOOKER_W-b.r-14;b.vx=-Math.abs(b.vx)*.82}
+  if(b.y<b.r+14){b.y=b.r+14;b.vy=Math.abs(b.vy)*.82}if(b.y>SNOOKER_H-b.r-14){b.y=SNOOKER_H-b.r-14;b.vy=-Math.abs(b.vy)*.82}
+  for(const [px,py] of SNOOKER_POCKETS){if(Math.hypot(b.x-px,b.y-py)<23){b.potted=true;b.vx=0;b.vy=0;if(b.type==="cue"){snookerShotPotted=true;setSnookerMessage("Foul: cue ball potted. Turn passes to the other player.");}else{snookerShotPotted=true;snookerScores[snookerPlayer-1]+=b.value;setSnookerMessage("Potted "+b.type+" · +"+b.value+" points.");updateSnookerScore()}break}}
+ }
+ for(let i=0;i<live.length;i++)for(let j=i+1;j<live.length;j++){const a=live[i],b=live[j];if(a.potted||b.potted)continue;const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy),min=a.r+b.r;if(d>0&&d<min){const nx=dx/d,ny=dy/d,overlap=(min-d)/2;a.x-=nx*overlap;a.y-=ny*overlap;b.x+=nx*overlap;b.y+=ny*overlap;const rel=(a.vx-b.vx)*nx+(a.vy-b.vy)*ny;if(rel>0){a.vx-=rel*nx*.94;a.vy-=rel*ny*.94;b.vx+=rel*nx*.94;b.vy+=rel*ny*.94}}}
+ drawSnooker();if(moving&&Date.now()-snookerLastShotAt<30000){requestAnimationFrame(snookerLoop);return}
+ snookerAnimating=false;snookerShotActive=false;if(!snookerShotPotted)snookerPlayer=snookerPlayer===1?2:1;
+ if(snookerCueBall.potted){snookerCueBall.potted=false;snookerCueBall.x=205;snookerCueBall.y=240;snookerCueBall.vx=0;snookerCueBall.vy=0}
+ updateSnookerScore();if(!snookerBalls.some(b=>b.type==="red"&&!b.potted)){setSnookerMessage("All reds are cleared. Start a new frame to play again.");return}
+ if(!snookerShotPotted)setSnookerMessage("No ball potted. Player "+snookerPlayer+" to play.");
+}
+
 </script>
 </body>
 </html>
