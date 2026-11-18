@@ -503,6 +503,13 @@ input,select,textarea{background:#1d1827;border-color:#51405f;color:#f4f0f8}
 button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid #c6a15b;outline-offset:2px}
 @media(max-width:760px){.feed-page{background-color:#171321}.mobile-tabbar{min-height:68px!important}.mobile-tab{font-size:10px!important}.mobile-tab span{font-size:21px!important}}
 
+
+/* Accessible password visibility control */
+.playam-password-field{position:relative;display:flex;align-items:center;width:100%;margin:8px 0}
+.playam-password-field input{width:100%;margin:0;padding-right:88px}
+.playam-password-toggle{position:absolute;right:7px;top:50%;transform:translateY(-50%);display:flex;align-items:center;gap:5px;padding:8px 9px;background:transparent;color:#d8c5ee;border:1px solid #665578;border-radius:9px;font-size:10px;font-weight:900;letter-spacing:.06em}
+.playam-password-toggle:focus-visible{outline:2px solid #c6a15b;outline-offset:2px}
+
 </style>
 </head>
 <body>
@@ -514,7 +521,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
  <h2>Welcome to PLAYAM</h2>
  <div id="authLoginPanel">
   <input id="email" type="email" placeholder="Email address" autocomplete="email">
-  <input id="password" type="password" placeholder="Password" autocomplete="current-password">
+  <div class="playam-password-field"><input id="password" type="password" placeholder="Password" autocomplete="current-password" aria-label="Password"><button id="togglePasswordButton" class="playam-password-toggle" type="button" onclick="togglePlayamPassword()" aria-label="Show password" aria-pressed="false"><span id="passwordEyeIcon" aria-hidden="true">◉</span><span id="passwordEyeLabel">SHOW</span></button></div>
   <button id="signUpButton" type="button" class="primary" style="width:100%;margin-top:8px" onclick="signUp()">CREATE NEW ACCOUNT</button>
   <button id="signInButton" type="button" class="secondary" style="width:100%;margin-top:8px" onclick="signIn()">LOG IN TO EXISTING ACCOUNT</button>
   <button class="auth-link" type="button" onclick="showForgotPassword()">FORGOT PASSWORD?</button>
@@ -1443,6 +1450,21 @@ async function signIn(){
  }catch(error){showMessage(error?.message||"Login failed. Please check your details and try again.");}
  finally{playamAuthBusy=false;if(button){button.disabled=false;button.textContent="LOG IN TO EXISTING ACCOUNT"}}
 }
+
+function togglePlayamPassword(){
+ const field=document.getElementById("password");
+ const button=document.getElementById("togglePasswordButton");
+ const label=document.getElementById("passwordEyeLabel");
+ const icon=document.getElementById("passwordEyeIcon");
+ if(!field||!button)return;
+ const reveal=field.type==="password";
+ field.type=reveal?"text":"password";
+ button.setAttribute("aria-label",reveal?"Hide password":"Show password");
+ button.setAttribute("aria-pressed",String(reveal));
+ if(label)label.textContent=reveal?"HIDE":"SHOW";
+ if(icon)icon.textContent=reveal?"◎":"◉";
+}
+
 document.getElementById("password")?.addEventListener("keydown",event=>{if(event.key==="Enter")void signIn()});
 async function signOut(){
  stopLobbyRefresh();stopGameRefresh();clearRoomSession();await supabaseClient.auth.signOut();
