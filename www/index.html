@@ -392,6 +392,23 @@ textarea{line-height:1.5;resize:vertical}
 }
 
 
+/* PLAYAM in-app video filter editor — staging */
+.playam-quick-editor{margin:14px 0 18px;padding:14px;border:1px solid #51406f;border-radius:20px;background:linear-gradient(155deg,#211a35,#11101e)}
+.playam-editor-heading{display:flex;justify-content:space-between;align-items:center;gap:8px}.playam-editor-heading h3{margin:3px 0 12px;font-size:19px}
+.playam-editor-tag{font-size:9px;font-weight:900;letter-spacing:.08em;color:#dfc2ff;border:1px solid #76569a;padding:6px 8px;border-radius:99px}
+#playamEditorPreview{display:block;width:100%;max-height:48dvh;aspect-ratio:9/16;object-fit:contain;background:#05050b;border-radius:14px}
+.playam-filter-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0}
+.playam-filter-choice{display:flex;min-width:0;flex-direction:column;align-items:center;gap:5px;padding:9px 4px;border:1px solid #51416f;border-radius:12px;background:#171528;color:#f4efff;font-size:11px}
+.playam-filter-choice.active{border:2px solid #c08cff;background:#302047}.playam-filter-choice small{font-size:9px;color:#b9a8d3}
+.playam-filter-choice.premium{border-color:#b68b43;background:#302718}.playam-filter-choice.premium small{color:#ffd78a}
+.filter-swatch{width:38px;height:38px;border-radius:50%;border:2px solid #ffffff55;background:linear-gradient(135deg,#f4b8a8,#7b5b9d)}
+.filter-original{background:linear-gradient(135deg,#e6a98b,#537a9d)}.filter-glow{background:radial-gradient(circle,#fff3b8,#e58ec4 60%,#7154ad)}
+.filter-beauty{background:linear-gradient(135deg,#f8d3bc,#ed9bb6 55%,#d5a9ff)}.filter-cinematic{background:linear-gradient(135deg,#163d36,#d49b55)}
+.filter-vintage{background:linear-gradient(135deg,#a87543,#e5c18b 55%,#7b583f)}.filter-mono{background:linear-gradient(135deg,#fff,#222)}
+.filter-hd{display:grid;place-items:center;background:linear-gradient(135deg,#fff0ba,#a97735);color:#211608;font-weight:1000}
+.playam-intensity-label{display:flex;justify-content:space-between;color:#e8def7;font-size:12px;font-weight:700}.playam-quick-editor input[type=range]{accent-color:#b67aff;margin:5px 0 12px}
+.playam-editor-adjustments{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.playam-editor-adjustments label{font-size:10px;color:#c9bedb}.playam-editor-adjustments input{padding:0;margin:8px 0}
+.playam-editor-status{min-height:18px;color:#d3b6ff;font-size:11px;line-height:1.4}.playam-editor-publish,.playam-editor-cancel{width:100%;margin:5px 0;padding:12px}.playam-editor-note{color:#a99cbd;font-size:10px;line-height:1.5}
 /* PLAYAM Create menu and Studio preview — staging */
 .playam-create-overlay{position:fixed;inset:0;z-index:1500;display:flex;align-items:flex-end;justify-content:center;padding:16px;background:#05040bdc;backdrop-filter:blur(8px)}
 .playam-create-sheet{position:relative;width:min(100%,520px);max-height:88dvh;overflow:auto;padding:25px 20px 22px;border:1px solid #554174;border-radius:24px 24px 18px 18px;background:linear-gradient(155deg,#211735,#10101e 70%);box-shadow:0 -14px 48px #0009}
@@ -530,7 +547,27 @@ textarea{line-height:1.5;resize:vertical}
 
    <section class="feed-page feed-video-page" id="feedVideos">
      <div class="feed-page-head"><div><div class="feed-kicker">SCROLL • WATCH • DISCOVER</div><h2>PLAYAM Shorts</h2></div><span class="feed-page-count">02 / 06</span></div>
-     <div class="shorts-toolbar"><input id="playamVideoCaption" type="text" maxlength="220" placeholder="Write a caption…" aria-label="Video caption"><button class="primary shorts-upload-button" type="button" onclick="document.getElementById('playamVideoFile').click()">＋ Upload</button><button class="secondary shorts-record-button" type="button" onclick="document.getElementById('playamRecordFile').click()">● Record</button><input id="playamVideoFile" type="file" accept="video/mp4,video/webm,video/quicktime" hidden onchange="uploadPlayamVideo(event)"><input id="playamRecordFile" type="file" accept="video/*" capture="environment" hidden onchange="uploadPlayamVideo(event)"></div>
+     <div class="shorts-toolbar"><input id="playamVideoCaption" type="text" maxlength="220" placeholder="Write a caption…" aria-label="Video caption"><button class="primary shorts-upload-button" type="button" onclick="document.getElementById('playamVideoFile').click()">＋ Choose video</button><button class="secondary shorts-record-button" type="button" onclick="document.getElementById('playamRecordFile').click()">● Record</button><input id="playamVideoFile" type="file" accept="video/mp4,video/webm,video/quicktime" hidden onchange="previewPlayamEditor(event)"><input id="playamRecordFile" type="file" accept="video/*" capture="environment" hidden onchange="previewPlayamEditor(event)"></div>
+     <section id="playamQuickEditor" class="playam-quick-editor hidden" aria-label="PLAYAM video filters">
+      <div class="playam-editor-heading"><div><div class="feed-kicker">MAKE IT YOURS</div><h3>Video filters</h3></div><span class="playam-editor-tag">PLAYAM CREATE</span></div>
+      <video id="playamEditorPreview" playsinline controls muted></video>
+      <div class="playam-filter-grid" id="playamFilterGrid">
+       <button type="button" class="playam-filter-choice active" data-filter="original" onclick="selectPlayamFilter('original',this)"><span class="filter-swatch filter-original"></span>Original <small>Free</small></button>
+       <button type="button" class="playam-filter-choice" data-filter="glow" onclick="selectPlayamFilter('glow',this)"><span class="filter-swatch filter-glow"></span>Glow <small>Free</small></button>
+       <button type="button" class="playam-filter-choice" data-filter="beauty" onclick="selectPlayamFilter('beauty',this)"><span class="filter-swatch filter-beauty"></span>Beauty <small>Free</small></button>
+       <button type="button" class="playam-filter-choice" data-filter="cinematic" onclick="selectPlayamFilter('cinematic',this)"><span class="filter-swatch filter-cinematic"></span>Cinematic <small>Free</small></button>
+       <button type="button" class="playam-filter-choice" data-filter="vintage" onclick="selectPlayamFilter('vintage',this)"><span class="filter-swatch filter-vintage"></span>Vintage <small>Free</small></button>
+       <button type="button" class="playam-filter-choice" data-filter="mono" onclick="selectPlayamFilter('mono',this)"><span class="filter-swatch filter-mono"></span>B&amp;W <small>Free</small></button>
+       <button type="button" class="playam-filter-choice premium" data-filter="hd" onclick="selectPlayamFilter('hd',this)"><span class="filter-swatch filter-hd">HD</span>HD Enhance <small>Premium</small></button>
+      </div>
+      <label class="playam-intensity-label" for="playamFilterIntensity">Filter strength <strong id="playamIntensityValue">70%</strong></label>
+      <input id="playamFilterIntensity" type="range" min="0" max="100" value="70" oninput="updatePlayamFilterIntensity(this.value)">
+      <div class="playam-editor-adjustments"><label>Brightness <input id="playamBrightness" type="range" min="70" max="140" value="100" oninput="updatePlayamEditorPreview()"></label><label>Contrast <input id="playamContrast" type="range" min="70" max="140" value="100" oninput="updatePlayamEditorPreview()"></label><label>Saturation <input id="playamSaturation" type="range" min="0" max="180" value="100" oninput="updatePlayamEditorPreview()"></label></div>
+      <p id="playamEditorStatus" class="playam-editor-status" aria-live="polite">Choose a free filter and preview it before uploading.</p>
+      <button class="primary playam-editor-publish" type="button" onclick="exportPlayamEditedVideo()">Apply look &amp; upload video</button>
+      <button class="secondary playam-editor-cancel" type="button" onclick="cancelPlayamEditor()">Cancel</button>
+      <p class="playam-editor-note">Filters and adjustments are applied to the exported video. HD Enhance is shown as a premium preview; purchasing and unlocking it will be connected after secure checkout is configured.</p>
+     </section>
      <p id="playamVideoStatus" class="shorts-status" role="status" aria-live="polite">Choose an MP4, WebM or MOV video. Maximum size: 100 MB.</p>
      <div id="playamShortsList" class="shorts-list" aria-live="polite"><div class="shorts-empty">Loading PLAYAM Shorts…</div></div>
      <p class="feed-feature-note">Staging preview: signed-in players can upload videos and watch published clips. Please report any playback issue.</p>
@@ -898,8 +935,85 @@ async function validatePlayamVideoFile(file){
  }finally{probe.pause();probe.removeAttribute("src");probe.load();URL.revokeObjectURL(url)}
 }
 function setPlayamVideoStatus(message,isError=false){const el=document.getElementById("playamVideoStatus");if(el){el.textContent=message||"";el.style.color=isError?"#ff9bb8":"#c4a5ef"}}
+const playamFilterPresets={
+ original:{brightness:100,contrast:100,saturate:100,sepia:0,grayscale:0},
+ glow:{brightness:112,contrast:104,saturate:118,sepia:4,grayscale:0},
+ beauty:{brightness:108,contrast:94,saturate:105,sepia:8,grayscale:0},
+ cinematic:{brightness:94,contrast:125,saturate:82,sepia:12,grayscale:0},
+ vintage:{brightness:105,contrast:92,saturate:78,sepia:38,grayscale:0},
+ mono:{brightness:103,contrast:112,saturate:0,sepia:0,grayscale:100},
+ hd:{brightness:105,contrast:116,saturate:112,sepia:0,grayscale:0}
+};
+let playamSelectedFilter="original",playamEditorObjectUrl=null,playamEditorBusy=false;
+function previewPlayamEditor(event){
+ const file=event?.target?.files?.[0];if(!file)return;
+ if(!["video/mp4","video/webm","video/quicktime"].includes(file.type)){setPlayamVideoStatus("Please choose an MP4, WebM or MOV video.",true);event.target.value="";return}
+ if(file.size>100*1024*1024){setPlayamVideoStatus("This video is larger than the 100 MB staging limit.",true);event.target.value="";return}
+ const preview=document.getElementById("playamEditorPreview"),panel=document.getElementById("playamQuickEditor");
+ if(playamEditorObjectUrl)URL.revokeObjectURL(playamEditorObjectUrl);
+ playamEditorObjectUrl=URL.createObjectURL(file);preview.src=playamEditorObjectUrl;preview.load();panel.classList.remove("hidden");
+ playamSelectedFilter="original";document.querySelectorAll(".playam-filter-choice").forEach(b=>b.classList.toggle("active",b.dataset.filter==="original"));
+ ["playamFilterIntensity","playamBrightness","playamContrast","playamSaturation"].forEach((id,i)=>{const el=document.getElementById(id);if(el)el.value=[70,100,100,100][i]});
+ updatePlayamFilterIntensity(70);updatePlayamEditorPreview();setPlayamEditorStatus("Choose a filter, adjust it, then apply your look to upload.");
+ panel.scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+function setPlayamEditorStatus(message,isError=false){const el=document.getElementById("playamEditorStatus");if(el){el.textContent=message;el.style.color=isError?"#ff9bb8":"#d3b6ff"}}
+function selectPlayamFilter(name,button){
+ if(name==="hd"){setPlayamEditorStatus("HD Enhance is a premium filter. Secure purchase and unlock will be added before launch.");return}
+ playamSelectedFilter=name;document.querySelectorAll(".playam-filter-choice").forEach(b=>b.classList.toggle("active",b===button));updatePlayamEditorPreview();
+}
+function updatePlayamFilterIntensity(value){const el=document.getElementById("playamIntensityValue");if(el)el.textContent=value+"%";updatePlayamEditorPreview()}
+function getPlayamFilterValues(){
+ const p=playamFilterPresets[playamSelectedFilter]||playamFilterPresets.original;
+ const amount=Number(document.getElementById("playamFilterIntensity")?.value||70)/100;
+ const mix=(base)=>100+(base-100)*amount;
+ return {brightness:mix(p.brightness)*Number(document.getElementById("playamBrightness")?.value||100)/100,
+ contrast:mix(p.contrast)*Number(document.getElementById("playamContrast")?.value||100)/100,
+ saturate:mix(p.saturate)*Number(document.getElementById("playamSaturation")?.value||100)/100,
+ sepia:p.sepia*amount,grayscale:p.grayscale*amount};
+}
+function playamFilterCss(v){return "brightness("+v.brightness+"%) contrast("+v.contrast+"%) saturate("+v.saturate+"%) sepia("+v.sepia+"%) grayscale("+v.grayscale+"%)"}
+function updatePlayamEditorPreview(){const v=document.getElementById("playamEditorPreview");if(v)v.style.filter=playamFilterCss(getPlayamFilterValues())}
+function cancelPlayamEditor(){
+ const panel=document.getElementById("playamQuickEditor"),preview=document.getElementById("playamEditorPreview");
+ if(panel)panel.classList.add("hidden");if(preview){preview.pause();preview.removeAttribute("src");preview.load();preview.style.filter="none"}
+ if(playamEditorObjectUrl){URL.revokeObjectURL(playamEditorObjectUrl);playamEditorObjectUrl=null}
+ const a=document.getElementById("playamVideoFile"),b=document.getElementById("playamRecordFile");if(a)a.value="";if(b)b.value="";
+}
+async function exportPlayamEditedVideo(){
+ if(playamEditorBusy)return;
+ const preview=document.getElementById("playamEditorPreview"),source=(document.getElementById("playamVideoFile")?.files?.[0]||document.getElementById("playamRecordFile")?.files?.[0]);
+ if(!source||!preview?.src){setPlayamEditorStatus("Choose a video first.",true);return}
+ if(playamSelectedFilter==="hd"){setPlayamEditorStatus("HD Enhance is not unlocked yet. Choose a free filter for now.",true);return}
+ if(!preview.videoWidth||!preview.videoHeight){setPlayamEditorStatus("Wait for the video preview to load, then try again.",true);return}
+ if(!window.MediaRecorder||!HTMLCanvasElement.prototype.captureStream){setPlayamEditorStatus("This browser cannot export filtered video yet. You can upload the original video instead.",true);return}
+ playamEditorBusy=true;const btn=document.querySelector(".playam-editor-publish");if(btn){btn.disabled=true;btn.textContent="APPLYING FILTER…"}
+ setPlayamEditorStatus("Applying your filter. Keep this screen open…");
+ let recorder=null,raf=0,canvas=null,stream=null;
+ try{
+  canvas=document.createElement("canvas");canvas.width=preview.videoWidth;canvas.height=preview.videoHeight;
+  const ctx=canvas.getContext("2d");if(!ctx)throw new Error("Video editor could not start.");
+  stream=canvas.captureStream(30);
+  const mime=["video/mp4;codecs=h264","video/webm;codecs=vp9","video/webm"].find(t=>MediaRecorder.isTypeSupported(t))||"";
+  recorder=new MediaRecorder(stream,mime?{mimeType:mime}:undefined);
+  const chunks=[];recorder.ondataavailable=e=>{if(e.data?.size)chunks.push(e.data)};
+  const finished=new Promise((resolve,reject)=>{recorder.onstop=()=>resolve(new Blob(chunks,{type:recorder.mimeType||"video/webm"}));recorder.onerror=()=>reject(new Error("Filtered video export failed."))});
+  const v=getPlayamFilterValues();preview.pause();preview.currentTime=0;await preview.play();
+  const draw=()=>{ctx.filter=playamFilterCss(v);ctx.drawImage(preview,0,0,canvas.width,canvas.height);raf=requestAnimationFrame(draw)};
+  recorder.start(500);draw();
+  await new Promise(resolve=>{preview.onended=resolve;preview.onerror=resolve});
+  cancelAnimationFrame(raf);recorder.stop();preview.pause();
+  const blob=await finished;if(!blob.size)throw new Error("No filtered video was created.");
+  const ext=blob.type.includes("mp4")?"mp4":"webm";
+  window.playamEditedVideoFile=new File([blob],"playam-filtered-"+Date.now()+"."+ext,{type:blob.type});
+  setPlayamEditorStatus("Filter applied. Uploading your edited video…");
+  const fakeEvent={target:{files:[window.playamEditedVideoFile],value:""}};
+  await uploadPlayamVideo(fakeEvent);
+ }catch(error){console.error("PLAYAM filter export failed",error);setPlayamEditorStatus(error?.message||"Could not export this video. Try a shorter clip.",true)}
+ finally{if(raf)cancelAnimationFrame(raf);if(recorder&&recorder.state!=="inactive")recorder.stop();if(stream)stream.getTracks().forEach(t=>t.stop());playamEditorBusy=false;if(btn){btn.disabled=false;btn.textContent="Apply look & upload video"}}
+}
 async function uploadPlayamVideo(event){
- const input=event?.target,file=input?.files?.[0];if(!file)return;
+ const input=event?.target,file=window.playamEditedVideoFile||input?.files?.[0];if(!file)return;
  if(!["video/mp4","video/webm","video/quicktime"].includes(file.type)){setPlayamVideoStatus("Please choose an MP4, WebM or MOV video.",true);input.value="";return}
  if(file.size>100*1024*1024){setPlayamVideoStatus("This video is larger than the 100 MB staging limit.",true);input.value="";return}
  const {data:{user},error:userError}=await supabaseClient.auth.getUser();if(userError||!user){setPlayamVideoStatus("Please sign in before uploading a video.",true);input.value="";return}
@@ -913,7 +1027,7 @@ async function uploadPlayamVideo(event){
   const {error:upErr}=await supabaseClient.storage.from("playam-videos-staging").upload(storagePath,file,{cacheControl:"3600",upsert:false,contentType:file.type});if(upErr)throw upErr;
   const {error:dbErr}=await supabaseClient.from("playam_videos").insert({owner_id:user.id,storage_path:storagePath,caption,creator_name:creatorName,status:"published"});
   if(dbErr){await supabaseClient.storage.from("playam-videos-staging").remove([storagePath]);throw dbErr}
-  document.getElementById("playamVideoCaption").value="";input.value="";setPlayamVideoStatus("Upload complete. Your video is now in PLAYAM Shorts.");await loadPlayamVideos();
+  document.getElementById("playamVideoCaption").value="";if(input)input.value="";window.playamEditedVideoFile=null;cancelPlayamEditor();setPlayamVideoStatus("Upload complete. Your video is now in PLAYAM Shorts.");await loadPlayamVideos();
  }catch(e){console.error("PLAYAM Shorts upload failed",e);setPlayamVideoStatus(e?.message||"Upload failed. Please try again.",true)}
  finally{if(button)button.disabled=false}
 }
