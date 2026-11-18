@@ -2361,7 +2361,7 @@ if ('serviceWorker' in navigator) {
 (function(){
 let currentUser=null,currentConversation=null,currentPartner=null,searchSeq=0;
 const $=id=>document.getElementById(id);
-const client=()=>window.supabaseClient||window.supabase;
+const client=()=>typeof supabaseClient!=='undefined'?supabaseClient:null;
 function safeError(e){return e&&e.message?e.message:'Something went wrong. Please try again.'}
 function initials(s){return String(s||'P').trim().charAt(0).toUpperCase()||'P'}
 function stamp(s){const d=new Date(s);return isNaN(d)?'':d.toLocaleString([],{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}
