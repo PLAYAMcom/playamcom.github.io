@@ -468,15 +468,6 @@ textarea{line-height:1.5;resize:vertical}
    <section class="feed-page feed-profile-page" id="feedProfile">
     <div class="feed-page-head"><div><div class="feed-kicker">YOUR PLAYAM SPACE</div><h2>Profile & Wallet</h2></div><span>👤</span></div>
     <div class="feed-profile-card"><div class="feed-avatar">👤</div><h3>Your player profile</h3><p>Manage your PLAYAM account and preferences.</p><button class="primary" onclick="showSettings()">ACCOUNT SETTINGS</button></div>
-    <div class="coin-wallet-card" aria-label="Purchased PLAYAM Coin wallet">
-     <div class="coin-wallet-heading">
-      <div><div class="feed-kicker">YOUR PURCHASED COINS</div><h3>PLAYAM Coin Wallet</h3><p>Coins for sending LIVE gifts.</p></div>
-      <div class="coin-wallet-balance"><strong id="purchasedCoinBalance">0</strong><small>COINS</small></div>
-     </div>
-     <p id="coinPaymentStatus" role="status" aria-live="polite">Loading your wallet…</p>
-     <div id="coinPackageList" class="coin-package-grid"></div>
-     <p class="coin-wallet-note">Purchased PLAYAM Coins can only be used for LIVE gifts. They cannot be withdrawn or used to buy gameplay advantages. Coin purchases remain unavailable until Staging checkout is explicitly enabled.</p>
-    </div>
     <button class="secondary feed-wide-button" onclick="signOut()">LOG OUT</button>
     <div class="feed-bottom-hint"><span>SWIPE DOWN TO GO BACK</span><span class="feed-chevron">⌃</span></div>
    </section>
@@ -501,9 +492,18 @@ textarea{line-height:1.5;resize:vertical}
 
   <section id="settingsScreen" class="screen-card hidden">
    <h2>⚙️ Settings</h2>
-   <p class="muted">Manage your PLAYAM account.</p>
-   <button class="back" style="width:100%" onclick="signOut()">LOG OUT</button>
-   <button class="back" style="width:100%" onclick="showHome()">← BACK</button>
+   <p class="muted">Manage your PLAYAM account and purchased coins.</p>
+   <div class="coin-wallet-card" aria-label="Purchased PLAYAM Coin wallet">
+    <div class="coin-wallet-heading">
+     <div><div class="feed-kicker">YOUR PURCHASED COINS</div><h3>PLAYAM Coin Wallet</h3><p>Coins for sending LIVE gifts.</p></div>
+     <div class="coin-wallet-balance"><strong id="purchasedCoinBalance">0</strong><small>COINS</small></div>
+    </div>
+    <p id="coinPaymentStatus" role="status" aria-live="polite">Loading your wallet…</p>
+    <div id="coinPackageList" class="coin-package-grid"></div>
+    <p class="coin-wallet-note">Purchased PLAYAM Coins can only be used for LIVE gifts. They cannot be withdrawn or used to buy gameplay advantages. Coin purchases remain unavailable until Staging checkout is explicitly enabled.</p>
+   </div>
+   <button class="back" style="width:100%;margin-top:14px" onclick="signOut()">LOG OUT</button>
+   <button class="back" style="width:100%;margin-top:8px" onclick="showHome()">← BACK</button>
   </section>
 
   <section id="soloSetupScreen" class="screen-card hidden">
