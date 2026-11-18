@@ -840,7 +840,8 @@ async function loadPlayamVideos(){
     }catch(e){setPlayamVideoStatus(e?.message||"Could not update like. Please try again.",true)}finally{likeButton.disabled=false}
    });
    if(viewer&&row.owner_id===viewer.id){
-    const ownerLabel=document.createElement("div");ownerLabel.className="shorts-owner-label";ownerLabel.textContent="YOUR VIDEO";copy.insertBefore(ownerLabel,copy.firstChild);\n    const deleteButton=document.createElement("button");deleteButton.type="button";deleteButton.className="shorts-action shorts-delete-action";deleteButton.textContent="🗑 DELETE MY VIDEO";
+    const ownerLabel=document.createElement("div");ownerLabel.className="shorts-owner-label";ownerLabel.textContent="YOUR VIDEO";copy.insertBefore(ownerLabel,copy.firstChild);
+    const deleteButton=document.createElement("button");deleteButton.type="button";deleteButton.className="shorts-action shorts-delete-action";deleteButton.textContent="🗑 DELETE MY VIDEO";
     deleteButton.addEventListener("click",async()=>{
      if(!window.confirm("Delete this video permanently? This cannot be undone."))return;
      deleteButton.disabled=true;setPlayamVideoStatus("Deleting your video…");
