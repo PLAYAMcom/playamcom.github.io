@@ -510,6 +510,35 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .playam-password-toggle{position:absolute;right:7px;top:50%;transform:translateY(-50%);display:flex;align-items:center;gap:5px;padding:8px 9px;background:transparent;color:#d8c5ee;border:1px solid #665578;border-radius:9px;font-size:10px;font-weight:900;letter-spacing:.06em}
 .playam-password-toggle:focus-visible{outline:2px solid #c6a15b;outline-offset:2px}
 
+
+/* PLAYAM SOCIAL HOME — approved charcoal / purple / gold direction */
+.playam-social-header,.playam-story-strip,.playam-feed-tabs{display:none}
+@media(max-width:760px){
+ #homeScreen.playam-vertical-feed .feed-video-page>.playam-social-header{position:absolute;z-index:12;top:10px;left:15px;right:15px;display:flex;align-items:center;justify-content:space-between;height:34px}
+ .playam-social-brand{font-size:23px;font-weight:950;letter-spacing:.12em;color:#f5f0fa;text-shadow:0 2px 12px #000}
+ .playam-social-brand span{color:#c6a15b;font-size:24px;margin-left:3px}
+ .playam-social-header-actions{display:flex;gap:9px}
+ .playam-social-header-actions button{width:36px;height:36px;min-height:36px;padding:0;border-radius:50%;background:#171321d9;border:1px solid #c6a15b66;color:#f5f0fa;font-size:19px}
+ #homeScreen.playam-vertical-feed .feed-video-page>.playam-story-strip{position:absolute;z-index:11;top:53px;left:0;right:0;display:flex;gap:14px;overflow-x:auto;padding:5px 14px 8px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+ .playam-story-strip::-webkit-scrollbar{display:none}
+ .playam-story{flex:0 0 58px;display:flex;flex-direction:column;align-items:center;gap:5px;color:#fff;font-size:9px;font-weight:700;text-shadow:0 1px 5px #000}
+ .playam-story-ring{width:49px;height:49px;display:grid;place-items:center;border-radius:50%;font-size:21px;color:#fff;border:2px solid #c6a15b;background:linear-gradient(145deg,#512b81,#171321);box-shadow:0 0 0 2px #171321,0 4px 15px #0008}
+ button.playam-story-ring{min-height:49px;padding:0}
+ .playam-story-ring.create-story{background:#171321;border:2px dashed #c6a15b;color:#e5c985;font-size:26px}
+ .story-gaming{background:linear-gradient(145deg,#512b81,#24204a)}.story-music{background:linear-gradient(145deg,#8b3d79,#27172f)}.story-dance{background:linear-gradient(145deg,#80552a,#332044)}.story-comedy{background:linear-gradient(145deg,#6b4d22,#32203f)}.story-style{background:linear-gradient(145deg,#67458b,#2a1d36)}
+ #homeScreen.playam-vertical-feed .feed-video-page>.playam-feed-tabs{position:absolute;z-index:11;top:116px;left:0;right:0;display:flex;align-items:center;gap:18px;overflow-x:auto;padding:8px 15px 10px;background:linear-gradient(180deg,#090711d9,#0907118c);scrollbar-width:none}
+ .playam-feed-tabs::-webkit-scrollbar{display:none}
+ .playam-feed-tabs span{flex:0 0 auto;color:#e4dce9;font-size:11px;font-weight:800;white-space:nowrap;opacity:.78}
+ .playam-feed-tabs span.active{color:#fff;opacity:1;position:relative}
+ .playam-feed-tabs span.active:after{content:"";position:absolute;left:0;right:0;bottom:-8px;height:2px;border-radius:4px;background:#c6a15b}
+ .playam-feed-tabs span.live{color:#ff9bb5}
+ #homeScreen.playam-vertical-feed .feed-video-page>.feed-page-head{top:156px;left:15px;right:15px}
+ #homeScreen.playam-vertical-feed .feed-video-page .shorts-toolbar{top:205px;left:14px;right:14px}
+ #homeScreen.playam-vertical-feed .feed-video-page .shorts-status{top:250px;left:15px;right:15px}
+ #homeScreen.playam-vertical-feed .feed-video-page .shorts-card-copy{padding-bottom:calc(95px + env(safe-area-inset-bottom))}
+ .main:has(#homeScreen:not(.hidden))>.topbar{display:none}
+}
+
 </style>
 </head>
 <body>
@@ -619,6 +648,19 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
    </section>
 
    <section class="feed-page feed-video-page" id="feedVideos">
+     <div class="playam-social-header">
+      <div class="playam-social-brand">PLAYAM <span>♛</span></div>
+      <div class="playam-social-header-actions"><button type="button" aria-label="Search PLAYAM" onclick="showFindPlayer()">⌕</button><button type="button" aria-label="Settings" onclick="showSettings()">⚙</button></div>
+     </div>
+     <div class="playam-story-strip" aria-label="PLAYAM creator categories">
+      <div class="playam-story"><button type="button" class="playam-story-ring create-story" onclick="triggerPlayamCreate()" aria-label="Add your story">＋</button><span>Your Story</span></div>
+      <div class="playam-story"><span class="playam-story-ring story-gaming">🎮</span><span>Gaming</span></div>
+      <div class="playam-story"><span class="playam-story-ring story-music">♫</span><span>Music</span></div>
+      <div class="playam-story"><span class="playam-story-ring story-dance">✦</span><span>Dance</span></div>
+      <div class="playam-story"><span class="playam-story-ring story-comedy">☺</span><span>Comedy</span></div>
+      <div class="playam-story"><span class="playam-story-ring story-style">✧</span><span>Fashion</span></div>
+     </div>
+     <div class="playam-feed-tabs" aria-label="Video feed categories"><span class="active">For You</span><span>Following</span><span>Gaming</span><span class="live">Live</span><span>Trending</span></div>
      <div class="feed-page-head"><div><div class="feed-kicker">SCROLL • WATCH • DISCOVER</div><h2>PLAYAM Shorts</h2></div><span class="feed-page-count">02 / 06</span></div>
      <div class="shorts-toolbar"><input id="playamVideoCaption" type="text" maxlength="220" placeholder="Write a caption…" aria-label="Video caption"><button class="primary shorts-upload-button" type="button" onclick="document.getElementById('playamVideoFile').click()">＋ Choose video</button><button class="secondary shorts-record-button" type="button" onclick="document.getElementById('playamRecordFile').click()">● Record</button><input id="playamVideoFile" type="file" accept="video/mp4,video/webm,video/quicktime" hidden onchange="previewPlayamEditor(event)"><input id="playamRecordFile" type="file" accept="video/*" capture="environment" hidden onchange="previewPlayamEditor(event)"></div>
      <section id="playamQuickEditor" class="playam-quick-editor hidden" aria-label="PLAYAM video filters">
