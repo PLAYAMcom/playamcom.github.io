@@ -612,6 +612,30 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .playam-filter-strength{display:flex;align-items:center;gap:10px;font-size:11px}.playam-filter-strength input{flex:1;accent-color:#ff315b}.playam-tool-options{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;padding:20px 0}.playam-tool-options button{border:1px solid #ffffff44;border-radius:20px;background:#292435;color:white;padding:12px 18px;font-weight:800}
 .playam-camera-bottom-tools{bottom:calc(118px + env(safe-area-inset-bottom))}
 #playamCreatePanel.camera-mode .playam-ar-effects{display:none!important}
+
+ /* PLAYAM compact camera + swipeable effect gallery */
+ #playamCreatePanel.camera-mode .playam-ar-stage{top:calc(58px + env(safe-area-inset-top));left:12px;right:12px;bottom:calc(43vh + 8px);width:auto;height:auto;max-height:none;border-radius:18px;overflow:hidden;background:#111}
+ #playamCreatePanel.camera-mode .playam-ar-stage video,#playamCreatePanel.camera-mode .playam-ar-stage canvas{object-fit:contain}
+ #playamCreatePanel.camera-mode .playam-effects-tray{display:flex;left:0;right:0;bottom:0;height:41vh;max-height:380px;min-height:245px;padding:9px 12px calc(12px + env(safe-area-inset-bottom));border-radius:18px 18px 0 0;box-shadow:0 -8px 28px #0009;gap:7px}
+ #playamCreatePanel.camera-mode .playam-tray-grabber{margin-bottom:0}
+ #playamCreatePanel.camera-mode .playam-tray-heading{font-size:14px}
+ #playamCreatePanel.camera-mode .playam-tray-categories{gap:14px;padding-bottom:6px}
+ #playamCreatePanel.camera-mode .playam-tray-grid{grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:min-content;gap:10px 6px;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;padding:3px 0 12px}
+ #playamCreatePanel.camera-mode .playam-tray-grid button{min-width:0;font-size:10px}
+ #playamCreatePanel.camera-mode .tray-thumb{width:min(17vw,68px);height:min(17vw,68px);border-radius:14px}
+ #playamCreatePanel.camera-mode .playam-filter-strength{display:none}
+ #playamCreatePanel.camera-mode .playam-camera-modes{bottom:calc(43vh + 82px + env(safe-area-inset-bottom))}
+ #playamCreatePanel.camera-mode .playam-camera-bottom{bottom:calc(43vh + 8px + env(safe-area-inset-bottom));left:50%;right:auto;transform:translateX(-50%);z-index:9}
+ #playamCreatePanel.camera-mode .playam-camera-bottom-tools{display:none}
+ #playamCreatePanel.camera-mode .playam-camera-side-tools{top:calc(66px + env(safe-area-inset-top));right:18px;gap:5px}
+ #playamCreatePanel.camera-mode .playam-camera-side-tools button{width:40px;min-height:38px;background:#17151dcc}
+ #playamCreatePanel.camera-mode .playam-camera-side-tools button:nth-child(4){display:none}
+ @media(max-height:700px){
+  #playamCreatePanel.camera-mode .playam-ar-stage{bottom:calc(45vh + 8px)}
+  #playamCreatePanel.camera-mode .playam-effects-tray{height:44vh;min-height:220px}
+  #playamCreatePanel.camera-mode .playam-camera-modes{bottom:calc(45vh + 82px + env(safe-area-inset-bottom))}
+  #playamCreatePanel.camera-mode .playam-camera-bottom{bottom:calc(45vh + 8px + env(safe-area-inset-bottom))}
+ }
 @media(max-height:700px){.playam-camera-side-tools{gap:5px;top:calc(68px + env(safe-area-inset-top))}.playam-camera-side-tools button{min-height:42px}.playam-effects-tray{height:55vh}}
 
 /* PLAYAM full-screen vertical creator feed and engagement rail */
@@ -1243,6 +1267,7 @@ function showHome(){stopLobbyRefresh();stopGameRefresh();showScreen("homeScreen"
 let playamARStream=null,playamARLandmarker=null,playamARFrame=0,playamAREffect="none",playamARRecorder=null,playamARChunks=[],playamMusicUrl=null,playamAudioContext=null,playamMusicGain=null,playamMusicElementSource=null,playamCameraFilter="none",playamCreateMode="video",playamTextOverlay="";
 async function openPlayamARCamera(){
  const panel=document.getElementById("playamARPanel");panel.classList.remove("hidden");
+ const effectsTray=document.getElementById("playamEffectsTray");if(effectsTray)effectsTray.classList.remove("hidden");
  const status=document.getElementById("playamARStatus");
  try{
   if(!navigator.mediaDevices?.getUserMedia)throw new Error("Live camera is not supported in this browser.");
