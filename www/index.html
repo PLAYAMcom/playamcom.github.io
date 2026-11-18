@@ -549,7 +549,7 @@ textarea{line-height:1.5;resize:vertical}
      <div class="feed-page-head"><div><div class="feed-kicker">SCROLL • WATCH • DISCOVER</div><h2>PLAYAM Shorts</h2></div><span class="feed-page-count">02 / 06</span></div>
      <div class="shorts-toolbar"><input id="playamVideoCaption" type="text" maxlength="220" placeholder="Write a caption…" aria-label="Video caption"><button class="primary shorts-upload-button" type="button" onclick="document.getElementById('playamVideoFile').click()">＋ Choose video</button><button class="secondary shorts-record-button" type="button" onclick="document.getElementById('playamRecordFile').click()">● Record</button><input id="playamVideoFile" type="file" accept="video/mp4,video/webm,video/quicktime" hidden onchange="previewPlayamEditor(event)"><input id="playamRecordFile" type="file" accept="video/*" capture="environment" hidden onchange="previewPlayamEditor(event)"></div>
      <section id="playamQuickEditor" class="playam-quick-editor hidden" aria-label="PLAYAM video filters">
-      <div class="playam-editor-heading"><div><div class="feed-kicker">MAKE IT YOURS</div><h3>Video filters</h3></div><span class="playam-editor-tag">PLAYAM CREATE</span></div>
+      <div class="playam-editor-heading"><div><div class="feed-kicker">MAKE IT YOURS</div><h3>Video filters</h3></div><span class="playam-editor-tag">VIDEO TOOLS</span></div>
       <video id="playamEditorPreview" playsinline controls muted></video>
       <div class="playam-filter-grid" id="playamFilterGrid">
        <button type="button" class="playam-filter-choice active" data-filter="original" onclick="selectPlayamFilter('original',this)"><span class="filter-swatch filter-original"></span>Original <small>Free</small></button>
@@ -763,14 +763,14 @@ textarea{line-height:1.5;resize:vertical}
   <div id="playamCreatePanel" class="playam-create-overlay hidden" aria-hidden="true">
    <section class="playam-create-sheet" role="dialog" aria-modal="true" aria-labelledby="playamCreateTitle">
     <button class="playam-create-close" type="button" onclick="closePlayamCreate()" aria-label="Close">×</button>
-    <div class="feed-kicker">MAKE SOMETHING GREAT</div>
+    <div class="feed-kicker">CREATE & EDIT</div>
     <h2 id="playamCreateTitle">Create on PLAYAM</h2>
     <p>Share a video today, or get ready for a new way to edit.</p>
     <button class="primary playam-create-upload" type="button" onclick="openPlayamUpload()">＋ Upload a video</button>
     <article class="playam-studio-coming">
      <div class="playam-studio-top"><span class="playam-studio-icon">✦</span><span class="playam-coming-label">COMING SOON</span></div>
-     <h3>PLAYAM Studio</h3>
-     <p>Your own video editor, built into PLAYAM.</p>
+     <h3>Advanced Video Editor</h3>
+     <p>A separate editing experience for creators, makeup artists and anyone who wants more control.</p>
      <div class="playam-studio-features"><span>Trim &amp; split clips</span><span>Transitions</span><span>Music &amp; captions</span><span>Creative filters</span><span>Premium HD Filter</span><span>HD export</span></div>
      <p class="playam-studio-foot">Premium HD Filter will be available to purchase when Studio launches. Preview first, then pay securely to unlock.</p>
     </article>
