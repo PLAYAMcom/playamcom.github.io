@@ -643,6 +643,21 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .pds-tap{width:100%;min-height:86px;border:2px solid #f3d17d;border-radius:16px;background:linear-gradient(135deg,#8c4dd4,#4a2382);color:white;font-size:24px;font-weight:900;letter-spacing:1px;touch-action:manipulation}
 .pds-tap:disabled{opacity:.65}.pds-actions{margin-top:10px}.pds-actions button{flex:1;font-size:12px;padding:10px 7px}.playam-daily-showdown .pds-feedback{min-height:18px;margin:12px 0 0;font-size:12px;color:#eadcfb}
 @media(max-width:480px){.playam-daily-showdown{padding:16px}.pds-scoreline{padding:10px}.pds-scoreline strong{font-size:20px}}
+</style><style id="playam-auth-refresh">
+#authScreen{position:relative!important;z-index:99999!important;isolation:isolate!important;pointer-events:auto!important;max-width:440px;margin:calc(4vh + env(safe-area-inset-top)) auto 24px;padding:24px 20px}
+#authScreen *{pointer-events:auto}
+#authScreen button{position:relative;z-index:2;min-height:46px;touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:pointer}
+.playam-auth-tabs,.playam-auth-methods{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
+.playam-auth-tabs button,.playam-auth-methods button{background:#29213a;color:#eee;border:1px solid #59476d;border-radius:12px;padding:11px}
+.playam-auth-tabs button.active,.playam-auth-methods button.active{background:#56347a;border-color:#c59be8}
+.playam-auth-intro,.playam-auth-legal{font-size:12px;color:#c7bdd2}
+.playam-auth-primary{width:100%;min-height:50px;margin-top:10px}
+.playam-social-auth{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.playam-social-auth button{background:#f8f6fa;color:#17121e;border:1px solid #ddd;border-radius:12px;font-weight:800}
+.playam-auth-divider{display:flex;align-items:center;gap:10px;margin:18px 0 8px;color:#aaa;font-size:10px}
+.playam-auth-divider:before,.playam-auth-divider:after{content:"";height:1px;background:#51475c;flex:1}
+.playam-auth-legal{margin-top:16px;line-height:1.5}
+@media(max-width:480px){#authScreen{margin:calc(2vh + env(safe-area-inset-top)) 14px 20px;padding:22px 16px}}
 </style></head>
 <body>
 <div class="staging-banner" role="status">PLAYAM STAGING ONLY — TEST ACCOUNTS ONLY — NOT PRODUCTION</div>
@@ -651,13 +666,21 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
  <div class="logo">PLAYAM 🎮</div>
  <p class="tagline">Laugh. Confess. Play. Keep the secrets. 👀❤️</p>
  <h2>Welcome to PLAYAM</h2>
- <div id="authLoginPanel">
-  <input id="email" type="email" placeholder="Email address" autocomplete="email">
-  <div class="playam-password-field"><input id="password" type="password" placeholder="Password" autocomplete="current-password" aria-label="Password"><button id="togglePasswordButton" class="playam-password-toggle" type="button" onclick="togglePlayamPassword()" aria-label="Show password" aria-pressed="false"><span id="passwordEyeIcon" aria-hidden="true">◉</span><span id="passwordEyeLabel">SHOW</span></button></div>
-  <button id="signUpButton" type="button" class="primary" style="width:100%;margin-top:8px" onclick="signUp()">CREATE NEW ACCOUNT</button>
-  <button id="signInButton" type="button" class="secondary" style="width:100%;margin-top:8px" onclick="signIn()">LOG IN TO EXISTING ACCOUNT</button>
-  <button class="auth-link" type="button" onclick="showForgotPassword()">FORGOT PASSWORD?</button>
-  <p class="small">Only email and password are required.</p>
+ <div id="authLoginPanel" class="playam-auth-panel">
+  <div class="playam-auth-tabs"><button id="authLoginTab" class="active" type="button" onclick="setPlayamAuthMode('login')">Log in</button><button id="authSignupTab" type="button" onclick="setPlayamAuthMode('signup')">Sign up</button></div>
+  <p id="authIntro" class="playam-auth-intro">Welcome back. Log in to continue.</p>
+  <div class="playam-auth-methods"><button id="authEmailMethod" class="active" type="button" onclick="setPlayamAuthMethod('email')">✉ Email</button><button id="authPhoneMethod" type="button" onclick="setPlayamAuthMethod('phone')">☎ Phone</button></div>
+  <form id="playamEmailAuthForm" onsubmit="event.preventDefault();playamAuthMode==='signup'?signUp():signIn()">
+   <input id="email" type="email" placeholder="Email address" autocomplete="email" required>
+   <div class="playam-password-field"><input id="password" type="password" placeholder="Password" autocomplete="current-password" aria-label="Password" required><button id="togglePasswordButton" class="playam-password-toggle" type="button" onclick="togglePlayamPassword()" aria-label="Show password" aria-pressed="false"><span id="passwordEyeIcon" aria-hidden="true">◉</span><span id="passwordEyeLabel">SHOW</span></button></div>
+   <button id="signInButton" type="submit" class="primary playam-auth-primary">LOG IN</button>
+   <button id="signUpButton" type="button" class="secondary playam-auth-primary" onclick="setPlayamAuthMode('signup')">CREATE ACCOUNT</button>
+   <button class="auth-link" type="button" onclick="showForgotPassword()">FORGOT PASSWORD?</button>
+  </form>
+  <div id="playamPhoneAuthForm" class="hidden"><label class="playam-auth-field-label" for="phoneNumber">Phone number with country code</label><input id="phoneNumber" type="tel" inputmode="tel" autocomplete="tel" placeholder="+2348012345678"><button id="sendPhoneCodeButton" type="button" class="primary playam-auth-primary" onclick="sendPlayamPhoneCode()">SEND CODE</button><div id="playamPhoneVerifyPanel" class="hidden"><input id="phoneOtpCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6-digit SMS code"><button id="verifyPhoneCodeButton" type="button" class="primary playam-auth-primary" onclick="verifyPlayamPhoneCode()">VERIFY & LOG IN</button></div></div>
+  <div class="playam-auth-divider"><span>OR CONTINUE WITH</span></div>
+  <div class="playam-social-auth"><button type="button" onclick="signInWithPlayamProvider('google')"><b>G</b> Google</button><button type="button" onclick="signInWithPlayamProvider('apple')"><b>●</b> Apple</button></div>
+  <p class="playam-auth-legal">By continuing, you agree to PLAYAM's Terms and Privacy Policy.</p>
  </div>
  <div id="passwordRecoveryRequestPanel" class="hidden">
   <h3>Reset your password</h3>
@@ -1632,6 +1655,14 @@ async function exitPasswordRecovery(){
  showAuthPanel("authLoginPanel");
  showMessage("You have left password recovery. Log in or request a new reset link.");
 }
+
+/* PLAYAM auth options */
+let playamAuthMode="login",playamAuthMethod="email",playamPhonePending="";
+function setPlayamAuthMode(mode){playamAuthMode=mode==="signup"?"signup":"login";document.getElementById("authLoginTab")?.classList.toggle("active",playamAuthMode==="login");document.getElementById("authSignupTab")?.classList.toggle("active",playamAuthMode==="signup");const b=document.getElementById("signInButton"),u=document.getElementById("signUpButton"),p=document.getElementById("password"),i=document.getElementById("authIntro");if(b)b.textContent=playamAuthMode==="signup"?"CREATE ACCOUNT":"LOG IN";if(u)u.classList.toggle("hidden",playamAuthMode==="signup");if(p)p.autocomplete=playamAuthMode==="signup"?"new-password":"current-password";if(i)i.textContent=playamAuthMode==="signup"?"Create your PLAYAM account.":"Welcome back. Log in to continue.";}
+function setPlayamAuthMethod(method){playamAuthMethod=method==="phone"?"phone":"email";document.getElementById("authEmailMethod")?.classList.toggle("active",playamAuthMethod==="email");document.getElementById("authPhoneMethod")?.classList.toggle("active",playamAuthMethod==="phone");document.getElementById("playamEmailAuthForm")?.classList.toggle("hidden",playamAuthMethod!=="email");document.getElementById("playamPhoneAuthForm")?.classList.toggle("hidden",playamAuthMethod!=="phone");}
+async function sendPlayamPhoneCode(){const c=getPlayamAuthClient();if(!c)return;const phone=document.getElementById("phoneNumber")?.value.trim()||"";if(!/^\+[1-9]\d{7,14}$/.test(phone)){showMessage("Enter your full phone number with country code, e.g. +2348012345678.");return;}try{const {error}=await c.auth.signInWithOtp({phone,options:{shouldCreateUser:playamAuthMode==="signup"}});if(error)throw error;playamPhonePending=phone;document.getElementById("playamPhoneVerifyPanel")?.classList.remove("hidden");showMessage("SMS code sent. Check your phone.");}catch(e){showMessage(e.message||"Phone sign-in is unavailable. SMS authentication may need to be enabled.");}}
+async function verifyPlayamPhoneCode(){const c=getPlayamAuthClient();if(!c)return;const token=document.getElementById("phoneOtpCode")?.value.trim()||"";if(!/^\d{6}$/.test(token)){showMessage("Enter the six-digit SMS code.");return;}try{const {data,error}=await c.auth.verifyOtp({phone:playamPhonePending,token,type:"sms"});if(error)throw error;if(data.session)showHome();else showMessage("Verification completed without an active session.");}catch(e){showMessage(e.message||"The code could not be verified.");}}
+async function signInWithPlayamProvider(provider){const c=getPlayamAuthClient();if(!c)return;try{const {error}=await c.auth.signInWithOAuth({provider,options:{redirectTo:location.origin+location.pathname}});if(error)throw error;}catch(e){showMessage(e.message||provider+" sign-in is not configured. Enable it in Supabase Auth providers.");}}
 
 /* AUTH — keep the existing email/password sign-in and registration */
 let playamAuthBusy=false;
