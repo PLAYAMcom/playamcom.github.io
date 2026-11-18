@@ -1,0 +1,19 @@
+{
+  "name": "PLAYAM",
+  "short_name": "PLAYAM",
+  "description": "Play games and connect with friends on PLAYAM.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#090914",
+  "theme_color": "#090914",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/playam-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
