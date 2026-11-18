@@ -392,6 +392,19 @@ textarea{line-height:1.5;resize:vertical}
 }
 
 
+/* PLAYAM Create menu and Studio preview — staging */
+.playam-create-overlay{position:fixed;inset:0;z-index:1500;display:flex;align-items:flex-end;justify-content:center;padding:16px;background:#05040bdc;backdrop-filter:blur(8px)}
+.playam-create-sheet{position:relative;width:min(100%,520px);max-height:88dvh;overflow:auto;padding:25px 20px 22px;border:1px solid #554174;border-radius:24px 24px 18px 18px;background:linear-gradient(155deg,#211735,#10101e 70%);box-shadow:0 -14px 48px #0009}
+.playam-create-sheet h2{margin:7px 0;font-size:24px}.playam-create-sheet>p{color:#c3bad5;font-size:13px;line-height:1.5}
+.playam-create-close{position:absolute;right:14px;top:12px;width:36px;height:36px;padding:0;border:1px solid #ffffff28;border-radius:50%;background:#ffffff12;color:white;font-size:25px}
+.playam-create-upload{width:100%;margin:12px 0 15px;padding:14px}
+.playam-studio-coming{padding:16px;border:1px solid #8057b7;border-radius:18px;background:linear-gradient(135deg,#30204b,#171427)}
+.playam-studio-top{display:flex;align-items:center;justify-content:space-between}.playam-studio-icon{font-size:24px;color:#e4c3ff}
+.playam-coming-label{padding:6px 9px;border-radius:999px;background:#583b79;color:#f0dcff;font-size:10px;font-weight:900;letter-spacing:.09em}
+.playam-studio-coming h3{margin:10px 0 4px;font-size:20px}.playam-studio-coming p{margin:5px 0;color:#d0c5df;font-size:12px;line-height:1.5}
+.playam-studio-features{display:flex;flex-wrap:wrap;gap:7px;margin:13px 0}
+.playam-studio-features span{padding:7px 9px;border:1px solid #ffffff20;border-radius:999px;background:#ffffff0c;color:#f0e7ff;font-size:10px;font-weight:700}
+.playam-studio-coming .playam-studio-foot{padding-top:10px;border-top:1px solid #ffffff20;color:#bfa9d9;font-size:11px}
 /* PLAYAM TikTok-style bottom navigation — staging */
 @media(max-width:760px){
  .mobile-tabbar.playam-tiktok-tabbar{position:fixed;left:0;right:0;top:auto;bottom:0;z-index:1200;display:flex!important;align-items:center;justify-content:space-around;gap:2px;width:100%;height:calc(64px + env(safe-area-inset-bottom));min-height:calc(64px + env(safe-area-inset-bottom));padding:5px max(8px,env(safe-area-inset-left)) calc(5px + env(safe-area-inset-bottom));background:rgba(8,8,15,.97);border-top:1px solid #ffffff24;box-shadow:0 -8px 26px #0008;backdrop-filter:blur(18px)}
@@ -700,6 +713,22 @@ textarea{line-height:1.5;resize:vertical}
    <button class="primary" style="width:100%" onclick="returnHomeFromResults()">BACK TO DASHBOARD</button>
   </section>
 
+  <div id="playamCreatePanel" class="playam-create-overlay hidden" aria-hidden="true">
+   <section class="playam-create-sheet" role="dialog" aria-modal="true" aria-labelledby="playamCreateTitle">
+    <button class="playam-create-close" type="button" onclick="closePlayamCreate()" aria-label="Close">×</button>
+    <div class="feed-kicker">MAKE SOMETHING GREAT</div>
+    <h2 id="playamCreateTitle">Create on PLAYAM</h2>
+    <p>Share a video today, or get ready for a new way to edit.</p>
+    <button class="primary playam-create-upload" type="button" onclick="openPlayamUpload()">＋ Upload a video</button>
+    <article class="playam-studio-coming">
+     <div class="playam-studio-top"><span class="playam-studio-icon">✦</span><span class="playam-coming-label">COMING SOON</span></div>
+     <h3>PLAYAM Studio</h3>
+     <p>Your own video editor, built into PLAYAM.</p>
+     <div class="playam-studio-features"><span>Trim &amp; split clips</span><span>Transitions</span><span>Music &amp; captions</span><span>Creative filters</span><span>Premium HD Filter</span><span>HD export</span></div>
+     <p class="playam-studio-foot">Premium HD Filter will be available to purchase when Studio launches. Preview first, then pay securely to unlock.</p>
+    </article>
+   </section>
+  </div>
   <div id="message"></div>
   <p class="small">🔞 Hard, Elite and Final Boss contain mature content.</p>
  </main>
@@ -792,7 +821,9 @@ function hideScreens(){screenIds.forEach(id=>document.getElementById(id).classLi
 function setNav(id){document.querySelectorAll(".navbtn").forEach(b=>b.classList.remove("active"));if(id)document.getElementById(id)?.classList.add("active")}
 function showScreen(id,nav=""){hideScreens();document.getElementById(id).classList.remove("hidden");setNav(nav);showMessage("")}
 function showHome(){stopLobbyRefresh();stopGameRefresh();showScreen("homeScreen","navHome");void loadPlayamGameAd();const main=document.querySelector(".main");if(main)main.onscroll=syncFeedTab;requestAnimationFrame(()=>{if(main){const videos=document.getElementById("feedVideos");main.scrollTop=videos?videos.offsetTop:0;}syncFeedTab();loadPlayamVideos()})}
-function triggerPlayamCreate(){const input=document.getElementById("playamVideoFile");if(input)input.click();else showMessage("Video upload is not available on this screen yet.");}
+function triggerPlayamCreate(){const panel=document.getElementById("playamCreatePanel");if(panel){panel.classList.remove("hidden");panel.setAttribute("aria-hidden","false")}else{const input=document.getElementById("playamVideoFile");if(input)input.click();else showMessage("Video upload is not available on this screen yet.");}}
+function closePlayamCreate(){const panel=document.getElementById("playamCreatePanel");if(panel){panel.classList.add("hidden");panel.setAttribute("aria-hidden","true")}}
+function openPlayamUpload(){closePlayamCreate();const input=document.getElementById("playamVideoFile");if(input)input.click();else showMessage("Video upload is not available on this screen yet.");}
 function showFindPlayer(){stopLobbyRefresh();stopGameRefresh();showScreen("findPlayerScreen")}
 function showSettings(){showScreen("settingsScreen")}
 function showCreateRoom(){showScreen("createScreen")}
