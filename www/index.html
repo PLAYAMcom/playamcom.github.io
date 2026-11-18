@@ -596,6 +596,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .playam-camera-side-tools b{font-size:21px;line-height:22px}.playam-camera-side-tools small{font-size:9px;font-weight:700}
 .playam-camera-bottom-tools{position:absolute;z-index:8;bottom:calc(25px + env(safe-area-inset-bottom));left:16px;right:16px;display:flex;justify-content:space-between;pointer-events:none}
 .playam-camera-bottom-tools button{pointer-events:auto;border:1px solid #ffffff55;border-radius:22px;background:#17151dcc;color:#fff;padding:9px 14px;font-weight:800}
+.playam-template-tray{position:absolute;z-index:21;left:12px;right:12px;bottom:calc(165px + env(safe-area-inset-bottom));padding:14px;border:1px solid #ffffff35;border-radius:18px;background:#17131ff5;color:#fff;box-shadow:0 8px 30px #0009}.playam-template-tray.hidden{display:none!important}.playam-template-tray-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:13px}.playam-template-tray-head button{border:0;background:transparent;color:#fff;font-size:24px}.playam-template-tray-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.playam-template-tray-grid button{display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-height:82px;padding:11px;border:1px solid #ffffff25;border-radius:12px;background:#292139;color:#fff;font-size:22px}.playam-template-tray-grid b{font-size:11px}.playam-template-tray-grid small{font-size:9px;color:#c9bfd8}.playam-camera-template-hint{position:absolute;z-index:4;left:12%;right:12%;top:24%;padding:12px 14px;border:1px solid #ffffff55;border-radius:14px;background:#15111dcc;color:#fff;text-align:center;font-size:13px;font-weight:800;text-shadow:0 1px 4px #000}.playam-camera-template-hint.hidden{display:none!important}
 #playamCreatePanel.camera-mode .playam-camera-bottom{bottom:calc(18px + env(safe-area-inset-bottom));left:50%;right:auto;transform:translateX(-50%);z-index:9}
 .playam-effects-tray{position:absolute;z-index:20;left:0;right:0;bottom:0;height:min(52vh,440px);padding:10px 14px calc(16px + env(safe-area-inset-bottom));border-radius:22px 22px 0 0;background:#15131df5;color:white;box-shadow:0 -12px 40px #0008;display:flex;flex-direction:column;gap:10px}
 .playam-effects-tray.hidden{display:none!important}
@@ -1078,7 +1079,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
     <section id="playamARPanel" class="playam-ar-panel hidden" aria-label="Live face filters">
      <div class="playam-camera-top"><button type="button" class="playam-camera-close" onclick="closePlayamCreate()" aria-label="Close camera">×</button><button type="button" class="playam-add-sound" onclick="document.getElementById('playamMusicFile').click()">♫ Add music</button><span class="playam-camera-label">PLAYAM CAMERA</span></div>
      <p class="playam-ar-note">Real-time face tracking. Effects follow your face as you move. Allow camera access to begin.</p>
-     <div class="playam-ar-stage"><video id="playamARVideo" playsinline muted></video><canvas id="playamARCanvas"></canvas><div id="playamCameraTextPreview" class="playam-camera-text-preview"></div></div><input id="playamCameraText" class="playam-camera-text hidden" maxlength="90" placeholder="Type text to add to your video…" oninput="playamTextOverlay=this.value;document.getElementById('playamCameraTextPreview').textContent=this.value">
+     <div class="playam-ar-stage"><video id="playamARVideo" playsinline muted></video><canvas id="playamARCanvas"></canvas><div id="playamCameraTextPreview" class="playam-camera-text-preview"></div><div id="playamCameraTemplateHint" class="playam-camera-template-hint hidden"></div></div><input id="playamCameraText" class="playam-camera-text hidden" maxlength="90" placeholder="Type text to add to your video…" oninput="playamTextOverlay=this.value;document.getElementById('playamCameraTextPreview').textContent=this.value">
      <div class="playam-camera-modes"><button type="button" data-create-mode="video" class="active" onclick="setPlayamCreateMode('video',this)">Video</button><button type="button" data-create-mode="photo" onclick="setPlayamCreateMode('photo',this)">Photo</button><button type="button" data-create-mode="text" onclick="setPlayamCreateMode('text',this)">Text</button></div>
      <div class="playam-camera-side-tools" aria-label="Camera tools">
       <button onclick="flipPlayamCamera()"><b>↻</b><small>Flip</small></button>
@@ -1105,7 +1106,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
       <div class="playam-filter-strength"><span>Strength</span><input type="range" min="0" max="100" value="100" oninput="setPlayamFilterStrength(this.value)"><b id="playamFilterStrengthValue">100%</b></div>
       <div id="playamToolOptions" class="playam-tool-options hidden"></div>
      </div>
-     <div class="playam-camera-bottom-tools"><button onclick="openPlayamEffectsTray()">✦ Effects</button><button onclick="openPlayamUpload()">▧ Upload</button></div>
+     <div class="playam-camera-bottom-tools"><button type="button" onclick="openPlayamEffectsTray()">✦ Effects</button><button type="button" onclick="openPlayamTemplateTray()">▦ Templates</button><button type="button" onclick="openPlayamUpload()">▧ Upload</button></div><div id="playamTemplateTray" class="playam-template-tray hidden" aria-label="PLAYAM creator templates"><div class="playam-template-tray-head"><strong>Choose a PLAYAM prompt</strong><button type="button" onclick="closePlayamTemplateTray()" aria-label="Close templates">×</button></div><div class="playam-template-tray-grid"><button type="button" onclick="selectPlayamTemplate('Gaming clutch','Show your setup, the best gameplay moment and your reaction.')">🎮<b>Gaming clutch</b><small>Highlight moment</small></button><button type="button" onclick="selectPlayamTemplate('Player intro','Introduce yourself, your game and your player name.')">👋<b>Player intro</b><small>Meet the player</small></button><button type="button" onclick="selectPlayamTemplate('Victory moment','Capture the win and celebrate with your teammates.')">🏆<b>Victory moment</b><small>Celebrate a win</small></button><button type="button" onclick="selectPlayamTemplate('My setup','Show your gaming space, gear and favourite game.')">🎧<b>My setup</b><small>Setup tour</small></button></div></div>
      <div class="playam-ar-effects hidden">
       <button type="button" class="active" data-ar="none" onclick="setPlayamAREffect('none',this)">Natural</button>
       <button type="button" data-ar="glasses" onclick="setPlayamAREffect('glasses',this)">Glasses</button>
@@ -1321,11 +1322,16 @@ async function togglePlayamARRecording(){
  }catch(e){status.textContent=e.message||"Recording could not start on this device.";}
 }
 
+function openPlayamTemplateTray(){document.getElementById("playamTemplateTray")?.classList.remove("hidden")}
+function closePlayamTemplateTray(){document.getElementById("playamTemplateTray")?.classList.add("hidden")}
 function selectPlayamTemplate(name,prompt){
  const out=document.getElementById("playamTemplatePrompt");
- if(out)out.textContent=name+": "+prompt+" These are guided recording prompts; automatic multi-clip template editing is not live yet.";
+ if(out)out.textContent=name+": "+prompt+" This is a guided recording prompt; automatic multi-clip editing is not live yet.";
+ const hint=document.getElementById("playamCameraTemplateHint");
+ if(hint){hint.textContent=name+" — "+prompt;hint.classList.remove("hidden")}
  const panel=document.getElementById("playamCreatePanel");
  if(panel)panel.dataset.selectedTemplate=name;
+ closePlayamTemplateTray();
 }
 function triggerPlayamCreate(){const panel=document.getElementById("playamCreatePanel");if(!panel)return;panel.classList.remove("hidden");panel.classList.add("camera-mode");panel.setAttribute("aria-hidden","false");openPlayamARCamera();}
 function closePlayamCreate(){const panel=document.getElementById("playamCreatePanel");if(panel){panel.classList.add("hidden");panel.classList.remove("camera-mode");panel.setAttribute("aria-hidden","true")}closePlayamARCamera();}
