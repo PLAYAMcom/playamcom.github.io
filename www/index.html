@@ -554,9 +554,8 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
  .story-gaming{background:linear-gradient(145deg,#512b81,#24204a)}.story-music{background:linear-gradient(145deg,#8b3d79,#27172f)}.story-dance{background:linear-gradient(145deg,#80552a,#332044)}.story-comedy{background:linear-gradient(145deg,#6b4d22,#32203f)}.story-style{background:linear-gradient(145deg,#67458b,#2a1d36)}
  #homeScreen.playam-vertical-feed .feed-video-page>.playam-feed-tabs{position:absolute;z-index:11;top:116px;left:0;right:0;display:flex;align-items:center;gap:18px;overflow-x:auto;padding:8px 15px 10px;background:linear-gradient(180deg,#090711d9,#0907118c);scrollbar-width:none}
  .playam-feed-tabs::-webkit-scrollbar{display:none}
- .playam-feed-tabs span{flex:0 0 auto;color:#e4dce9;font-size:11px;font-weight:800;white-space:nowrap;opacity:.78}
- .playam-feed-tabs span.active{color:#fff;opacity:1;position:relative}
- .playam-feed-tabs span.active:after{content:"";position:absolute;left:0;right:0;bottom:-8px;height:2px;border-radius:4px;background:#c6a15b}
+ .playam-feed-tabs button{flex:0 0 auto;padding:5px 0;border:0;border-radius:0;background:transparent;color:#e4dce9;font-size:11px;font-weight:800;white-space:nowrap;opacity:.78}.playam-feed-tabs button.active{color:#fff;opacity:1;position:relative}.playam-feed-tabs button:focus-visible{outline:2px solid #c6a15b;outline-offset:4px}
+ .playam-feed-tabs button.active:after{content:"";position:absolute;left:0;right:0;bottom:-8px;height:2px;border-radius:4px;background:#c6a15b}
  .playam-feed-tabs span.live{color:#ff9bb5}
  #homeScreen.playam-vertical-feed .feed-video-page>.feed-page-head{top:156px;left:15px;right:15px}
  #homeScreen.playam-vertical-feed .feed-video-page .shorts-toolbar{top:205px;left:14px;right:14px}
@@ -872,7 +871,7 @@ body.playam-camera-open{overflow:hidden!important;overscroll-behavior:none!impor
       <div class="playam-story"><span class="playam-story-ring story-comedy">☺</span><span>Comedy</span></div>
       <div class="playam-story"><span class="playam-story-ring story-style">✧</span><span>Fashion</span></div>
      </div>
-     <div class="playam-feed-tabs" aria-label="Video feed categories"><span class="active">For You</span><span>Following</span><span>Gaming</span><span class="live">Live</span><span>Trending</span></div>
+     <div class="playam-feed-tabs" role="tablist" aria-label="Video feed categories"><button type="button" class="active" role="tab" aria-selected="true" data-feed-mode="for-you" onclick="setPlayamShortsFeedMode('for-you',this)">For You</button><button type="button" role="tab" aria-selected="false" data-feed-mode="following" onclick="setPlayamShortsFeedMode('following',this)">Following</button><span class="live" aria-label="Live streaming coming later">LIVE · SOON</span></div>
      <div class="feed-page-head"><div><div class="feed-kicker">SCROLL • WATCH • DISCOVER</div><h2>PLAYAM Shorts</h2></div><span class="feed-page-count">02 / 06</span></div>
      <div class="shorts-toolbar"><input id="playamVideoCaption" type="text" maxlength="220" placeholder="Write a caption…" aria-label="Video caption"><button class="primary shorts-upload-button" type="button" onclick="document.getElementById('playamVideoFile').click()">＋ Choose video</button><button class="secondary shorts-record-button" type="button" onclick="document.getElementById('playamRecordFile').click()">● Record</button><input id="playamVideoFile" type="file" accept="video/mp4,video/webm,video/quicktime" hidden onchange="previewPlayamEditor(event)"><input id="playamRecordFile" type="file" accept="video/*" capture="environment" hidden onchange="previewPlayamEditor(event)"></div>
      <section id="playamQuickEditor" class="playam-quick-editor hidden" aria-label="PLAYAM video filters">
@@ -1375,8 +1374,8 @@ const playamEffectFamilies=[
 ["Mono","Pure Mono|Matte Black|Silver Mono|High Contrast|Soft Gray|Noir|Slate|Graphite|Classic B&W|Shadow|Bright Mono|Deep Mono|Urban Gray|Steel|Minimal"],
 ["Color","Autumn|Spring|Winter Light|Summer Heat|Citrus|Berry|Mango|Mint|Plum|Copper|Rose Gold|Ice|Sapphire|Honey|Forest"]
 ];
-const playamFilterPresets=["brightness(1.10) saturate(1.24) contrast(1.03)","contrast(1.18) saturate(.88) brightness(1.02)","sepia(.22) saturate(1.3) contrast(1.08)","saturate(1.65) contrast(1.08)","hue-rotate(18deg) saturate(1.25) brightness(1.05)","hue-rotate(195deg) saturate(1.35) contrast(1.08)","brightness(1.08) contrast(.92) saturate(.82)","grayscale(1) contrast(1.18)","sepia(.38) contrast(1.12)","hue-rotate(285deg) saturate(1.3)","brightness(1.16) saturate(1.12)","contrast(1.28) saturate(1.2)","hue-rotate(35deg) saturate(1.4)","hue-rotate(125deg) saturate(1.25)","saturate(.72) brightness(1.08)"];
-const playamEffectCatalog=playamEffectFamilies.flatMap((f,fi)=>f[1].split("|").map((name,ni)=>({id:"playamfx"+fi+"_"+ni,name:name,category:f[0],filter:playamFilterPresets[(ni+fi*3)%playamFilterPresets.length]})));
+const playamCameraEffectPresets=["brightness(1.10) saturate(1.24) contrast(1.03)","contrast(1.18) saturate(.88) brightness(1.02)","sepia(.22) saturate(1.3) contrast(1.08)","saturate(1.65) contrast(1.08)","hue-rotate(18deg) saturate(1.25) brightness(1.05)","hue-rotate(195deg) saturate(1.35) contrast(1.08)","brightness(1.08) contrast(.92) saturate(.82)","grayscale(1) contrast(1.18)","sepia(.38) contrast(1.12)","hue-rotate(285deg) saturate(1.3)","brightness(1.16) saturate(1.12)","contrast(1.28) saturate(1.2)","hue-rotate(35deg) saturate(1.4)","hue-rotate(125deg) saturate(1.25)","saturate(.72) brightness(1.08)"];
+const playamEffectCatalog=playamEffectFamilies.flatMap((f,fi)=>f[1].split("|").map((name,ni)=>({id:"playamfx"+fi+"_"+ni,name:name,category:f[0],filter:playamCameraEffectPresets[(ni+fi*3)%playamCameraEffectPresets.length]})));
 function renderPlayamEffects(category,query){const grid=document.getElementById("playamTrayGrid");if(!grid)return;const q=(query||"").trim().toLowerCase();const items=playamEffectCatalog.filter(x=>(category==="Trending"||x.category===category)&&(!q||x.name.toLowerCase().includes(q)||x.category.toLowerCase().includes(q)));grid.innerHTML=items.map(x=>'<button type="button" data-effect-category="'+x.category+'" onclick="choosePlayamTrayEffect(\''+x.id+'\',\''+x.name+'\')"><i class="tray-thumb" style="filter:'+x.filter+';background:linear-gradient(135deg,#34254f,#e58ac4)"></i><span>'+x.name+'</span></button>').join("");document.getElementById("playamTrayTitle").textContent=(q?"Search results":category==="Trending"?"Effects for you":category+" effects")+" · "+items.length;}
 function searchPlayamEffects(q){const active=document.querySelector(".playam-tray-categories button.active");renderPlayamEffects(active?.dataset.effectCategory||"Trending",q);}
 function openPlayamEffectsTray(){const t=document.getElementById("playamEffectsTray");if(t){t.classList.remove("hidden");document.getElementById("playamToolOptions").classList.add("hidden");renderPlayamEffects(document.querySelector(".playam-tray-categories button.active")?.dataset.effectCategory||"Trending",document.getElementById("playamEffectSearch")?.value||"");}}
@@ -1684,15 +1683,27 @@ async function loadPlayamVideoComments(videoId,panel){
  try{await refresh()}catch(e){const error=document.createElement("p");error.className="shorts-comment-empty";error.textContent=e?.message||"Comments could not load.";list.append(error)}
 }
 
+let playamShortsFeedMode="for-you";
+function setPlayamShortsFeedMode(mode,button){
+ if(!["for-you","following"].includes(mode))return;
+ playamShortsFeedMode=mode;
+ document.querySelectorAll(".playam-feed-tabs [data-feed-mode]").forEach(tab=>{const active=tab.dataset.feedMode===mode;tab.classList.toggle("active",active);tab.setAttribute("aria-selected",active?"true":"false")});
+ const list=document.getElementById("playamShortsList");if(list)list.scrollTop=0;
+ loadPlayamVideos();
+}
 async function loadPlayamVideos(){
  if(playamVideosLoading)return;const list=document.getElementById("playamShortsList");if(!list)return;
  const requestId=++playamVideoLoadSequence;playamVideosLoading=true;list.innerHTML='<div class="shorts-empty">Loading PLAYAM Shorts…</div>';
  try{
   const {data:rows,error}=await supabaseClient.from("playam_videos").select("id,owner_id,storage_path,caption,creator_name,created_at").eq("status","published").order("created_at",{ascending:false}).limit(30);if(error)throw error;if(requestId!==playamVideoLoadSequence)return;
-  if(!rows?.length){list.innerHTML='<div class="shorts-empty">No videos yet. Be the first to share a PLAYAM moment.</div>';return}list.replaceChildren();
-  const {data:{user:viewer},error:viewerError}=await supabaseClient.auth.getUser();
-  if(viewerError)throw viewerError;
-  for(const row of rows){
+  const {data:{user:viewer},error:viewerError}=await supabaseClient.auth.getUser();if(viewerError)throw viewerError;
+  let visibleRows=rows||[];
+  if(playamShortsFeedMode==="following"){
+   if(!viewer)visibleRows=[];
+   else{const {data:follows,error:followError}=await supabaseClient.from("flow_follows").select("followed_auth_user_id").eq("follower_auth_user_id",viewer.id);if(followError)throw followError;const followedIds=new Set((follows||[]).map(x=>x.followed_auth_user_id));visibleRows=visibleRows.filter(row=>followedIds.has(row.owner_id))}
+  }
+  if(!visibleRows.length){list.innerHTML=playamShortsFeedMode==="following"?(viewer?'<div class="shorts-empty">No videos from people you follow yet. Discover creators in For You and follow them to see their videos here.</div>':'<div class="shorts-empty">Sign in to see videos from creators you follow.</div>'):'<div class="shorts-empty">No videos yet. Be the first to share a PLAYAM moment.</div>';return}list.replaceChildren();
+  for(const row of visibleRows){
    const {data:signed,error:sErr}=await supabaseClient.storage.from("playam-videos-staging").createSignedUrl(row.storage_path,3600);if(requestId!==playamVideoLoadSequence)return;if(sErr||!signed?.signedUrl)continue;
    const card=document.createElement("article");card.className="shorts-card";const video=document.createElement("video");video.controls=true;video.playsInline=true;video.preload="auto";video.autoplay=true;video.muted=true;video.loop=true;video.setAttribute("playsinline","");video.setAttribute("webkit-playsinline","");video.setAttribute("muted","");video.setAttribute("autoplay","");video.addEventListener("loadedmetadata",()=>{const ratio=video.videoWidth/video.videoHeight;card.classList.toggle("video-vertical",Number.isFinite(ratio)&&ratio>=0.5&&ratio<=0.65);card.classList.toggle("video-letterboxed",!Number.isFinite(ratio)||ratio<0.5||ratio>0.65)});video.src=signed.signedUrl;// Use the native video controls and the explicit PLAY/PAUSE button; avoid intercepting taps on the seek bar or controls.video.addEventListener("error",()=>{const code=video.error?.code;const reason=code===2?"A network problem interrupted video loading. Refresh and try again.":(code===3||code===4)?"This video codec is not supported by this device. Re-export it as MP4 with H.264 video and AAC audio.":"A video could not be loaded. Refresh and try again.";setPlayamVideoStatus(reason,true)});
    const copy=document.createElement("div");copy.className="shorts-card-copy";const creator=document.createElement("div");creator.className="shorts-card-creator";creator.textContent=row.creator_name||"PLAYAM Player";const captionEl=document.createElement("p");captionEl.className="shorts-card-caption";captionEl.textContent=row.caption||"";copy.append(creator,captionEl);
