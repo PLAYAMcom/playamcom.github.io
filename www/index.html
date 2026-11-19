@@ -420,6 +420,15 @@ textarea{line-height:1.5;resize:vertical}
 .playam-intensity-label{display:flex;justify-content:space-between;color:#e8def7;font-size:12px;font-weight:700}.playam-quick-editor input[type=range]{accent-color:#b67aff;margin:5px 0 12px}
 .playam-editor-adjustments{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.playam-editor-adjustments label{font-size:10px;color:#c9bedb}.playam-editor-adjustments input{padding:0;margin:8px 0}
 .playam-editor-status{min-height:18px;color:#d3b6ff;font-size:11px;line-height:1.4}.playam-editor-publish,.playam-editor-cancel{width:100%;margin:5px 0;padding:12px}.playam-editor-note{color:#a99cbd;font-size:10px;line-height:1.5}
+.playam-studio-edit-tools{margin:12px 0;padding:12px;border:1px solid #51416f;border-radius:14px;background:#171528}
+.playam-studio-tool-heading{display:flex;justify-content:space-between;gap:8px;margin-bottom:10px;font-size:11px;font-weight:900;letter-spacing:.06em}
+.playam-studio-tool-heading span,.playam-studio-overlay-label span{color:#b9a8d3;font-size:10px;font-weight:600;letter-spacing:0}
+.playam-studio-trim-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.playam-studio-trim-row label,.playam-studio-overlay-label{display:flex;flex-direction:column;gap:6px;color:#c9bedb;font-size:11px;font-weight:800}
+.playam-studio-trim-row input,.playam-studio-edit-tools>input{box-sizing:border-box;width:100%;min-width:0;padding:10px;border:1px solid #51416f;border-radius:9px;background:#0f0d19;color:#fff}
+.playam-studio-overlay-label{margin-top:12px}.playam-studio-overlay-label span{font-weight:500}
+.playam-studio-edit-tools>input{margin-top:7px}
+.playam-studio-edit-tools .playam-editor-note{margin:9px 0 0}
 /* PLAYAM creator camera and template prompt polish */
 .playam-create-sheet{width:min(100%,560px);padding:24px 18px 22px}
 .playam-create-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}
@@ -876,7 +885,13 @@ body.playam-camera-open{overflow:hidden!important;overscroll-behavior:none!impor
      <div class="shorts-toolbar"><input id="playamVideoCaption" type="text" maxlength="220" placeholder="Write a caption…" aria-label="Video caption"><button class="primary shorts-upload-button" type="button" onclick="document.getElementById('playamVideoFile').click()">＋ Choose video</button><button class="secondary shorts-record-button" type="button" onclick="document.getElementById('playamRecordFile').click()">● Record</button><input id="playamVideoFile" type="file" accept="video/mp4,video/webm,video/quicktime" hidden onchange="previewPlayamEditor(event)"><input id="playamRecordFile" type="file" accept="video/*" capture="environment" hidden onchange="previewPlayamEditor(event)"></div>
      <section id="playamQuickEditor" class="playam-quick-editor hidden" aria-label="PLAYAM video filters">
       <div class="playam-editor-heading"><div><div class="feed-kicker">MAKE IT YOURS</div><h3>Video filters</h3></div><span class="playam-editor-tag">VIDEO TOOLS</span></div>
-      <video id="playamEditorPreview" playsinline controls muted></video>
+      <video id="playamEditorPreview" playsinline controls muted onloadedmetadata="initPlayamStudioTimeline()"></video>
+      <section class="playam-studio-edit-tools" aria-label="Clip editing tools">
+       <div class="playam-studio-tool-heading">TRIM CLIP <span id="playamStudioDuration">Load a video to begin</span></div>
+       <div class="playam-studio-trim-row"><label>Start (sec)<input id="playamTrimStart" type="number" min="0" step="0.1" value="0" oninput="updatePlayamStudioTrim()"></label><label>End (sec)<input id="playamTrimEnd" type="number" min="0" step="0.1" value="0" oninput="updatePlayamStudioTrim()"></label></div>
+       <label class="playam-studio-overlay-label" for="playamStudioOverlay">ON-VIDEO TEXT <span>Optional · included in export</span></label><input id="playamStudioOverlay" type="text" maxlength="90" placeholder="Add a title to your video…">
+       <p class="playam-editor-note">Trim and title are rendered into the exported video. The browser export is silent and does not retain the original audio track.</p>
+      </section>
       <div class="playam-filter-grid" id="playamFilterGrid">
        <button type="button" class="playam-filter-choice active" data-filter="original" onclick="selectPlayamFilter('original',this)"><span class="filter-swatch filter-original"></span>Original <small>Free</small></button>
        <button type="button" class="playam-filter-choice" data-filter="glow" onclick="selectPlayamFilter('glow',this)"><span class="filter-swatch filter-glow"></span>Glow <small>Free</small></button>
@@ -1225,11 +1240,12 @@ body.playam-camera-open{overflow:hidden!important;overscroll-behavior:none!impor
      <p id="playamARStatus" class="playam-ar-note" role="status">Starting camera and face tracking…</p>
     </section>
     <article class="playam-studio-coming">
-     <div class="playam-studio-top"><span class="playam-studio-icon">✦</span><span class="playam-coming-label">COMING SOON</span></div>
-     <h3>Advanced Video Editor</h3>
-     <p>A separate editing experience for creators, makeup artists and anyone who wants more control.</p>
-     <div class="playam-studio-features"><span>Trim &amp; split clips</span><span>Transitions</span><span>Music &amp; captions</span><span>Creative filters</span><span>Premium HD Filter</span><span>HD export</span></div>
-     <p class="playam-studio-foot">Premium HD Filter will be available to purchase when Studio launches. Preview first, then pay securely to unlock.</p>
+     <div class="playam-studio-top"><span class="playam-studio-icon">✦</span><span class="playam-coming-label">CREATOR STUDIO · STAGING</span></div>
+     <h3>Make your next PLAYAM video</h3>
+     <p>Record with camera effects or edit a clip you already have. Preview your look, choose a trim range and add an optional title before uploading.</p>
+     <div class="playam-studio-features"><span>Camera &amp; effects</span><span>Video upload</span><span>Trim clip</span><span>Text overlay</span><span>Colour adjustments</span><span>Caption &amp; publish</span></div>
+     <div class="playam-create-actions"><button class="primary" type="button" onclick="openPlayamUpload()">＋ Edit a video</button><button class="secondary" type="button" onclick="openPlayamARCamera()">● Record video</button></div>
+     <p class="playam-studio-foot">HD Enhance, transitions and multi-track editing are not available yet. Browser-based edited exports currently omit source audio; choose the original upload when keeping audio matters.</p>
     </article>
    </section>
   </div>
@@ -1594,10 +1610,25 @@ function previewPlayamEditor(event){
  const preview=document.getElementById("playamEditorPreview"),panel=document.getElementById("playamQuickEditor");
  if(playamEditorObjectUrl)URL.revokeObjectURL(playamEditorObjectUrl);
  playamEditorObjectUrl=URL.createObjectURL(file);preview.src=playamEditorObjectUrl;preview.load();panel.classList.remove("hidden");
+ const overlay=document.getElementById("playamStudioOverlay");if(overlay)overlay.value="";
  playamEditorSelectedFilter="original";document.querySelectorAll(".playam-filter-choice").forEach(b=>b.classList.toggle("active",b.dataset.filter==="original"));
  ["playamFilterIntensity","playamBrightness","playamContrast","playamSaturation"].forEach((id,i)=>{const el=document.getElementById(id);if(el)el.value=[70,100,100,100][i]});
- updatePlayamFilterIntensity(70);updatePlayamEditorPreview();setPlayamEditorStatus("Choose a filter, adjust it, then apply your look to upload.");
+ updatePlayamFilterIntensity(70);updatePlayamEditorPreview();setPlayamEditorStatus("Choose a filter, set trim points and add optional on-video text.");
  panel.scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+function initPlayamStudioTimeline(){
+ const v=document.getElementById("playamEditorPreview");if(!v||!Number.isFinite(v.duration)||v.duration<=0)return;
+ const start=document.getElementById("playamTrimStart"),end=document.getElementById("playamTrimEnd");
+ if(start){start.max=Math.max(0,v.duration-.1);start.value="0"}
+ if(end){end.max=v.duration;end.value=String(v.duration.toFixed(1))}
+ const label=document.getElementById("playamStudioDuration");if(label)label.textContent=v.duration.toFixed(1)+" sec total";
+}
+function updatePlayamStudioTrim(){
+ const v=document.getElementById("playamEditorPreview"),start=document.getElementById("playamTrimStart"),end=document.getElementById("playamTrimEnd");
+ if(!v||!Number.isFinite(v.duration)||!start||!end)return;
+ const a=Math.max(0,Math.min(v.duration-.1,Number(start.value)||0)),b=Math.max(a+.1,Math.min(v.duration,Number(end.value)||v.duration));
+ start.value=a.toFixed(1);end.value=b.toFixed(1);
+ const label=document.getElementById("playamStudioDuration");if(label)label.textContent=(b-a).toFixed(1)+" sec selected";
 }
 function setPlayamEditorStatus(message,isError=false){const el=document.getElementById("playamEditorStatus");if(el){el.textContent=message;el.style.color=isError?"#ff9bb8":"#d3b6ff"}}
 function selectPlayamFilter(name,button){
@@ -1640,11 +1671,17 @@ async function exportPlayamEditedVideo(){
   recorder=new MediaRecorder(stream,mime?{mimeType:mime}:undefined);
   const chunks=[];recorder.ondataavailable=e=>{if(e.data?.size)chunks.push(e.data)};
   const finished=new Promise((resolve,reject)=>{recorder.onstop=()=>resolve(new Blob(chunks,{type:recorder.mimeType||"video/webm"}));recorder.onerror=()=>reject(new Error("Filtered video export failed."))});
-  const v=getPlayamFilterValues();preview.pause();preview.currentTime=0;await preview.play();
-  const draw=()=>{ctx.filter=playamFilterCss(v);ctx.drawImage(preview,0,0,canvas.width,canvas.height);raf=requestAnimationFrame(draw)};
-  recorder.start(500);draw();
-  await new Promise(resolve=>{preview.onended=resolve;preview.onerror=resolve});
-  cancelAnimationFrame(raf);recorder.stop();preview.pause();
+  const v=getPlayamFilterValues(),startAt=Math.max(0,Number(document.getElementById("playamTrimStart")?.value)||0),endAt=Math.min(preview.duration,Number(document.getElementById("playamTrimEnd")?.value)||preview.duration);
+  if(!Number.isFinite(endAt)||endAt<=startAt+.09)throw new Error("Choose a valid trim range. End must be after start.");
+  const overlay=(document.getElementById("playamStudioOverlay")?.value||"").trim().slice(0,90);
+  preview.pause();preview.currentTime=startAt;
+  await new Promise((resolve,reject)=>{if(Math.abs(preview.currentTime-startAt)<.03)return resolve();const onSeek=()=>resolve();preview.addEventListener("seeked",onSeek,{once:true});setTimeout(()=>reject(new Error("Could not seek to the selected trim start.")),8000)});
+  const draw=()=>{if(preview.currentTime>=endAt){cancelAnimationFrame(raf);if(recorder.state==="recording")recorder.stop();return}
+   ctx.clearRect(0,0,canvas.width,canvas.height);ctx.filter=playamFilterCss(v);ctx.drawImage(preview,0,0,canvas.width,canvas.height);ctx.filter="none";
+   if(overlay){const size=Math.max(24,Math.round(canvas.width*.05));ctx.font="900 "+size+"px system-ui,sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.lineWidth=Math.max(3,size*.12);ctx.strokeStyle="rgba(0,0,0,.85)";ctx.fillStyle="#fff";const words=overlay.split(/\\s+/),lines=[];let line="";for(const word of words){const test=line?line+" "+word:word;if(ctx.measureText(test).width>canvas.width*.86&&line){lines.push(line);line=word}else line=test}if(line)lines.push(line);const shown=lines.slice(0,3),lh=size*1.2,y=canvas.height*.72-(shown.length-1)*lh/2;shown.forEach((t,i)=>{ctx.strokeText(t,canvas.width/2,y+i*lh,canvas.width*.88);ctx.fillText(t,canvas.width/2,y+i*lh,canvas.width*.88)})}
+   raf=requestAnimationFrame(draw)};
+  const stopped=new Promise(resolve=>recorder.addEventListener("stop",resolve,{once:true}));
+  recorder.start(500);await preview.play();draw();await stopped;cancelAnimationFrame(raf);preview.pause();
   const blob=await finished;if(!blob.size)throw new Error("No filtered video was created.");
   const ext=blob.type.includes("mp4")?"mp4":"webm";
   window.playamEditedVideoFile=new File([blob],"playam-filtered-"+Date.now()+"."+ext,{type:blob.type});
