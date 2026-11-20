@@ -1351,7 +1351,7 @@ function showScreen(id,nav=""){stopInactiveGameLoops(id);hideScreens();const tar
 function showHome(){stopLobbyRefresh();stopGameRefresh();showScreen("homeScreen","navHome");void loadPlayamGameAd();const main=document.querySelector(".main");if(main)main.onscroll=syncFeedTab;requestAnimationFrame(()=>{if(main){const videos=document.getElementById("feedVideos");const games=document.getElementById("feedGames");main.scrollTop=games?games.offsetTop:0;}syncFeedTab();loadPlayamVideos()})}
 
 /* Live AR face effects powered by MediaPipe Face Landmarker */
-let playamARStream=null,playamARLandmarker=null,playamARFrame=0,playamAREffect="none",playamARRecorder=null,playamARChunks=[],playamMusicUrl=null,playamAudioContext=null,playamMusicGain=null,playamMusicElementSource=null,playamCameraFilter="none",playamCreateMode="video",playamTextOverlay="";
+let playamARStream=null,playamARLandmarker=null,playamARFrame=0,playamAREffect="none",playamARRecorder=null,playamARChunks=[],playamMusicUrl=null,playamAudioContext=null,playamMusicGain=null,playamMusicElementSource=null,playamMusicRecordElement=null,playamCameraFilter="none",playamCreateMode="video",playamTextOverlay="";
 async function openPlayamARCamera(){
  const panel=document.getElementById("playamARPanel");panel.classList.remove("hidden");
  const effectsTray=document.getElementById("playamEffectsTray");if(effectsTray)effectsTray.classList.remove("hidden");
@@ -1418,7 +1418,7 @@ function setPlayamFilterStrength(v){
 async function flipPlayamCamera(){if(!navigator.mediaDevices?.getUserMedia)return;const old=playamARStream;try{playamFacingMode=playamFacingMode==="user"?"environment":"user";const next=await navigator.mediaDevices.getUserMedia({video:{facingMode:playamFacingMode,width:{ideal:720},height:{ideal:960}},audio:true});if(old)old.getTracks().forEach(t=>t.stop());playamARStream=next;const v=document.getElementById("playamARVideo");v.srcObject=next;await v.play();}catch(e){document.getElementById("playamARStatus").textContent="Could not switch camera: "+e.message;}}
 async function togglePlayamFlash(){const track=playamARStream?.getVideoTracks()[0],caps=track?.getCapabilities?.();if(!track||!caps?.torch){document.getElementById("playamARStatus").textContent="Flash is not supported by this camera.";return;}playamFlashOn=!playamFlashOn;try{await track.applyConstraints({advanced:[{torch:playamFlashOn}]});}catch(e){playamARStatus.textContent="Flash unavailable on this device.";}}
 function setPlayamCreateMode(mode,button){playamCreateMode=mode;document.querySelectorAll("[data-create-mode]").forEach(b=>b.classList.toggle("active",b===button));const field=document.getElementById("playamCameraText");if(field)field.classList.toggle("hidden",mode!=="text");const record=document.getElementById("playamARRecordBtn");if(record)record.textContent=mode==="photo"?"◉ Take photo":"●"; }
-async function playamCameraAction(){if(playamCreateMode==="photo"){const c=document.getElementById("playamARCanvas");if(!c||!c.width){document.getElementById("playamARStatus").textContent="Wait for the camera preview, then take your photo.";return;}c.toBlob(blob=>{if(blob){window.playamPhotoFile=new File([blob],"playam-photo.png",{type:"image/png"});document.getElementById("playamARStatus").textContent="Photo captured. Photo-post publishing is not connected yet.";}},"image/png");return;}if(playamTimerSeconds){const n=playamTimerSeconds;playamTimerSeconds=0;for(let i=n;i>0;i--){document.getElementById("playamARStatus").textContent="Recording starts in "+i+"…";await new Promise(r=>setTimeout(r,1000));}}togglePlayamARRecording();}
+async async function playamCameraAction(){if(playamCreateMode==="photo"){const c=document.getElementById("playamARCanvas");if(!c||!c.width){document.getElementById("playamARStatus").textContent="Wait for the camera preview, then take your photo.";return;}c.toBlob(blob=>{if(blob){window.playamPhotoFile=new File([blob],"playam-photo.png",{type:"image/png"});document.getElementById("playamARStatus").textContent="Photo captured. Photo-post publishing is not connected yet.";}},"image/png");return;}if(playamTimerSeconds){const n=playamTimerSeconds;playamTimerSeconds=0;for(let i=n;i>0;i--){document.getElementById("playamARStatus").textContent="Recording starts in "+i+"…";await new Promise(r=>setTimeout(r,1000));}}togglePlayamARRecording();}
 function drawPlayamARFrame(){
  const video=document.getElementById("playamARVideo"),canvas=document.getElementById("playamARCanvas");if(!video||!canvas||!playamARLandmarker||video.readyState<2){playamARFrame=requestAnimationFrame(drawPlayamARFrame);return;}
  const w=video.videoWidth,h=video.videoHeight;if(!w||!h){playamARFrame=requestAnimationFrame(drawPlayamARFrame);return;}
@@ -1445,11 +1445,19 @@ function selectPlayamMusic(event){
 function updatePlayamMusicVolume(value){const label=document.getElementById("playamMusicVolumeValue");if(label)label.textContent=value+"%";if(playamMusicGain)playamMusicGain.gain.value=Number(value)/100;}
 async function buildPlayamRecordingAudio(){
  const Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)throw new Error("Audio mixing is not supported in this browser.");
+ if(!playamARStream)throw new Error("Camera microphone is not ready. Restart the camera and try again.");
  const context=new Ctx(),destination=context.createMediaStreamDestination();
- const micTracks=playamARStream.getAudioTracks();if(micTracks.length)context.createMediaStreamSource(new MediaStream(micTracks)).connect(destination);
- const music=document.getElementById("playamMusicPreview");
- if(music?.src){if(!playamMusicElementSource)playamMusicElementSource=context.createMediaElementSource(music);playamMusicGain=context.createGain();playamMusicGain.gain.value=Number(document.getElementById("playamMusicVolume")?.value||35)/100;playamMusicElementSource.connect(playamMusicGain);playamMusicGain.connect(destination);playamMusicGain.connect(context.destination);music.currentTime=0;await context.resume();await music.play();}
- playamAudioContext=context;return destination.stream;
+ try{
+  const micTracks=playamARStream.getAudioTracks();if(micTracks.length)context.createMediaStreamSource(new MediaStream(micTracks)).connect(destination);
+  if(playamMusicUrl){
+   playamMusicRecordElement=new Audio(playamMusicUrl);playamMusicRecordElement.loop=true;playamMusicRecordElement.preload="auto";
+   playamMusicElementSource=context.createMediaElementSource(playamMusicRecordElement);playamMusicGain=context.createGain();
+   playamMusicGain.gain.value=Math.max(0,Math.min(1,Number(document.getElementById("playamMusicVolume")?.value??35)/100));
+   playamMusicElementSource.connect(playamMusicGain);playamMusicGain.connect(destination);
+   await context.resume();await playamMusicRecordElement.play();
+  }else await context.resume();
+  playamAudioContext=context;return destination.stream;
+ }catch(error){if(playamMusicRecordElement){playamMusicRecordElement.pause();playamMusicRecordElement=null}try{await context.close()}catch{}playamMusicElementSource=null;playamMusicGain=null;throw error}
 }
 async function togglePlayamARRecording(){
  const btn=document.getElementById("playamARRecordBtn"),canvas=document.getElementById("playamARCanvas"),status=document.getElementById("playamARStatus");
@@ -1460,7 +1468,7 @@ async function togglePlayamARRecording(){
   if(!mime)throw new Error("This browser does not support recording this live AR effect.");
   playamARChunks=[];playamARRecorder=new MediaRecorder(out,{mimeType:mime});
   playamARRecorder.ondataavailable=e=>{if(e.data.size)playamARChunks.push(e.data);};
-  playamARRecorder.onstop=()=>{const blob=new Blob(playamARChunks,{type:mime}),file=new File([blob],"playam-live-filter.webm",{type:"video/webm"});window.playamEditedVideoFile=file;document.getElementById("playamMusicPreview")?.pause();if(playamAudioContext){playamAudioContext.close().catch(()=>{});playamAudioContext=null;playamMusicGain=null;playamMusicElementSource=null;}closePlayamARCamera();closePlayamCreate();const input=document.getElementById("playamVideoFile");if(input){const dt=new DataTransfer();dt.items.add(file);input.files=dt.files;previewPlayamEditor({target:input});}status.textContent="Recording ready to review and upload.";};
+  playamARRecorder.onstop=()=>{const blob=new Blob(playamARChunks,{type:mime}),file=new File([blob],"playam-live-filter.webm",{type:"video/webm"});window.playamEditedVideoFile=file;if(playamMusicRecordElement){playamMusicRecordElement.pause();playamMusicRecordElement.src="";playamMusicRecordElement=null;}if(playamAudioContext){playamAudioContext.close().catch(()=>{});playamAudioContext=null;playamMusicGain=null;playamMusicElementSource=null;}closePlayamARCamera();closePlayamCreate();const input=document.getElementById("playamVideoFile");if(input){const dt=new DataTransfer();dt.items.add(file);input.files=dt.files;previewPlayamEditor({target:input});}status.textContent="Recording ready to review and upload.";};
   playamARRecorder.start();btn.textContent="■ Stop recording";status.textContent="Recording with live face effect and microphone audio.";
  }catch(e){status.textContent=e.message||"Recording could not start on this device.";}
 }
