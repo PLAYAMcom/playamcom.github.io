@@ -1609,7 +1609,7 @@ function previewPlayamEditor(event){
  if(file.size>100*1024*1024){setPlayamVideoStatus("This video is larger than the 100 MB staging limit.",true);event.target.value="";return}
  const preview=document.getElementById("playamEditorPreview"),panel=document.getElementById("playamQuickEditor");
  if(playamEditorObjectUrl)URL.revokeObjectURL(playamEditorObjectUrl);
- playamEditorObjectUrl=URL.createObjectURL(file);preview.src=playamEditorObjectUrl;preview.load();panel.classList.remove("hidden");
+ window.playamEditedVideoFile=null;playamEditorObjectUrl=URL.createObjectURL(file);preview.src=playamEditorObjectUrl;preview.load();panel.classList.remove("hidden");
  const overlay=document.getElementById("playamStudioOverlay");if(overlay)overlay.value="";
  playamEditorSelectedFilter="original";document.querySelectorAll(".playam-filter-choice").forEach(b=>b.classList.toggle("active",b.dataset.filter==="original"));
  ["playamFilterIntensity","playamBrightness","playamContrast","playamSaturation"].forEach((id,i)=>{const el=document.getElementById(id);if(el)el.value=[70,100,100,100][i]});
@@ -1667,7 +1667,7 @@ async function exportPlayamEditedVideo(){
   canvas=document.createElement("canvas");canvas.width=preview.videoWidth;canvas.height=preview.videoHeight;
   const ctx=canvas.getContext("2d");if(!ctx)throw new Error("Video editor could not start.");
   stream=canvas.captureStream(30);
-  const mime=["video/mp4;codecs=h264","video/webm;codecs=vp9","video/webm"].find(t=>MediaRecorder.isTypeSupported(t))||"";
+  const supported=typeof MediaRecorder.isTypeSupported==="function"?["video/mp4;codecs=h264","video/webm;codecs=vp9","video/webm"].filter(t=>MediaRecorder.isTypeSupported(t)):[];const mime=supported[0]||"";
   recorder=new MediaRecorder(stream,mime?{mimeType:mime}:undefined);
   const chunks=[];recorder.ondataavailable=e=>{if(e.data?.size)chunks.push(e.data)};
   const finished=new Promise((resolve,reject)=>{recorder.onstop=()=>resolve(new Blob(chunks,{type:recorder.mimeType||"video/webm"}));recorder.onerror=()=>reject(new Error("Filtered video export failed."))});
@@ -1678,7 +1678,7 @@ async function exportPlayamEditedVideo(){
   await new Promise((resolve,reject)=>{if(Math.abs(preview.currentTime-startAt)<.03)return resolve();const onSeek=()=>resolve();preview.addEventListener("seeked",onSeek,{once:true});setTimeout(()=>reject(new Error("Could not seek to the selected trim start.")),8000)});
   const draw=()=>{if(preview.currentTime>=endAt){cancelAnimationFrame(raf);if(recorder.state==="recording")recorder.stop();return}
    ctx.clearRect(0,0,canvas.width,canvas.height);ctx.filter=playamFilterCss(v);ctx.drawImage(preview,0,0,canvas.width,canvas.height);ctx.filter="none";
-   if(overlay){const size=Math.max(24,Math.round(canvas.width*.05));ctx.font="900 "+size+"px system-ui,sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.lineWidth=Math.max(3,size*.12);ctx.strokeStyle="rgba(0,0,0,.85)";ctx.fillStyle="#fff";const words=overlay.split(/\\s+/),lines=[];let line="";for(const word of words){const test=line?line+" "+word:word;if(ctx.measureText(test).width>canvas.width*.86&&line){lines.push(line);line=word}else line=test}if(line)lines.push(line);const shown=lines.slice(0,3),lh=size*1.2,y=canvas.height*.72-(shown.length-1)*lh/2;shown.forEach((t,i)=>{ctx.strokeText(t,canvas.width/2,y+i*lh,canvas.width*.88);ctx.fillText(t,canvas.width/2,y+i*lh,canvas.width*.88)})}
+   if(overlay){const size=Math.max(24,Math.round(canvas.width*.05));ctx.font="900 "+size+"px system-ui,sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.lineWidth=Math.max(3,size*.12);ctx.strokeStyle="rgba(0,0,0,.85)";ctx.fillStyle="#fff";const words=overlay.split(/\s+/),lines=[];let line="";for(const word of words){const test=line?line+" "+word:word;if(ctx.measureText(test).width>canvas.width*.86&&line){lines.push(line);line=word}else line=test}if(line)lines.push(line);const shown=lines.slice(0,3),lh=size*1.2,y=canvas.height*.72-(shown.length-1)*lh/2;shown.forEach((t,i)=>{ctx.strokeText(t,canvas.width/2,y+i*lh,canvas.width*.88);ctx.fillText(t,canvas.width/2,y+i*lh,canvas.width*.88)})}
    raf=requestAnimationFrame(draw)};
   const stopped=new Promise(resolve=>recorder.addEventListener("stop",resolve,{once:true}));
   recorder.start(500);await preview.play();draw();await stopped;cancelAnimationFrame(raf);preview.pause();
