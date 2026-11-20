@@ -1662,11 +1662,19 @@ async function exportPlayamEditedVideo(){
  if(!window.MediaRecorder||!HTMLCanvasElement.prototype.captureStream){setPlayamEditorStatus("This browser cannot export filtered video yet. You can upload the original video instead.",true);return}
  playamEditorBusy=true;const btn=document.querySelector(".playam-editor-publish");if(btn){btn.disabled=true;btn.textContent="APPLYING FILTER…"}
  setPlayamEditorStatus("Applying your filter. Keep this screen open…");
- let recorder=null,raf=0,canvas=null,stream=null;
+ let recorder=null,raf=0,canvas=null,stream=null,sourceStream=null,wasMuted=true;
  try{
   canvas=document.createElement("canvas");canvas.width=preview.videoWidth;canvas.height=preview.videoHeight;
   const ctx=canvas.getContext("2d");if(!ctx)throw new Error("Video editor could not start.");
-  stream=canvas.captureStream(30);
+  const canvasStream=canvas.captureStream(30),videoTracks=canvasStream.getVideoTracks();
+  if(!videoTracks.length)throw new Error("This browser could not create the edited video track.");
+  const capture=preview.captureStream||preview.mozCaptureStream;
+  if(typeof capture!=="function")throw new Error("This browser cannot preserve the original audio while editing. Upload the original video instead.");
+  wasMuted=preview.muted;preview.muted=false;
+  sourceStream=capture.call(preview);
+  const audioTracks=sourceStream.getAudioTracks();
+  stream=new MediaStream([...videoTracks,...audioTracks]);
+  if(!stream.getVideoTracks().length)throw new Error("The edited video track is unavailable.");
   const supported=typeof MediaRecorder.isTypeSupported==="function"?["video/mp4;codecs=h264","video/webm;codecs=vp9","video/webm"].filter(t=>MediaRecorder.isTypeSupported(t)):[];const mime=supported[0]||"";
   recorder=new MediaRecorder(stream,mime?{mimeType:mime}:undefined);
   const chunks=[];recorder.ondataavailable=e=>{if(e.data?.size)chunks.push(e.data)};
@@ -1689,7 +1697,7 @@ async function exportPlayamEditedVideo(){
   const fakeEvent={target:{files:[window.playamEditedVideoFile],value:""}};
   await uploadPlayamVideo(fakeEvent);
  }catch(error){console.error("PLAYAM filter export failed",error);setPlayamEditorStatus(error?.message||"Could not export this video. Try a shorter clip.",true)}
- finally{if(raf)cancelAnimationFrame(raf);if(recorder&&recorder.state!=="inactive")recorder.stop();if(stream)stream.getTracks().forEach(t=>t.stop());playamEditorBusy=false;if(btn){btn.disabled=false;btn.textContent="Apply look & upload video"}}
+ finally{if(raf)cancelAnimationFrame(raf);if(recorder&&recorder.state!=="inactive")recorder.stop();if(stream)stream.getTracks().forEach(t=>t.stop());if(sourceStream)sourceStream.getTracks().forEach(t=>t.stop());preview.muted=wasMuted;playamEditorBusy=false;if(btn){btn.disabled=false;btn.textContent="Apply look & upload video"}}
 }
 async function uploadPlayamVideo(event){
  const input=event?.target,file=window.playamEditedVideoFile||input?.files?.[0];if(!file)return;
